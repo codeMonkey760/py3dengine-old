@@ -11,4 +11,4 @@ add_custom_command(
 )
 
 add_executable(py3dengine src/main.c lib/glad/src/gl.c)
-target_link_libraries(py3dengine glfw)
+target_link_libraries(py3dengine glfw m)
