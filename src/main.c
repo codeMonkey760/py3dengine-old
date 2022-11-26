@@ -12,6 +12,8 @@
 #define PI 3.14159265f
 #define TWO_PI 6.2831853f
 #define PI_TWO 1.570796325f
+#define DEG_TO_RAD(X) ((X) * 0.017453293)
+#define RAD_TO_DEG(X) ((X) * 57.295779579)
 
 GLuint vertexShader = -1;
 GLuint fragShader = -1;
@@ -22,7 +24,11 @@ GLuint vao = -1;
 GLuint vbo = -1;
 GLuint posShaderIndex = 0;
 
+int screenWidth = 800;
+int screenHeight = 600;
 float diffuseColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+float pMtx[16] = {0.0f};
 
 static const char *vertex_shader_source =
         "#version 460 core\n"
@@ -230,6 +236,25 @@ static void renderQuad() {
     glUseProgram(0);
 }
 
+static void updateCamera() {
+    float fov_x = DEG_TO_RAD(100.0f);
+    float fov_y = ((float) screenHeight) / ((float) screenWidth) * fov_x;
+    float aspect = ((float) screenWidth) / ((float) screenHeight);
+    float f = tanf(2.0f / fov_y);
+    float far = 100.0f;
+    float near = 0.05f;
+
+    for (int i = 0; i < 16; ++i) {
+        pMtx[0] = 0.0f;
+    }
+
+    pMtx[0] = f / aspect;
+    pMtx[5] = f;
+    pMtx[10] = (far + near) / (near - far);
+    pMtx[11] = (2.0f * far * near) / (near - far);
+    pMtx[14] = -1.0f;
+}
+
 int main() {
     glfwSetErrorCallback(error_callback);
 
@@ -240,7 +265,7 @@ int main() {
     trace_log("GLFW successfully initialized");
 
     trace_log("Creating GLFW window");
-    GLFWwindow *window = glfwCreateWindow(640, 480, "Py3DEngine", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "Py3DEngine", NULL, NULL);
     if (!window) {
         return 1;
     }
@@ -268,7 +293,9 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         update(dt);
+        updateCamera();
         updateQuad(dt);
+
         renderQuad();
 
         glfwSwapBuffers(window);
