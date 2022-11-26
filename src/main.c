@@ -41,6 +41,18 @@ static void update(float dt) {
     }
 }
 
+static void initQuadModel() {
+
+}
+
+static void updateQuad() {
+
+}
+
+static void renderQuad() {
+
+}
+
 int main() {
     glfwSetErrorCallback(error_callback);
 
@@ -64,6 +76,8 @@ int main() {
     int version = gladLoadGL(glfwGetProcAddress);
     printf("GL %d.%d\n",GLAD_VERSION_MAJOR(version),GLAD_VERSION_MINOR(version));
 
+    initQuadModel();
+
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.75f, 1.0f);
 
@@ -76,6 +90,8 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         update(dt);
+        updateQuad();
+        renderQuad();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
