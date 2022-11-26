@@ -9,9 +9,7 @@
 #define LOG_INFO "INFO"
 #define LOG_ERROR "ERROR"
 
-#define PI 3.14159265f
-#define TWO_PI 6.2831853f
-#define PI_TWO 1.570796325f
+#define M_TWO_PI (2.0f * ((float) M_PI))
 #define DEG_TO_RAD(X) ((X) * 0.017453293)
 #define RAD_TO_DEG(X) ((X) * 57.295779579)
 
@@ -117,17 +115,17 @@ static void deleteQuadModel() {
 }
 
 static void updateQuad(float dt) {
-    const static float cycle_rate = PI_TWO;
+    const static float cycle_rate = M_PI_2;
     static float theta = 0.0f;
 
     theta += dt * cycle_rate;
-    while (theta >= TWO_PI) {
-        theta -= TWO_PI;
+    while (theta >= M_TWO_PI) {
+        theta -= M_TWO_PI;
     }
 
-    diffuseColor[0] = cosf(theta);
+    diffuseColor[0] = (cosf(theta) * 0.5f) + 0.5f;
     diffuseColor[1] = 0.0f;
-    diffuseColor[2] = sinf(theta);
+    diffuseColor[2] = (sinf(theta) * 0.5f) + 0.5f;
     diffuseColor[3] = 1.0f;
 }
 
