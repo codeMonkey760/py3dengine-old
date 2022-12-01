@@ -12,8 +12,6 @@
 int screenWidth = 800;
 int screenHeight = 600;
 
-float pMtx[16] = {0.0f};
-
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
@@ -37,6 +35,8 @@ static void update(float dt) {
 }
 
 int main() {
+    initLogger();
+
     glfwSetErrorCallback(error_callback);
 
     trace_log("Initializing GLFW");

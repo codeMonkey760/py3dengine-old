@@ -6,6 +6,15 @@
 static void refreshViewMatrix(struct Camera *camera) {
     if (camera == NULL || camera->_viewMtxCacheDirty == false) return;
 
+    // calc and write view matrix
+}
+
+static void refreshProjMatrix(struct Camera *camera) {
+    if (camera == NULL || camera->_projMtxCacheDirty == false) return;
+
+    int screenWidth = 800;
+    int screenHeight = 600;
+
     float fov_x = DEG_TO_RAD(100.0f);
     float fov_y = ((float) screenHeight) / ((float) screenWidth) * fov_x;
     float aspect = ((float) screenWidth) / ((float) screenHeight);
@@ -13,23 +22,15 @@ static void refreshViewMatrix(struct Camera *camera) {
     float far = 100.0f;
     float near = 0.05f;
 
-    for (int i = 0; i < 16; ++i) {
-        pMtx[0] = 0.0f;
-    }
-
+    float pMtx[16] = {0.0f};
     pMtx[0] = f / aspect;
     pMtx[5] = f;
     pMtx[10] = (far + near) / (near - far);
     pMtx[11] = (2.0f * far * near) / (near - far);
     pMtx[14] = -1.0f;
 
-    // calc and write view matrix
-}
-
-static void refreshProjMatrix(struct Camera *camera) {
-    if (camera == NULL || camera->_projMtxCacheDirty == false) return;
-
-    // calc and write proj matrix
+    Mat4Copy(camera->_projMtxCache, pMtx);
+    camera->_projMtxCacheDirty = false;
 }
 
 static void refreshViewProjMatrix(struct Camera *camera) {
