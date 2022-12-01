@@ -20,5 +20,6 @@ add_executable(
     src/source/shader.c
     src/source/quadmodel.c
     src/source/quad.c
+    src/source/camera.c
 )
 target_link_libraries(py3dengine glfw m)

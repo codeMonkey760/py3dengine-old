@@ -50,7 +50,7 @@ void Mat4RotationQuaternionFA(float m[16], float q[4]);
 void Mat4Transpose(float dst[16], float src[16]);
 bool Mat4Inverse (float dst[16], float src[16]);
 void Mat4Vec4Mult(float m[16], float v[4], float res[4]);
-void Mat4Copy (float m[16], float n[16]);
+void Mat4Copy (float dst[16], float src[16]);
 float degreesToRadians (float d);
 float radiansToDegrees (float r);
 void Vec3Identity(float out[3]);

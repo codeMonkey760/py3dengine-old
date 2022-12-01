@@ -7,6 +7,7 @@
 #include "shader.h"
 #include "quadmodel.h"
 #include "quad.h"
+#include "camera.h"
 
 int screenWidth = 800;
 int screenHeight = 600;
@@ -47,25 +48,6 @@ static void update(float dt) {
     }
 }
 
-static void updateCamera() {
-    float fov_x = DEG_TO_RAD(100.0f);
-    float fov_y = ((float) screenHeight) / ((float) screenWidth) * fov_x;
-    float aspect = ((float) screenWidth) / ((float) screenHeight);
-    float f = tanf(2.0f / fov_y);
-    float far = 100.0f;
-    float near = 0.05f;
-
-    for (int i = 0; i < 16; ++i) {
-        pMtx[0] = 0.0f;
-    }
-
-    pMtx[0] = f / aspect;
-    pMtx[5] = f;
-    pMtx[10] = (far + near) / (near - far);
-    pMtx[11] = (2.0f * far * near) / (near - far);
-    pMtx[14] = -1.0f;
-}
-
 int main() {
     glfwSetErrorCallback(error_callback);
 
@@ -93,6 +75,8 @@ int main() {
     initQuadModel();
     struct Quad *quad = NULL;
     allocQuad(&quad);
+    struct Camera *camera = NULL;
+    allocCamera(&camera);
 
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.75f, 1.0f);
@@ -106,7 +90,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         update(dt);
-        updateCamera();
+        updateCamera(camera, dt);
         updateQuad(quad, dt);
 
         renderQuad(quad);
@@ -115,6 +99,7 @@ int main() {
         glfwPollEvents();
     }
 
+    deleteCamera(&camera);
     deleteQuad(&quad);
     deleteQuadModel();
     deleteShader();
