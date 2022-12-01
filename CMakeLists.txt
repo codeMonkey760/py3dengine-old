@@ -12,5 +12,5 @@ add_custom_command(
 
 include_directories(src/headers)
 
-add_executable(py3dengine src/source/main.c src/source/util.c lib/glad/src/gl.c src/headers/shader.h src/source/shader.c)
+add_executable(py3dengine src/source/main.c src/source/util.c lib/glad/src/gl.c src/source/shader.c src/source/quadmodel.c)
 target_link_libraries(py3dengine glfw m)
