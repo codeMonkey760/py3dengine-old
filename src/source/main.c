@@ -1,11 +1,18 @@
-#include <glad/gl.h>
+#include "glad/gl.h"
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
 
-#define LOG_TRACE "TRACE"
-#define LOG_INFO "INFO"
-#define LOG_ERROR "ERROR"
+#include "util.h"
+#include "shader.h"
+#include "quadmodel.h"
+#include "quad.h"
+#include "camera.h"
+
+int screenWidth = 800;
+int screenHeight = 600;
+
+float pMtx[16] = {0.0f};
 
 static void error_callback(int code, const char* description) {
     fprintf(stderr, "[%s]: %s 0x%x %s\n", LOG_ERROR, "GLFW error code", code, description);
@@ -51,7 +58,7 @@ int main() {
     trace_log("GLFW successfully initialized");
 
     trace_log("Creating GLFW window");
-    GLFWwindow *window = glfwCreateWindow(640, 480, "Py3DEngine", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "Py3DEngine", NULL, NULL);
     if (!window) {
         return 1;
     }
@@ -63,6 +70,13 @@ int main() {
     trace_log("Loading GLAD");
     int version = gladLoadGL(glfwGetProcAddress);
     printf("GL %d.%d\n",GLAD_VERSION_MAJOR(version),GLAD_VERSION_MINOR(version));
+
+    initShader();
+    initQuadModel();
+    struct Quad *quad = NULL;
+    allocQuad(&quad);
+    struct Camera *camera = NULL;
+    allocCamera(&camera);
 
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.75f, 1.0f);
@@ -76,10 +90,19 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         update(dt);
+        updateCamera(camera, dt);
+        updateQuad(quad, dt);
+
+        renderQuad(quad);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    deleteCamera(&camera);
+    deleteQuad(&quad);
+    deleteQuadModel();
+    deleteShader();
 
     glfwTerminate();
 
