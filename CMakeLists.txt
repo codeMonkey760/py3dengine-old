@@ -10,5 +10,7 @@ add_custom_command(
         COMMAND ${Python_EXECUTABLE} -m glad --out-path lib/glad --api gl:core c
 )
 
-add_executable(py3dengine src/source/main.c src/source/util.c lib/glad/src/gl.c)
+include_directories(src/headers)
+
+add_executable(py3dengine src/source/main.c src/source/util.c lib/glad/src/gl.c src/headers/shader.h src/source/shader.c)
 target_link_libraries(py3dengine glfw m)

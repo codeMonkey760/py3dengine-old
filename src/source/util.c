@@ -1,7 +1,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "../headers/util.h"
+#include "util.h"
 
 void Mat4Identity(float a[16]) {
     int i;
