@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "util.h"
+#include "logger.h"
 #include "shader.h"
 #include "quadmodel.h"
 #include "quad.h"
@@ -15,19 +15,7 @@ int screenHeight = 600;
 float pMtx[16] = {0.0f};
 
 static void error_callback(int code, const char* description) {
-    fprintf(stderr, "[%s]: %s 0x%x %s\n", LOG_ERROR, "GLFW error code", code, description);
-}
-
-static void level_log(const char *level, const char *message) {
-    printf("[%s]: %s\n", level, message);
-}
-
-static void info_log(const char *message) {
-    level_log(LOG_INFO, message);
-}
-
-static void trace_log(const char *message) {
-    level_log(LOG_TRACE, message);
+    error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
 
 static void update(float dt) {
