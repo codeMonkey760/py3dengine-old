@@ -377,6 +377,15 @@ void Mat4Copy(float dst[16], float src[16]) {
     }
 }
 
+void Vec3Identity(float out[3]) {
+    int i;
+    if (out == NULL) return;
+
+    for (i = 0; i < 3; ++i) {
+        out[i] = 0.0f;
+    }
+}
+
 void Vec3Add(float out[3], float a[3], float b[3]) {
     int i;
     if (out == NULL || a == NULL || b == NULL) return;
@@ -441,6 +450,25 @@ void Vec3Scalar(float out[3], float u[3], float s) {
 
     for (i = 0; i < 3; ++i) {
         out[i] = u[i] * s;
+    }
+}
+
+void QuaternionIdentity(float out[4]) {
+    int i;
+    if (out == NULL) return;
+
+    for (i = 0; i < 3; ++i) {
+        out[i] = 0.0f;
+    }
+    out[3] = 1.0f;
+}
+
+void QuaternionCopy(float dst[4], float src[4]) {
+    int i;
+    if (dst == NULL || src == NULL) return;
+
+    for (i = 0; i < 4; ++i) {
+        dst[i] = src[i];
     }
 }
 
@@ -514,6 +542,20 @@ void QuaternionMult(float m[4], float n[4], float out[4]) {
     for (i = 0; i < 4; ++i) {
         out[i] = temp[i];
     }
+}
+
+float clampRadians(float radianValue) {
+    if (radianValue >= 0.0f) {
+        while (radianValue > M_TWO_PI) {
+            radianValue -= M_TWO_PI;
+        }
+    } else {
+        while (radianValue < 0.0f) {
+            radianValue += M_TWO_PI;
+        }
+    }
+
+    return radianValue;
 }
 
 void Mat4LookAtLH(float out[16], float camPosW[3], float camTargetW[3], float camUpW[3]) {

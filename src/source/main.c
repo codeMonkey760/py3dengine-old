@@ -6,10 +6,10 @@
 #include "util.h"
 #include "shader.h"
 #include "quadmodel.h"
+#include "quad.h"
 
 int screenWidth = 800;
 int screenHeight = 600;
-float diffuseColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 float pMtx[16] = {0.0f};
 
@@ -45,32 +45,6 @@ static void update(float dt) {
             since_last_report -= 1.0f;
         }
     }
-}
-
-static void updateQuad(float dt) {
-    const static float cycle_rate = M_PI_2;
-    static float theta = 0.0f;
-
-    theta += dt * cycle_rate;
-    while (theta >= M_TWO_PI) {
-        theta -= M_TWO_PI;
-    }
-
-    diffuseColor[0] = (cosf(theta) * 0.5f) + 0.5f;
-    diffuseColor[1] = 0.0f;
-    diffuseColor[2] = (sinf(theta) * 0.5f) + 0.5f;
-    diffuseColor[3] = 1.0f;
-}
-
-static void renderQuad() {
-    enableShader();
-    setDiffuseColor(diffuseColor);
-
-    bindQuadModel();
-    renderQuadModel();
-    unbindQuadModel();
-
-    disableShader();
 }
 
 static void updateCamera() {
@@ -117,6 +91,8 @@ int main() {
 
     initShader();
     initQuadModel();
+    struct Quad *quad = NULL;
+    allocQuad(&quad);
 
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.75f, 1.0f);
@@ -131,14 +107,15 @@ int main() {
 
         update(dt);
         updateCamera();
-        updateQuad(dt);
+        updateQuad(quad, dt);
 
-        renderQuad();
+        renderQuad(quad);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+    deleteQuad(&quad);
     deleteQuadModel();
     deleteShader();
 
