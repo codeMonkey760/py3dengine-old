@@ -8,5 +8,6 @@ extern void initShader();
 extern void deleteShader();
 
 extern void setDiffuseColor(float newDiffuseColor[4]);
+extern void setWVPMtx(float newWVPMtx[16]);
 
 #endif

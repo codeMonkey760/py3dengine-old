@@ -49,11 +49,16 @@ void updateQuad(struct Quad *quad, float dt) {
     quad->_diffuseColor[3] = 1.0f;
 }
 
-void renderQuad(struct Quad *quad) {
+void renderQuad(struct Quad *quad, struct Camera *camera) {
     if (quad == NULL) return;
 
     enableShader();
     setDiffuseColor(quad->_diffuseColor);
+
+    float wvpMtx[16] = {0.0f};
+    getVPMtx(camera, wvpMtx);
+    Mat4Mult(wvpMtx, quad->wMtxCache, wvpMtx);
+    setWVPMtx(wvpMtx);
 
     bindQuadModel();
     renderQuadModel();

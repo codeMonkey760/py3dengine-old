@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "camera.h"
+
 struct Quad {
     float _posW[4]; //world space
     float _orientation[4]; //quaternion
@@ -19,7 +21,7 @@ extern void allocQuad(struct Quad **quadPtr);
 extern void deleteQuad(struct Quad **quadPtr);
 
 extern void updateQuad(struct Quad *quad, float dt);
-extern void renderQuad(struct Quad *quad);
+extern void renderQuad(struct Quad *quad, struct Camera *camera);
 
 extern void setPosW(struct Quad *quad, float newPosW[3]);
 extern void setOrientation(struct Quad *quad, float newOrientation[4]);

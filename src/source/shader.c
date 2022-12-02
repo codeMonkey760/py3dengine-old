@@ -8,13 +8,15 @@ static GLuint vertexShader = -1;
 static GLuint fragShader = -1;
 static GLuint program = -1;
 static GLint diffuseColorIndex = -1;
+static GLint wvpMtxIndex = -1;
 
 static const char *vertex_shader_source =
         "#version 460 core\n"
         "layout(location = 0) in vec3 posL;\n"
+        "uniform mat4 gWVPMtx;\n"
         "void main()\n"
         "{\n"
-        "   gl_Position = vec4(posL, 1.0);\n"
+        "   gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
         "}\n";
 
 static const char *fragment_shader_source =
@@ -114,6 +116,7 @@ void initShader() {
     linkProgram(program);
 
     diffuseColorIndex = glGetUniformLocation(program, "gDiffuseColor");
+    wvpMtxIndex = glGetUniformLocation(program, "gWVPMtx");
 }
 
 void deleteShader() {
@@ -130,4 +133,8 @@ void deleteShader() {
 
 void setDiffuseColor(float newDiffuseColor[4]) {
     glUniform4fv(diffuseColorIndex, 1, newDiffuseColor);
+}
+
+void setWVPMtx(float newWVPMtx[16]) {
+    glUniformMatrix4fv(wvpMtxIndex, 1, GL_FALSE, newWVPMtx);
 }

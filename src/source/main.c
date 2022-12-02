@@ -81,7 +81,7 @@ int main() {
         updateCamera(camera, dt);
         updateQuad(quad, dt);
 
-        renderQuad(quad);
+        renderQuad(quad, camera);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

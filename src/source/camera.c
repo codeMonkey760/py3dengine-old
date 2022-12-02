@@ -6,7 +6,25 @@
 static void refreshViewMatrix(struct Camera *camera) {
     if (camera == NULL || camera->_viewMtxCacheDirty == false) return;
 
-    // calc and write view matrix
+    float yaw = 0.0f;
+    float pitch = 0.0f;
+
+    float camPosW[3] = {0.0f,0.0f,-2.0f};
+    float camTargetW[3] = {0.0f,0.0f,0.0f};
+    float camUpW[3] = {0.0f,1.0f,0.0f};
+
+    float qY[4] = {0.0f};
+    float qX[4] = {0.0f};
+    float qTot[4] = {0.0f};
+
+    QuaternionFromAxisAngle(0.0f,1.0f,0.0f,yaw,qY);
+    QuaternionFromAxisAngle(1.0f,0.0f,0.0f,pitch,qX);
+    QuaternionMult(qY,qX,qTot);
+
+    QuaternionVec3Rotation(camPosW,qTot,camPosW);
+
+    Mat4LookAtLH(camera->_viewMtxCache,camPosW,camTargetW,camUpW);
+    camera->_viewMtxCacheDirty = false;
 }
 
 static void refreshProjMatrix(struct Camera *camera) {
@@ -14,20 +32,24 @@ static void refreshProjMatrix(struct Camera *camera) {
 
     int screenWidth = 800;
     int screenHeight = 600;
+    float aspectRatio = ((float) screenWidth) / ((float) screenHeight);
+    float aspectRatioInv = ((float) screenHeight) / ((float) screenWidth);
 
-    float fov_x = DEG_TO_RAD(100.0f);
-    float fov_y = ((float) screenHeight) / ((float) screenWidth) * fov_x;
-    float aspect = ((float) screenWidth) / ((float) screenHeight);
-    float f = tanf(2.0f / fov_y);
-    float far = 100.0f;
-    float near = 0.05f;
+    float fovxInDegrees = 100.0f;
+    float nearZ = 0.05f;
+    float farZ = 10.0f;
+    float fov_y = DEG_TO_RAD(aspectRatioInv * fovxInDegrees);
+
+    float w = 1.0f / (aspectRatio * tanf(fov_y / 2.0f));
+    float h = 1.0f / (tanf(fov_y / 2.0f));
 
     float pMtx[16] = {0.0f};
-    pMtx[0] = f / aspect;
-    pMtx[5] = f;
-    pMtx[10] = (far + near) / (near - far);
-    pMtx[11] = (2.0f * far * near) / (near - far);
-    pMtx[14] = -1.0f;
+    Mat4Identity(pMtx);
+    pMtx[0] = w;
+    pMtx[5] = h;
+    pMtx[10] = (farZ) / (farZ - nearZ);
+    pMtx[11] = 1.0f;
+    pMtx[14] = (-1.0f * nearZ * farZ) / (farZ - nearZ);
 
     Mat4Copy(camera->_projMtxCache, pMtx);
     camera->_projMtxCacheDirty = false;
@@ -40,6 +62,7 @@ static void refreshViewProjMatrix(struct Camera *camera) {
     refreshProjMatrix(camera);
 
     Mat4Mult(camera->_viewProjMtxCache, camera->_viewMtxCache, camera->_projMtxCache);
+    camera->_viewProjMtxCacheDirty = false;
 }
 
 void allocCamera(struct Camera **cameraPtr) {
