@@ -57,6 +57,7 @@ float Vec3Dot(float a[3], float b[3]);
 void Vec3Cross(float out[3], float u[3], float v[3]);
 void Vec3Scalar (float out[3], float u[3], float s);
 void Vec3Normalize (float v[3]);
+void Vec4Copy(float dst[4], float src[4]);
 void PixelsToPercent (float x, float y, float width, float height, float *px, float *py);
 void QuaternionIdentity(float out[4]);
 void QuaternionCopy(float dst[4], float src[4]);

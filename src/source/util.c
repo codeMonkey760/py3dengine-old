@@ -453,6 +453,15 @@ void Vec3Scalar(float out[3], float u[3], float s) {
     }
 }
 
+void Vec4Copy(float dst[4], float src[4]) {
+    if (dst == NULL || src == NULL) return;
+
+    int i;
+    for (i = 0; i < 4; ++i) {
+        dst[i] = src[i];
+    }
+}
+
 void QuaternionIdentity(float out[4]) {
     int i;
     if (out == NULL) return;

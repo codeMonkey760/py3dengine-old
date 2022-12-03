@@ -62,17 +62,22 @@ int main() {
     initShader();
     initQuadModel();
     float quadPosW[3] = {-2.0f, 0.0f, 0.0f};
+    float quadDiffuseColor[4] = {0.8f, 0.0f, 0.2f, 1.0f};
     struct Quad *quad1 = NULL, *quad2 = NULL;
     allocQuad(&quad1);
-    setPosW(quad1, quadPosW);
+    setPosWQuad(quad1, quadPosW);
+    setDiffuseColorQuad(quad1, quadDiffuseColor);
     allocQuad(&quad2);
     quadPosW[0] = 2.0f;
-    setPosW(quad2, quadPosW);
+    quadDiffuseColor[0] = 0.2f;
+    quadDiffuseColor[2] = 0.8f;
+    setPosWQuad(quad2, quadPosW);
+    setDiffuseColorQuad(quad2, quadDiffuseColor);
     struct Camera *camera = NULL;
     allocCamera(&camera);
 
     glfwSwapInterval(1);
-    glClearColor(0.25f, 0.25f, 0.75f, 1.0f);
+    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
 
     float prev_ts, cur_ts = 0.0f;
     while(!glfwWindowShouldClose(window)) {
