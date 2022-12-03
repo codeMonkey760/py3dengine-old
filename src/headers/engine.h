@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include <GLFW/glfw3.h>
+
 #include "quad.h"
 #include "camera.h"
 
@@ -13,7 +15,7 @@ struct Engine {
     float _time_since_last_report;
     bool _print_report;
 
-    struct Window *window;
+    GLFWwindow *window;
 
     struct Quad *quad[2];
     struct Camera *camera;

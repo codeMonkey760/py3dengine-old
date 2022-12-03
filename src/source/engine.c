@@ -5,7 +5,6 @@
 
 #include "logger.h"
 #include "util.h"
-#include "window.h"
 #include "quadmodel.h"
 #include "shader.h"
 #include "engine.h"
@@ -94,7 +93,8 @@ void deleteEngine(struct Engine **enginePtr){
     if (enginePtr == NULL || (*enginePtr) == NULL) return;
 
     struct Engine *engine = (*enginePtr);
-    deleteWindow(&(engine->window));
+    glfwDestroyWindow(engine->window);
+    engine->window = NULL;
 
     deleteQuad(&(engine->quad[0]));
     deleteQuad(&(engine->quad[1]));
@@ -103,6 +103,8 @@ void deleteEngine(struct Engine **enginePtr){
 
     deleteQuadModel();
     deleteShader();
+
+    glfwTerminate();
 
     free((*enginePtr));
     (*enginePtr) = NULL;
@@ -113,7 +115,21 @@ void initEngine(struct Engine *engine){
 
     glfwSetErrorCallback(error_callback);
 
-    allocWindow(&(engine->window), 800, 600, false);
+    if (!glfwInit()) {
+        return;
+    }
+
+    GLFWwindow *glfwWindow = glfwCreateWindow(800, 600, "Py3DEngine", NULL, NULL);
+    if (glfwWindow == NULL) {
+        return;
+    }
+    engine->window = glfwWindow;
+    glfwWindow = NULL;
+
+    glfwMakeContextCurrent(engine->window);
+
+    gladLoadGL(glfwGetProcAddress);
+
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
 
@@ -152,7 +168,7 @@ void runEngine(struct Engine *engine) {
     if (engine == NULL) return;
 
     float prev_ts, cur_ts = 0.0f;
-    while(!windowShouldClose(engine->window)) {
+    while(!glfwWindowShouldClose(engine->window)) {
         prev_ts = cur_ts;
         cur_ts = (float) glfwGetTime();
         float dt = cur_ts - prev_ts;
@@ -162,7 +178,7 @@ void runEngine(struct Engine *engine) {
         updateEngine(engine, dt);
         renderEngine(engine);
 
-        swapBuffers(engine->window);
-        pollEvents();
+        glfwSwapBuffers(engine->window);
+        glfwPollEvents();
     }
 }
