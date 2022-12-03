@@ -38,7 +38,9 @@ void allocQuad(struct Quad **quadPtr) {
     Vec3Identity(newQuad->_posW);
     newQuad->_posW[3] = 1.0f;
     QuaternionIdentity(newQuad->_orientation);
-    Vec3Identity(newQuad->_scale);
+    newQuad->_scale[0] = 1.0f;
+    newQuad->_scale[1] = 1.0f;
+    newQuad->_scale[2] = 1.0f;
     newQuad->_cycle_rate = M_PI_2;
     newQuad->_theta = 0.0f;
 

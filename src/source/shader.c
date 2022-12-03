@@ -136,5 +136,5 @@ void setDiffuseColor(float newDiffuseColor[4]) {
 }
 
 void setWVPMtx(float newWVPMtx[16]) {
-    glUniformMatrix4fv(wvpMtxIndex, 1, GL_FALSE, newWVPMtx);
+    glUniformMatrix4fv(wvpMtxIndex, 1, GL_TRUE, newWVPMtx);
 }
