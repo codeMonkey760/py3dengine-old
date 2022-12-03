@@ -23,5 +23,6 @@ add_executable(
     src/source/camera.c
     src/source/logger.c
     src/source/engine.c
+    src/source/custom_string.c
 )
 target_link_libraries(py3dengine glfw m)
