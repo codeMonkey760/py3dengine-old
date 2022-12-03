@@ -22,5 +22,6 @@ add_executable(
     src/source/quad.c
     src/source/camera.c
     src/source/logger.c
+    src/source/engine.c
 )
 target_link_libraries(py3dengine glfw m)

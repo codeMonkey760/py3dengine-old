@@ -1,37 +1,14 @@
 #include "glad/gl.h"
 #include <GLFW/glfw3.h>
 
-#include <stdio.h>
-
 #include "logger.h"
-#include "shader.h"
-#include "quadmodel.h"
-#include "quad.h"
-#include "camera.h"
+#include "engine.h"
 
 int screenWidth = 800;
 int screenHeight = 600;
 
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
-}
-
-static void update(float dt) {
-    static int frame_count = 0;
-    static float since_last_report = 0.0f;
-
-    since_last_report += dt;
-    frame_count += 1;
-
-    if (since_last_report >= 1.0f) {
-        float mpf = (since_last_report / (float) frame_count) * 1000.0f;
-        printf("FPS: %d MPF: %f\n", frame_count, mpf);
-
-        frame_count = 0;
-        while (since_last_report >= 1.0f) {
-            since_last_report -= 1.0f;
-        }
-    }
 }
 
 int main() {
@@ -59,25 +36,12 @@ int main() {
     int version = gladLoadGL(glfwGetProcAddress);
     trace_log("GL Version: %d.%d", GLAD_VERSION_MAJOR(version),GLAD_VERSION_MINOR(version));
 
-    initShader();
-    initQuadModel();
-    float quadPosW[3] = {-2.0f, 0.0f, 0.0f};
-    float quadDiffuseColor[4] = {0.8f, 0.0f, 0.2f, 1.0f};
-    struct Quad *quad1 = NULL, *quad2 = NULL;
-    allocQuad(&quad1);
-    setPosWQuad(quad1, quadPosW);
-    setDiffuseColorQuad(quad1, quadDiffuseColor);
-    allocQuad(&quad2);
-    quadPosW[0] = 2.0f;
-    quadDiffuseColor[0] = 0.2f;
-    quadDiffuseColor[2] = 0.8f;
-    setPosWQuad(quad2, quadPosW);
-    setDiffuseColorQuad(quad2, quadDiffuseColor);
-    struct Camera *camera = NULL;
-    allocCamera(&camera);
-
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+
+    struct Engine *engine = NULL;
+    allocEngine(&engine);
+    initEngine(engine);
 
     float prev_ts, cur_ts = 0.0f;
     while(!glfwWindowShouldClose(window)) {
@@ -87,24 +51,15 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        update(dt);
-        updateCamera(camera, dt);
-
-        updateQuad(quad1, dt);
-        updateQuad(quad2, dt);
-
-        renderQuad(quad1, camera);
-        renderQuad(quad2, camera);
+        updateEngine(engine, dt);
+        renderEngine(engine);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    deleteCamera(&camera);
-    deleteQuad(&quad2);
-    deleteQuad(&quad1);
-    deleteQuadModel();
-    deleteShader();
+    deleteEngine(&engine);
+    engine = NULL;
 
     glfwTerminate();
 

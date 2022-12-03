@@ -67,6 +67,7 @@ void QuaternionNormalize(float out[4]);
 void QuaternionMult(float m[4], float n[4], float out[4]);
 
 float clampRadians(float radianValue);
+float clampValue(float value, float max_value);
 
 void Mat4LookAtLH (float out[16], float camPosW[3], float camTargetW[3], float camUpW[3]);
 

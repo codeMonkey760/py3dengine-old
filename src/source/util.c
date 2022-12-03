@@ -567,6 +567,14 @@ float clampRadians(float radianValue) {
     return radianValue;
 }
 
+float clampValue(float value, float max_value) {
+    while (value >= max_value) {
+        value -= max_value;
+    }
+
+    return value;
+}
+
 void Mat4LookAtLH(float out[16], float camPosW[3], float camTargetW[3], float camUpW[3]) {
     if (
             out == NULL ||
