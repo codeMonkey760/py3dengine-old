@@ -57,7 +57,7 @@ int main() {
 
     trace_log("Loading GLAD");
     int version = gladLoadGL(glfwGetProcAddress);
-    printf("GL %d.%d\n",GLAD_VERSION_MAJOR(version),GLAD_VERSION_MINOR(version));
+    trace_log("GL Version: %d.%d", GLAD_VERSION_MAJOR(version),GLAD_VERSION_MINOR(version));
 
     initShader();
     initQuadModel();
