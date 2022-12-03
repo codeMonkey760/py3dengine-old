@@ -9,12 +9,13 @@ void allocWindow(struct Window **windowPtr, int width, int height, bool full_scr
     window = calloc(1, sizeof(struct Window));
     if (window == NULL) return;
 
-    window->window = glfwCreateWindow(width, height, "Py3DEngine", NULL, NULL);
-    if (window->window == NULL) {
+    GLFWwindow *glfwWindow = glfwCreateWindow(width, height, "Py3DEngine", NULL, NULL);
+    if (glfwWindow == NULL) {
         deleteWindow(&window);
         return;
     }
 
+    window->window = glfwWindow;
     window->width = width;
     window->height = height;
     window->full_screen = false;
@@ -39,3 +40,26 @@ void deleteWindow(struct Window **windowPtr) {
     (*windowPtr) = NULL;
 }
 
+// TODO: this has nothing to do with windows, this should go into a new class for managing the current opengl context
+void setSwapInterval(int newSwapInterval) {
+    glfwSwapInterval(newSwapInterval);
+}
+
+bool windowShouldClose(struct Window *window) {
+    // this function is used as a conditional for while loops
+    // returning false when there is no window could lead to infinite loop
+    if (window == NULL || window->window == NULL) return true;
+
+    return glfwWindowShouldClose(window->window) == GL_TRUE;
+}
+
+void swapBuffers(struct Window *window) {
+    if (window == NULL || window->window == NULL) return;
+
+    glfwSwapBuffers(window->window);
+}
+
+// TODO: this has nothing to do with windows, this should go into a new class for managing the current opengl context
+void pollEvents(){
+    glfwPollEvents();
+}

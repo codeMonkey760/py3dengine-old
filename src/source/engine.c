@@ -1,10 +1,18 @@
 #include <stdlib.h>
 
+#include "glad/gl.h"
+#include <GLFW/glfw3.h>
+
 #include "logger.h"
 #include "util.h"
+#include "window.h"
 #include "quadmodel.h"
 #include "shader.h"
 #include "engine.h"
+
+static void error_callback(int code, const char* description) {
+    error_log("%s 0x%x %s\n", "GLFW error code", code, description);
+}
 
 static void updateStats(struct Engine *engine, float dt) {
     static float since_last_calc = 0.0f;
@@ -43,6 +51,24 @@ static void printStats(struct Engine *engine, float dt) {
     }
 }
 
+static void updateEngine(struct Engine *engine, float dt){
+    if (engine == NULL) return;
+
+    updateStats(engine, dt);
+    printStats(engine, dt);
+
+    updateQuad(engine->quad[0], dt);
+    updateQuad(engine->quad[1], dt);
+    updateCamera(engine->camera, dt);
+}
+
+static void renderEngine(struct Engine *engine){
+    if (engine == NULL) return;
+
+    renderQuad(engine->quad[0], engine->camera);
+    renderQuad(engine->quad[1], engine->camera);
+}
+
 void allocEngine(struct Engine **enginePtr){
     if (enginePtr == NULL || (*enginePtr) != NULL) return;
 
@@ -55,6 +81,8 @@ void allocEngine(struct Engine **enginePtr){
     engine->_time_since_last_report = 0.0f;
     engine->_print_report = true;
 
+    engine->window = NULL;
+
     engine->quad[0] = NULL;
     engine->quad[1] = NULL;
     engine->camera = NULL;
@@ -66,6 +94,8 @@ void deleteEngine(struct Engine **enginePtr){
     if (enginePtr == NULL || (*enginePtr) == NULL) return;
 
     struct Engine *engine = (*enginePtr);
+    deleteWindow(&(engine->window));
+
     deleteQuad(&(engine->quad[0]));
     deleteQuad(&(engine->quad[1]));
     deleteCamera(&(engine->camera));
@@ -80,6 +110,12 @@ void deleteEngine(struct Engine **enginePtr){
 
 void initEngine(struct Engine *engine){
     if (engine == NULL) return;
+
+    glfwSetErrorCallback(error_callback);
+
+    allocWindow(&(engine->window), 800, 600, false);
+    glfwSwapInterval(1);
+    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
 
     initShader();
     initQuadModel();
@@ -112,20 +148,21 @@ void initEngine(struct Engine *engine){
     camera = NULL;
 }
 
-void updateEngine(struct Engine *engine, float dt){
+void runEngine(struct Engine *engine) {
     if (engine == NULL) return;
 
-    updateStats(engine, dt);
-    printStats(engine, dt);
+    float prev_ts, cur_ts = 0.0f;
+    while(!windowShouldClose(engine->window)) {
+        prev_ts = cur_ts;
+        cur_ts = (float) glfwGetTime();
+        float dt = cur_ts - prev_ts;
 
-    updateQuad(engine->quad[0], dt);
-    updateQuad(engine->quad[1], dt);
-    updateCamera(engine->camera, dt);
-}
+        glClear(GL_COLOR_BUFFER_BIT);
 
-void renderEngine(struct Engine *engine){
-    if (engine == NULL) return;
+        updateEngine(engine, dt);
+        renderEngine(engine);
 
-    renderQuad(engine->quad[0], engine->camera);
-    renderQuad(engine->quad[1], engine->camera);
+        swapBuffers(engine->window);
+        pollEvents();
+    }
 }

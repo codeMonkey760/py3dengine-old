@@ -15,8 +15,9 @@ struct Window {
 extern void allocWindow(struct Window **windowPtr, int width, int height, bool fullscreen);
 extern void deleteWindow(struct Window **windowPtr);
 
+extern void setSwapInterval(int newSwapInterval);
 extern bool windowShouldClose(struct Window *window);
 extern void swapBuffers(struct Window *window);
-extern void pollEvents(struct Window *window);
+extern void pollEvents();
 
 #endif

@@ -13,6 +13,8 @@ struct Engine {
     float _time_since_last_report;
     bool _print_report;
 
+    struct Window *window;
+
     struct Quad *quad[2];
     struct Camera *camera;
 };
@@ -21,7 +23,6 @@ extern void allocEngine(struct Engine **enginePtr);
 extern void deleteEngine(struct Engine **enginePtr);
 
 extern void initEngine(struct Engine *engine);
-extern void updateEngine(struct Engine *engine, float dt);
-extern void renderEngine(struct Engine *engine);
+extern void runEngine(struct Engine *engine);
 
 #endif
