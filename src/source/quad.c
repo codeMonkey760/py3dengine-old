@@ -5,6 +5,26 @@
 #include "quadmodel.h"
 #include "quad.h"
 
+static void refreshWorldMatrix(struct Quad *quad) {
+    if (quad == NULL || quad->wMtxCacheDirty == false) return;
+
+    float sMtx[16] = {0.0f};
+    Mat4ScalingFA(sMtx, quad->_scale);
+
+    float rMtx[16] = {0.0f};
+    Mat4RotationQuaternionFA(rMtx, quad->_orientation);
+
+    float tMtx[16] = {0.0f};
+    Mat4TranslationFA(tMtx, quad->_posW);
+
+    float wMtx[16] = {0.0f};
+    Mat4Mult(wMtx, tMtx, rMtx);
+    Mat4Mult(wMtx, wMtx, sMtx);
+
+    Mat4Copy(quad->wMtxCache, wMtx);
+    quad->wMtxCacheDirty = false;
+}
+
 void allocQuad(struct Quad **quadPtr) {
     if (quadPtr == NULL || (*quadPtr != NULL)) {
         return;
@@ -24,6 +44,8 @@ void allocQuad(struct Quad **quadPtr) {
 
     Mat4Identity(newQuad->wMtxCache);
     newQuad->wMtxCacheDirty = true;
+
+    refreshWorldMatrix(newQuad);
 
     (*quadPtr) = newQuad;
 }
@@ -51,6 +73,8 @@ void updateQuad(struct Quad *quad, float dt) {
 
 void renderQuad(struct Quad *quad, struct Camera *camera) {
     if (quad == NULL) return;
+
+    refreshWorldMatrix(quad);
 
     enableShader();
     setDiffuseColor(quad->_diffuseColor);

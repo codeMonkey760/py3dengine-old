@@ -61,8 +61,13 @@ int main() {
 
     initShader();
     initQuadModel();
-    struct Quad *quad = NULL;
-    allocQuad(&quad);
+    float quadPosW[3] = {-2.0f, 0.0f, 0.0f};
+    struct Quad *quad1 = NULL, *quad2 = NULL;
+    allocQuad(&quad1);
+    setPosW(quad1, quadPosW);
+    allocQuad(&quad2);
+    quadPosW[0] = 2.0f;
+    setPosW(quad2, quadPosW);
     struct Camera *camera = NULL;
     allocCamera(&camera);
 
@@ -79,16 +84,20 @@ int main() {
 
         update(dt);
         updateCamera(camera, dt);
-        updateQuad(quad, dt);
 
-        renderQuad(quad, camera);
+        updateQuad(quad1, dt);
+        updateQuad(quad2, dt);
+
+        renderQuad(quad1, camera);
+        renderQuad(quad2, camera);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     deleteCamera(&camera);
-    deleteQuad(&quad);
+    deleteQuad(&quad2);
+    deleteQuad(&quad1);
     deleteQuadModel();
     deleteShader();
 
