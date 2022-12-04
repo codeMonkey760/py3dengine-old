@@ -25,5 +25,6 @@ add_executable(
     src/source/engine.c
     src/source/custom_string.c
     src/source/game_object.c
+    src/source/model.c
 )
 target_link_libraries(py3dengine glfw m)
