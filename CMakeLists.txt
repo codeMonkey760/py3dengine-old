@@ -26,5 +26,6 @@ add_executable(
     src/source/custom_string.c
     src/source/game_object.c
     src/source/model.c
+    src/source/wfo_parser.c
 )
 target_link_libraries(py3dengine glfw m)
