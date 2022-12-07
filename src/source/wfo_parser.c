@@ -5,7 +5,7 @@
 #include "wfo_parser.h"
 
 struct VertexListNode {
-    struct VertexList *next;
+    struct VertexListNode *next;
     float data[3];
     char type[3];
     int data_len; //number of floats used from data array
@@ -113,7 +113,7 @@ static char* advancePastSpaces(char *curPos) {
 }
 
 static void appendVertexData(struct VertexListNode **vertexDataListPtr, char *type, float *src, int size) {
-    if (vertexDataListPtr == NULL || src == NULL || type == NULL || size > 3) return;
+    if (vertexDataListPtr == NULL || type == NULL || src == NULL || size > 3) return;
 
     struct VertexListNode *newNode = NULL;
     newNode = calloc(1, sizeof(struct VertexListNode));
@@ -123,7 +123,39 @@ static void appendVertexData(struct VertexListNode **vertexDataListPtr, char *ty
         newNode->data[i] = src[i];
     }
     newNode->data_len = size;
-    strcpy_s(newNode->type, 2, type);
+    strncpy(newNode->type, type, 2);
+    newNode->type[2] = 0;
+    newNode->next = NULL;
+
+    struct VertexListNode *prevNode = NULL, *curNode = NULL;
+    prevNode = curNode = (*vertexDataListPtr);
+    while(curNode != NULL) {
+        prevNode = curNode;
+        curNode = curNode->next;
+    }
+
+    if (prevNode == NULL) {
+        (*vertexDataListPtr) = newNode;
+    } else {
+        prevNode->next = newNode;
+    }
+}
+
+static void deleteVertexDataList(struct VertexListNode **vertexDataListPtr) {
+    if (vertexDataListPtr == NULL || (*vertexDataListPtr) == NULL) return;
+
+    struct VertexListNode *curNode = NULL, *temp = NULL;
+    curNode = (*vertexDataListPtr);
+
+    while (curNode != NULL) {
+        temp = curNode->next;
+        curNode->next = NULL;
+
+        free(curNode);
+        curNode = temp;
+    }
+
+    (*vertexDataListPtr) = NULL;
 }
 
 void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
@@ -150,7 +182,7 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
         curPos = advancePastSpaces(curPos);
         curPos = readFloatFromLine(curPos, &(dataBuffer[1]));
         curPos = advancePastSpaces(curPos);
-        curPos = readFloatFromLine(curPos, &(dataBuffer[2]));
+        readFloatFromLine(curPos, &(dataBuffer[2]));
 
         if (strncmp(typeBuffer, "v", 1) == 0) {
             appendVertexData(&posList, typeBuffer, dataBuffer, 3);
@@ -160,6 +192,10 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
             appendVertexData(&texCoordList, typeBuffer, dataBuffer, 2);
         }
     }
+
+    deleteVertexDataList(&texCoordList);
+    deleteVertexDataList(&normalList);
+    deleteVertexDataList(&posList);
 
     free(dataBuffer);
     dataBuffer = NULL;
