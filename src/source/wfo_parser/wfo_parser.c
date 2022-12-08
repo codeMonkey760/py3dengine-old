@@ -58,6 +58,15 @@ static char* advancePastSpaces(char *curPos) {
     return curPos;
 }
 
+static void readFloatsFromLine(char *curPos, float *dataBuffer, int numFloatsToRead) {
+    if (curPos == NULL || (*curPos) == 0 || dataBuffer == NULL || numFloatsToRead < 1 || numFloatsToRead > 3) return;
+
+    for (int i = 0; i < numFloatsToRead; ++i) {
+        curPos = readFloatFromLine(curPos, &(dataBuffer[i]));
+        curPos = advancePastSpaces(curPos);
+    }
+}
+
 void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
     if (modelPtr == NULL || (*modelPtr) != NULL || wfo == NULL) return;
 
@@ -75,19 +84,21 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
         curPos = lineBuffer;
         curPos = readStringFromLine(curPos, typeBuffer, 2);
         curPos = advancePastSpaces(curPos);
-        curPos = readFloatFromLine(curPos, &(dataBuffer[0]));
-        curPos = advancePastSpaces(curPos);
-        curPos = readFloatFromLine(curPos, &(dataBuffer[1]));
-        curPos = advancePastSpaces(curPos);
-        readFloatFromLine(curPos, &(dataBuffer[2]));
 
         if (strncmp(typeBuffer, "v", 1) == 0) {
+            readFloatsFromLine(curPos, dataBuffer, 3);
             appendVertexData(&posList, typeBuffer, dataBuffer, 3);
         } else if (strncmp(typeBuffer, "vn", 2) == 0) {
+            readFloatsFromLine(curPos, dataBuffer, 3);
             appendVertexData(&normalList, typeBuffer, dataBuffer, 3);
         } else if (strncmp(typeBuffer, "vt", 2) == 0) {
+            readFloatsFromLine(curPos, dataBuffer, 2);
             appendVertexData(&texCoordList, typeBuffer, dataBuffer, 2);
+        } else if (strncmp(typeBuffer, "o", 1) == 0) {
+
         }
+
+        resetLineBuffer(lineBuffer);
     }
 
     deleteVertexDataList(&texCoordList);
