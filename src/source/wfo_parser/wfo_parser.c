@@ -10,9 +10,14 @@
 static const int line_buffer_size_in_elements = 256;
 static const int type_buffer_size_in_elements = 16;
 static const int name_buffer_size_in_elements = 64;
+static const int index_buffer_size_in_elements = 9;
 
 static void clearCharBuffer(char *lineBuffer, int sizeInElements) {
     memset(lineBuffer, 0, sizeInElements * sizeof(char));
+}
+
+static void clearIndexBuffer(int *indexBuffer) {
+    memset(indexBuffer, 0, index_buffer_size_in_elements * sizeof(int));
 }
 
 static char* readStringFromLine(char *curPos, char *dst, int limit) {
@@ -59,6 +64,61 @@ static void readFloatsFromLine(char *curPos, float *dataBuffer, int numFloatsToR
     }
 }
 
+static char* readIntFromLine(char *curPos, int *dst) {
+    if (curPos == NULL || (*curPos) == 0 || dst == NULL) return curPos;
+
+    if ( (*curPos) == '/' ) {
+        (*dst) = -1;
+
+        return curPos;
+    }
+
+    char charBuffer[33];
+    char *charBufferCursor = charBuffer;
+    memset(charBuffer, 0, 33 * sizeof(char));
+
+    for (int i = 0; i < 32; ++i) {
+        char curChar = (*curPos);
+
+        if (!isdigit(curChar)) {
+            break;
+        }
+
+        (*charBufferCursor) = curChar;
+        charBufferCursor++;
+        curPos++;
+    }
+
+    (*dst) = (int) strtol(charBuffer, NULL, 10);
+
+    return curPos;
+}
+
+static char* consumeIndexSeparator(char *curPos) {
+    if (curPos == NULL) return curPos;
+
+    if ( (*curPos) == '/') {
+        return curPos+1;
+    } else {
+        return curPos;
+    }
+}
+
+static char* readIndicesFromLine(char *curPos, int *indexBuffer) {
+    if (curPos == NULL || (*curPos) == 0 || indexBuffer == NULL) return curPos;
+
+    for (int i = 0; i < 3; ++i) {
+        curPos = readIntFromLine(curPos, &(indexBuffer[i*3+0]));
+        curPos = consumeIndexSeparator(curPos);
+        curPos = readIntFromLine(curPos, &(indexBuffer[i*3+1]));
+        curPos = consumeIndexSeparator(curPos);
+        curPos = readIntFromLine(curPos, &(indexBuffer[i*3+2]));
+        curPos = advancePastSpaces(curPos);
+    }
+
+    return curPos;
+}
+
 void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
     if (wfo == NULL) return;
 
@@ -67,6 +127,7 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
     char typeBuffer[type_buffer_size_in_elements+1];
     char nameBuffer[name_buffer_size_in_elements+1];
     float dataBuffer[3];
+    int indexBuffer[index_buffer_size_in_elements];
     int lineNumber = 0;
     int posCount = 0, normalCount = 0, texCoordCount = 0;
 
@@ -103,7 +164,9 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
             clearCharBuffer(nameBuffer, name_buffer_size_in_elements + 1);
             readStringFromLine(curPos, nameBuffer, name_buffer_size_in_elements);
         } else if (strncmp(typeBuffer, "f", type_buffer_size_in_elements) == 0) {
-            ;
+            clearIndexBuffer(indexBuffer);
+            readIndicesFromLine(curPos, indexBuffer);
+            //TODO: appendFaceToObjectList(&objectList, nameBuffer, materialBuffer, indexBuffer);
         } else {
             debug_log("WFO Parser: Ignoring line #%d: unsupported type '%s'", lineNumber, typeBuffer);
         }
