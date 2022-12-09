@@ -48,3 +48,26 @@ void deleteVertexDataList(struct VertexListNode **vertexDataListPtr) {
 
     (*vertexDataListPtr) = NULL;
 }
+
+void printVertexDataList(FILE *fd, struct VertexListNode *vertexDataList) {
+    if (fd == NULL) return;
+
+    if (vertexDataList == NULL) {
+        fprintf(fd, "List was empty\n");
+
+        return;
+    }
+
+    struct VertexListNode *curNode = vertexDataList;
+    while (curNode != NULL) {
+        fprintf(fd, "%s ", curNode->type);
+
+        for (int i = 0; i < curNode->data_len; ++i) {
+            fprintf(fd, "%f ", curNode->data[i]);
+        }
+
+        fprintf(fd, "\n");
+
+        curNode = curNode->next;
+    }
+}

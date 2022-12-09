@@ -1,6 +1,8 @@
 #ifndef PY3DENGINE_VERTEX_DATA_LIST_H
 #define PY3DENGINE_VERTEX_DATA_LIST_H
 
+#include <stdio.h>
+
 struct VertexListNode {
     struct VertexListNode *next;
     float data[3];
@@ -10,5 +12,7 @@ struct VertexListNode {
 
 extern void appendVertexData(struct VertexListNode **vertexDataListPtr, char *type, float *src, int size);
 extern void deleteVertexDataList(struct VertexListNode **vertexDataListPtr);
+
+extern void printVertexDataList(FILE *fd, struct VertexListNode *vertexDataList);
 
 #endif

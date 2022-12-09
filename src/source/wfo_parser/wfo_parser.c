@@ -2,29 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "custom_string.h"
+#include "util.h"
+#include "logger.h"
 #include "wfo_parser/vertex_data_list.h"
 #include "wfo_parser/wfo_parser.h"
 
 static const int line_buffer_size_in_elements = 256;
+static const int type_buffer_size_in_elements = 16;
+static const int name_buffer_size_in_elements = 64;
 
-static void allocLineBuffer(char **lineBufferPtr) {
-    if (lineBufferPtr == NULL || (*lineBufferPtr) != NULL) return;
-
-    char *newLineBuffer = calloc(line_buffer_size_in_elements, sizeof(char));
-
-    (*lineBufferPtr) = newLineBuffer;
-}
-
-static void deleteLineBuffer(char **lineBufferPtr) {
-    if (lineBufferPtr == NULL || (*lineBufferPtr) == NULL) return;
-
-    free( (*lineBufferPtr) );
-    (*lineBufferPtr) = NULL;
-}
-
-static void resetLineBuffer(char *lineBuffer) {
-    memset(lineBuffer, line_buffer_size_in_elements, sizeof(char));
+static void clearCharBuffer(char *lineBuffer, int sizeInElements) {
+    memset(lineBuffer, 0, sizeInElements * sizeof(char));
 }
 
 static char* readStringFromLine(char *curPos, char *dst, int limit) {
@@ -37,6 +25,7 @@ static char* readStringFromLine(char *curPos, char *dst, int limit) {
         }
         (*dst) = curChar;
         curPos++;
+        dst++;
     }
 
     return curPos;
@@ -73,49 +62,68 @@ static void readFloatsFromLine(char *curPos, float *dataBuffer, int numFloatsToR
 void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
     if (wfo == NULL) return;
 
+    char lineBuffer[line_buffer_size_in_elements+1];
+    char *curPos = NULL;
+    char typeBuffer[type_buffer_size_in_elements+1];
+    char nameBuffer[name_buffer_size_in_elements+1];
+    float dataBuffer[3];
+    int lineNumber = 0;
+    int posCount = 0, normalCount = 0, texCoordCount = 0;
+
     struct VertexListNode *posList = NULL, *normalList = NULL, *texCoordList = NULL;
     struct ObjectListNode *objectList = NULL;
-    struct String *curObjectName = NULL;
 
-    char *lineBuffer = NULL;
-    allocLineBuffer(&lineBuffer);
-    char *typeBuffer = calloc(3, sizeof(char));
-    char *curPos = NULL;
-    float *dataBuffer = calloc(3, sizeof(float));
-    char *nameBuffer = calloc(65, sizeof(char));
-    allocString(&curObjectName, "None");
+    clearCharBuffer(lineBuffer, line_buffer_size_in_elements+1);
+    curPos = lineBuffer;
+    clearCharBuffer(nameBuffer, name_buffer_size_in_elements+1);
+    strncpy(nameBuffer, "None", name_buffer_size_in_elements);
 
     while(fgets(lineBuffer, line_buffer_size_in_elements, wfo) != NULL) {
-        curPos = lineBuffer;
-        curPos = readStringFromLine(curPos, typeBuffer, 2);
+        lineNumber++;
+        clearCharBuffer(typeBuffer, type_buffer_size_in_elements+1);
+        curPos = readStringFromLine(curPos, typeBuffer, name_buffer_size_in_elements);
         curPos = advancePastSpaces(curPos);
 
-        if (strncmp(typeBuffer, "v", 1) == 0) {
+        if (strncmp(typeBuffer, "v", type_buffer_size_in_elements) == 0) {
+            Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 3);
             appendVertexData(&posList, typeBuffer, dataBuffer, 3);
-        } else if (strncmp(typeBuffer, "vn", 2) == 0) {
+            posCount++;
+        } else if (strncmp(typeBuffer, "vn", type_buffer_size_in_elements) == 0) {
+            Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 3);
             appendVertexData(&normalList, typeBuffer, dataBuffer, 3);
-        } else if (strncmp(typeBuffer, "vt", 2) == 0) {
+            normalCount++;
+        } else if (strncmp(typeBuffer, "vt", type_buffer_size_in_elements) == 0) {
+            Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 2);
             appendVertexData(&texCoordList, typeBuffer, dataBuffer, 2);
-        } else if (strncmp(typeBuffer, "o", 1) == 0) {
-            memset(nameBuffer, 0, 65 * sizeof(char));
-            readStringFromLine(curPos, nameBuffer, 64);
-            setChars(curObjectName, nameBuffer);
+            texCoordCount++;
+        } else if (strncmp(typeBuffer, "o", type_buffer_size_in_elements) == 0) {
+            clearCharBuffer(nameBuffer, name_buffer_size_in_elements + 1);
+            readStringFromLine(curPos, nameBuffer, name_buffer_size_in_elements);
+        } else if (strncmp(typeBuffer, "f", type_buffer_size_in_elements) == 0) {
+            ;
+        } else {
+            debug_log("WFO Parser: Ignoring line #%d: unsupported type '%s'", lineNumber, typeBuffer);
         }
 
-        resetLineBuffer(lineBuffer);
+        clearCharBuffer(lineBuffer, line_buffer_size_in_elements+1);
+        curPos = lineBuffer;
     }
 
-    deleteString(&curObjectName);
+    debug_log("Found %d positions, %d normals, %d texture coordinates", posCount, normalCount, texCoordCount);
+
+//    printf("%s\n", "Printing vertex position list");
+//    printVertexDataList(stdout, posList);
+//
+//    printf("%s\n", "Printing vertex normal list");
+//    printVertexDataList(stdout, normalList);
+//
+//    printf("%s\n", "Printing texture coordinate list");
+//    printVertexDataList(stdout, texCoordList);
+
     deleteVertexDataList(&texCoordList);
     deleteVertexDataList(&normalList);
     deleteVertexDataList(&posList);
-
-    free(dataBuffer);
-    dataBuffer = NULL;
-    free(typeBuffer);
-    typeBuffer = NULL;
-    deleteLineBuffer(&lineBuffer);
 }

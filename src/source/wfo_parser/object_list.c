@@ -1,3 +1,6 @@
+#include <stdlib.h>
+
+#include "custom_string.h"
 #include "wfo_parser/object_list.h"
 
 struct FaceListNode {
