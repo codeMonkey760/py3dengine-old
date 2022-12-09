@@ -9,6 +9,8 @@
 #include "shader.h"
 #include "engine.h"
 
+#include "wfo_parser/wfo_parser.h"
+
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
@@ -162,6 +164,10 @@ void initEngine(struct Engine *engine){
     allocCamera(&camera);
     engine->camera = camera;
     camera = NULL;
+
+    FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
+    parseWaveFrontFile(wfoFile, NULL);
+    fclose(wfoFile);
 }
 
 void runEngine(struct Engine *engine) {

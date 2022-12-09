@@ -12,6 +12,9 @@ add_custom_command(
 
 include_directories(src/headers)
 
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources)
+configure_file(src/resources/solid_objs.obj ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.obj COPYONLY)
+
 add_executable(
     py3dengine
     src/source/main.c

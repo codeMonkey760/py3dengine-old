@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,10 +31,12 @@ static char* readStringFromLine(char *curPos, char *dst, int limit) {
     if (curPos == NULL || (*curPos) == 0 || dst == NULL || limit < 0) return curPos;
 
     for (int i = 0; i < limit; ++i) {
-        (*dst) = (*curPos++);
-        if ((*curPos) == ' ' || (*curPos) == '\n' || (*curPos) == '\r') {
+        char curChar = (*curPos);
+        if (isspace(curChar) || curChar == 0) {
             return curPos;
         }
+        (*dst) = curChar;
+        curPos++;
     }
 
     return curPos;
@@ -68,7 +71,7 @@ static void readFloatsFromLine(char *curPos, float *dataBuffer, int numFloatsToR
 }
 
 void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
-    if (modelPtr == NULL || (*modelPtr) != NULL || wfo == NULL) return;
+    if (wfo == NULL) return;
 
     struct VertexListNode *posList = NULL, *normalList = NULL, *texCoordList = NULL;
     struct ObjectListNode *objectList = NULL;
@@ -79,6 +82,8 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
     char *typeBuffer = calloc(3, sizeof(char));
     char *curPos = NULL;
     float *dataBuffer = calloc(3, sizeof(float));
+    char *nameBuffer = calloc(65, sizeof(char));
+    allocString(&curObjectName, "None");
 
     while(fgets(lineBuffer, line_buffer_size_in_elements, wfo) != NULL) {
         curPos = lineBuffer;
@@ -95,12 +100,15 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
             readFloatsFromLine(curPos, dataBuffer, 2);
             appendVertexData(&texCoordList, typeBuffer, dataBuffer, 2);
         } else if (strncmp(typeBuffer, "o", 1) == 0) {
-
+            memset(nameBuffer, 0, 65 * sizeof(char));
+            readStringFromLine(curPos, nameBuffer, 64);
+            setChars(curObjectName, nameBuffer);
         }
 
         resetLineBuffer(lineBuffer);
     }
 
+    deleteString(&curObjectName);
     deleteVertexDataList(&texCoordList);
     deleteVertexDataList(&normalList);
     deleteVertexDataList(&posList);
