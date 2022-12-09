@@ -4,11 +4,10 @@
 struct ObjectListNode {
     struct ObjectListNode *next;
     struct FaceListNode *faceList;
-    struct String *name;
+    char *name;
 };
 
-extern void allocObjectListNode(struct ObjectListNode **objectListNodePtr);
+extern void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, int indexBuffer[9]);
 extern void deleteObjectListNode(struct ObjectListNode **objectListNodePtr);
-extern void setObjectListNodeName(struct ObjectListNode *objectList, char *newName);
 
 #endif

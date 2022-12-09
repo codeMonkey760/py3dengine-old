@@ -5,6 +5,7 @@
 #include "util.h"
 #include "logger.h"
 #include "wfo_parser/vertex_data_list.h"
+#include "wfo_parser/object_list.h"
 #include "wfo_parser/wfo_parser.h"
 
 static const int line_buffer_size_in_elements = 256;
@@ -166,7 +167,7 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
         } else if (strncmp(typeBuffer, "f", type_buffer_size_in_elements) == 0) {
             clearIndexBuffer(indexBuffer);
             readIndicesFromLine(curPos, indexBuffer);
-            //TODO: appendFaceToObjectList(&objectList, nameBuffer, materialBuffer, indexBuffer);
+            appendFaceToObjectList(&objectList, nameBuffer, indexBuffer);
         } else {
             debug_log("WFO Parser: Ignoring line #%d: unsupported type '%s'", lineNumber, typeBuffer);
         }
