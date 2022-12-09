@@ -58,6 +58,23 @@ static struct ObjectListNode * findObjectListNodeByName(struct ObjectListNode *o
     return NULL;
 }
 
+static void appendNodeToObjectList(struct ObjectListNode **objectListPtr, struct ObjectListNode *newNode) {
+    if (objectListPtr == NULL || newNode == NULL) return;
+
+    if ((*objectListPtr) == NULL) {
+        (*objectListPtr) = newNode;
+
+        return;
+    }
+
+    struct ObjectListNode *curNode = (*objectListPtr);
+    while (curNode != NULL) {
+        curNode = curNode->next;
+    }
+
+    curNode->next = newNode;
+}
+
 void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
     if (objectListNodePtr == NULL || (*objectListNodePtr) == NULL) return;
 
@@ -86,7 +103,7 @@ void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, i
     if (objectListNode == NULL) {
         allocObjectListNode(&objectListNode);
         setObjectListNodeName(objectListNode, name);
-        // TODO: implement -> appendNodeToObjectList(objectListPtr, objectListNode);
+        appendNodeToObjectList(objectListPtr, objectListNode);
     }
 
     // TODO: finish this
