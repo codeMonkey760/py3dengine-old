@@ -178,15 +178,7 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
 
     debug_log("Found %d positions, %d normals, %d texture coordinates", posCount, normalCount, texCoordCount);
 
-//    printf("%s\n", "Printing vertex position list");
-//    printVertexDataList(stdout, posList);
-//
-//    printf("%s\n", "Printing vertex normal list");
-//    printVertexDataList(stdout, normalList);
-//
-//    printf("%s\n", "Printing texture coordinate list");
-//    printVertexDataList(stdout, texCoordList);
-
+    deleteObjectListNode(&objectList);
     deleteVertexDataList(&texCoordList);
     deleteVertexDataList(&normalList);
     deleteVertexDataList(&posList);

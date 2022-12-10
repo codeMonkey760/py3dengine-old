@@ -133,7 +133,7 @@ void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, i
     if (newFaceListNode == NULL) return;
 
     struct ObjectListNode *objectListNode = NULL;
-    objectListNode = findObjectListNodeByName(objectListNode, name);
+    objectListNode = findObjectListNodeByName((*objectListPtr), name);
     if (objectListNode == NULL) {
         allocObjectListNode(&objectListNode);
         if (objectListNode == NULL) {
