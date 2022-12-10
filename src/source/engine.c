@@ -165,9 +165,14 @@ void initEngine(struct Engine *engine){
     engine->camera = camera;
     camera = NULL;
 
+    struct WfoParser *wfoParser = NULL;
+    allocWfoParser(&wfoParser);
+
     FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
-    parseWaveFrontFile(wfoFile, NULL);
+    parseWaveFrontFile(wfoParser, wfoFile);
     fclose(wfoFile);
+
+    deleteWfoParser(&wfoParser);
 }
 
 void runEngine(struct Engine *engine) {

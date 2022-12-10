@@ -120,8 +120,37 @@ static char* readIndicesFromLine(char *curPos, int *indexBuffer) {
     return curPos;
 }
 
-void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
-    if (wfo == NULL) return;
+void allocWfoParser(struct WfoParser **wfoParserPtr) {
+    if (wfoParserPtr == NULL || (*wfoParserPtr) != NULL) return;
+
+    struct WfoParser *wfoParser = calloc(1, sizeof(struct WfoParser));
+    if (wfoParser == NULL) return;
+
+    wfoParser->_positionList = NULL;
+    wfoParser->_normalList = NULL;
+    wfoParser->_texCoordList = NULL;
+    wfoParser->_objectList = NULL;
+
+    (*wfoParserPtr) = wfoParser;
+    wfoParser = NULL;
+}
+
+void deleteWfoParser(struct WfoParser **wfoParserPtr) {
+    if (wfoParserPtr == NULL || (*wfoParserPtr) == NULL) return;
+
+    struct WfoParser *wfoParser = (*wfoParserPtr);
+    deleteObjectListNode(&wfoParser->_objectList);
+    deleteVertexDataList(&wfoParser->_texCoordList);
+    deleteVertexDataList(&wfoParser->_normalList);
+    deleteVertexDataList(&wfoParser->_positionList);
+
+    free(wfoParser);
+    wfoParser = NULL;
+    (*wfoParserPtr) = NULL;
+}
+
+void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
+    if (wfoParser == NULL || wfo == NULL) return;
 
     char lineBuffer[line_buffer_size_in_elements+1];
     char *curPos = NULL;
@@ -178,8 +207,8 @@ void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr) {
 
     debug_log("Found %d positions, %d normals, %d texture coordinates", posCount, normalCount, texCoordCount);
 
-    deleteObjectListNode(&objectList);
-    deleteVertexDataList(&texCoordList);
-    deleteVertexDataList(&normalList);
-    deleteVertexDataList(&posList);
+    wfoParser->_positionList = posList;
+    wfoParser->_normalList = normalList;
+    wfoParser->_texCoordList = texCoordList;
+    wfoParser->_objectList = objectList;
 }

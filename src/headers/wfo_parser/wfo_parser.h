@@ -3,8 +3,16 @@
 
 #include <stdio.h>
 
-#include "model.h"
+struct WfoParser {
+    struct ObjectListNode *_objectList;
+    struct VertexListNode *_positionList;
+    struct VertexListNode *_normalList;
+    struct VertexListNode *_texCoordList;
+};
 
-extern void parseWaveFrontFile(FILE *wfo, struct Model **modelPtr);
+extern void allocWfoParser(struct WfoParser **wfoParserPtr);
+extern void deleteWfoParser(struct WfoParser **wfoParserPtr);
+
+extern void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo);
 
 #endif
