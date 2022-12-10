@@ -16,12 +16,6 @@ static void clearNameBuffer(char *nameBuffer) {
     memset(nameBuffer, 0, (name_buffer_size_in_elements+1) * sizeof(char) );
 }
 
-static void copyIndexBuffer(int dst[INDEX_BUFFER_SIZE_IN_ELEMENTS], const int src[INDEX_BUFFER_SIZE_IN_ELEMENTS]) {
-    for (int i = 0; i < INDEX_BUFFER_SIZE_IN_ELEMENTS; ++i) {
-        dst[i] = src[i];
-    }
-}
-
 static void allocObjectListNode(struct ObjectListNode **objectListNodePtr) {
     if (objectListNodePtr == NULL || (*objectListNodePtr) != NULL) return;
 
@@ -68,11 +62,53 @@ static void appendNodeToObjectList(struct ObjectListNode **objectListPtr, struct
     }
 
     struct ObjectListNode *curNode = (*objectListPtr);
-    while (curNode != NULL) {
+    while (curNode->next != NULL) {
         curNode = curNode->next;
     }
 
     curNode->next = newNode;
+}
+
+static void allocFaceListNode(struct FaceListNode **faceListNodePtr, const int indexBuffer[INDEX_BUFFER_SIZE_IN_ELEMENTS]) {
+    if (faceListNodePtr == NULL || (*faceListNodePtr) != NULL || indexBuffer == NULL) return;
+
+    struct FaceListNode *newFaceListNode = calloc(1, sizeof(struct FaceListNode));
+    if (newFaceListNode == NULL) return;
+
+    newFaceListNode->next = NULL;
+    for (int i = 0; i < INDEX_BUFFER_SIZE_IN_ELEMENTS; ++i) {
+        newFaceListNode->dataIndices[i] = indexBuffer[i];
+    }
+
+    (*faceListNodePtr) = newFaceListNode;
+}
+
+static void appendFaceListNode(struct FaceListNode **faceListNodePtr, struct FaceListNode *newNode) {
+    if (faceListNodePtr == NULL || newNode == NULL) return;
+
+    if ( (*faceListNodePtr) == NULL ) {
+        (*faceListNodePtr) = newNode;
+
+        return;
+    }
+
+    struct FaceListNode *curNode = (*faceListNodePtr);
+    while (curNode->next != NULL) {
+        curNode = curNode->next;
+    }
+
+    curNode->next = newNode;
+}
+
+static void deleteFaceList(struct FaceListNode **faceListNodePtr) {
+    if (faceListNodePtr == NULL || (*faceListNodePtr) == NULL) return;
+
+    struct FaceListNode *faceList = (*faceListNodePtr);
+    deleteFaceList(&faceList->next);
+
+    free(faceList);
+    faceList = NULL;
+    (*faceListNodePtr) = NULL;
 }
 
 void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
@@ -80,7 +116,7 @@ void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
 
     struct ObjectListNode *objectList = (*objectListNodePtr);
     deleteObjectListNode(&(objectList->next));
-    // TODO: delete face list?
+    deleteFaceList(&objectList->faceList);
     free(objectList->name);
     objectList->name = NULL;
 
@@ -90,21 +126,24 @@ void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
 }
 
 void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, int indexBuffer[9]) {
-    if (objectListPtr == NULL || name == NULL, indexBuffer == NULL) return;
+    if (objectListPtr == NULL || name == NULL || indexBuffer == NULL) return;
 
-    struct FaceListNode *newFaceListNode = calloc(1, sizeof(struct FaceListNode));
+    struct FaceListNode *newFaceListNode = NULL;
+    allocFaceListNode(&newFaceListNode, indexBuffer);
     if (newFaceListNode == NULL) return;
-
-    newFaceListNode->next = NULL;
-    copyIndexBuffer(newFaceListNode->dataIndices, indexBuffer);
 
     struct ObjectListNode *objectListNode = NULL;
     objectListNode = findObjectListNodeByName(objectListNode, name);
     if (objectListNode == NULL) {
         allocObjectListNode(&objectListNode);
+        if (objectListNode == NULL) {
+            deleteFaceList(&newFaceListNode);
+
+            return;
+        }
         setObjectListNodeName(objectListNode, name);
         appendNodeToObjectList(objectListPtr, objectListNode);
     }
 
-    // TODO: finish this
+    appendFaceListNode(&objectListNode->faceList, newFaceListNode);
 }
