@@ -179,7 +179,8 @@ void initEngine(struct Engine *engine){
         if (vbo != NULL) {
             getUnIndexedVertexBuffer(wfoParser, "Cube", vbo, cubeVboSize);
         }
-
+        free(vbo);
+        vbo = NULL;
     }
 
     deleteWfoParser(&wfoParser);

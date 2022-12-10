@@ -5,9 +5,13 @@
 
 struct WfoParser {
     struct ObjectListNode *_objectList;
-    struct VertexListNode *_positionList;
-    struct VertexListNode *_normalList;
-    struct VertexListNode *_texCoordList;
+
+    float *_posBuffer;
+    size_t _posBufferSize;
+    float *_normalBuffer;
+    size_t _normalBufferSize;
+    float *_texCoordBuffer;
+    size_t _texCoordBuffSize;
 };
 
 extern void allocWfoParser(struct WfoParser **wfoParserPtr);
@@ -16,6 +20,6 @@ extern void deleteWfoParser(struct WfoParser **wfoParserPtr);
 extern void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo);
 
 extern unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name);
-extern void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, unsigned long limit);
+extern void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, size_t limit);
 
 #endif
