@@ -147,3 +147,28 @@ void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, i
 
     appendFaceListNode(&objectListNode->faceList, newFaceListNode);
 }
+
+unsigned long getFaceCount(struct ObjectListNode *objectList) {
+    if (objectList == NULL) return 0;
+
+    struct FaceListNode *curNode = objectList->faceList;
+    int faceCount = 0;
+
+    while (curNode != NULL) {
+        faceCount++;
+        curNode = curNode->next;
+    }
+
+    return faceCount;
+}
+
+void getUnIndexedVertexBufferFromObject(struct ObjectListNode *objectList, float *dst, unsigned long limit) {
+    if (objectList == NULL || dst == NULL || limit == 0) return;
+
+    struct FaceListNode *curNode = objectList->faceList;
+    float *curPos = dst;
+
+    // TODO: i really shouldnt be doing this with list data
+    // so go back, flatten the object data and then do this with
+    // a data structure thats friendly to random access via vertex indices
+}

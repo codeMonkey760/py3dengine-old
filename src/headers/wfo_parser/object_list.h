@@ -10,4 +10,7 @@ struct ObjectListNode {
 extern void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, int indexBuffer[9]);
 extern void deleteObjectListNode(struct ObjectListNode **objectListNodePtr);
 
+extern unsigned long getFaceCount(struct ObjectListNode *objectList);
+extern void getUnIndexedVertexBufferFromObject(struct ObjectListNode *objectList, float *dst, unsigned long limit);
+
 #endif

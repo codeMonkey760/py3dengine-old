@@ -171,6 +171,16 @@ void initEngine(struct Engine *engine){
     FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
     parseWaveFrontFile(wfoParser, wfoFile);
     fclose(wfoFile);
+    wfoFile = NULL;
+
+    unsigned long cubeVboSize = getUnIndexedVertexBufferSizeInFloats(wfoParser, "Cube");
+    if (cubeVboSize != 0) {
+        float *vbo = calloc(cubeVboSize, sizeof(float));
+        if (vbo != NULL) {
+            getUnIndexedVertexBuffer(wfoParser, "Cube", vbo, cubeVboSize);
+        }
+
+    }
 
     deleteWfoParser(&wfoParser);
 }

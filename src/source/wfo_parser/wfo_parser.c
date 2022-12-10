@@ -212,3 +212,35 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
     wfoParser->_texCoordList = texCoordList;
     wfoParser->_objectList = objectList;
 }
+
+unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name) {
+    if (wfoParser == NULL || name == NULL) return 0;
+
+    struct ObjectListNode *target = NULL, *curNode = wfoParser->_objectList;
+    if (curNode == NULL) return 0;
+
+    while (curNode->next != NULL) {
+        if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
+            target = curNode;
+            break;
+        }
+    }
+
+    return getFaceCount(target) * 9;
+}
+
+void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, unsigned long limit) {
+    if (wfoParser == NULL || name == NULL || dst == NULL || limit == 0) return;
+
+    struct ObjectListNode *target = NULL, *curNode = wfoParser->_objectList;
+    if (curNode == NULL) return;
+
+    while(curNode->next == NULL) {
+        if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
+            target = curNode;
+            break;
+        }
+    }
+
+    getUnIndexedVertexBufferFromObject(target, dst, limit);
+}

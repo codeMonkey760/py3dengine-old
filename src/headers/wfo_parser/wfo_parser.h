@@ -15,4 +15,7 @@ extern void deleteWfoParser(struct WfoParser **wfoParserPtr);
 
 extern void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo);
 
+extern unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name);
+extern void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, unsigned long limit);
+
 #endif
