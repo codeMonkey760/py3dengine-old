@@ -256,6 +256,7 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
     wfoParser->_normalBufferSize = normalCount;
     flattenVertexDataList(texCoordList, texCoordCount, 2, &wfoParser->_texCoordBuffer);
     wfoParser->_texCoordBuffSize = texCoordCount;
+    flattenObjectList(objectList);
 
     wfoParser->_objectList = objectList;
 
@@ -293,5 +294,5 @@ void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, flo
         }
     }
 
-    getUnIndexedVertexBufferFromObject(target, dst, limit);
+    // TODO: finish this
 }

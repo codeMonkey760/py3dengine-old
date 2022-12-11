@@ -9,7 +9,7 @@ static const int name_buffer_size_in_elements = 64;
 
 struct FaceListNode {
     struct FaceListNode *next;
-    int dataIndices[9];
+    int dataIndices[INDEX_BUFFER_SIZE_IN_ELEMENTS];
 };
 
 static void clearNameBuffer(char *nameBuffer) {
@@ -25,6 +25,7 @@ static void allocObjectListNode(struct ObjectListNode **objectListNodePtr) {
     objectList->next = NULL;
     objectList->faceList = NULL;
     objectList->name = calloc(name_buffer_size_in_elements + 1, sizeof(char));
+    objectList->indexBuffer = NULL;
 
     (*objectListNodePtr) = objectList;
     objectList = NULL;
@@ -119,13 +120,17 @@ void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
     deleteFaceList(&objectList->faceList);
     free(objectList->name);
     objectList->name = NULL;
+    if (objectList->indexBuffer != NULL) {
+        free(objectList->indexBuffer);
+        objectList->indexBuffer = NULL;
+    }
 
     free(objectList);
     objectList = NULL;
     (*objectListNodePtr) = NULL;
 }
 
-void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, int indexBuffer[9]) {
+void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, int indexBuffer[INDEX_BUFFER_SIZE_IN_ELEMENTS]) {
     if (objectListPtr == NULL || name == NULL || indexBuffer == NULL) return;
 
     struct FaceListNode *newFaceListNode = NULL;
@@ -162,13 +167,28 @@ unsigned long getFaceCount(struct ObjectListNode *objectList) {
     return faceCount;
 }
 
-void getUnIndexedVertexBufferFromObject(struct ObjectListNode *objectList, float *dst, unsigned long limit) {
-    if (objectList == NULL || dst == NULL || limit == 0) return;
+void flattenObjectList(struct ObjectListNode *objectList) {
+    if (objectList == NULL || objectList->indexBuffer != NULL || objectList->faceList == NULL) return;
+
+    size_t faceCount = getFaceCount(objectList);
+    if (faceCount == 0) return;
+
+    int *newIndexBuffer = calloc(faceCount * INDEX_BUFFER_SIZE_IN_ELEMENTS, sizeof(int));
+    if (newIndexBuffer == NULL) return;
 
     struct FaceListNode *curNode = objectList->faceList;
-    float *curPos = dst;
+    int count = 0;
+    while (curNode != NULL && count < faceCount) {
+        for (int i = 0; i < INDEX_BUFFER_SIZE_IN_ELEMENTS; ++i) {
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + i] = curNode->dataIndices[i];
+        }
+        curNode = curNode->next;
+        count++;
+    }
 
-    // TODO: i really shouldnt be doing this with list data
-    // so go back, flatten the object data and then do this with
-    // a data structure thats friendly to random access via vertex indices
+    objectList->indexBuffer = newIndexBuffer;
+    newIndexBuffer = NULL;
+    deleteFaceList(&objectList->faceList);
+
+    flattenObjectList(objectList->next);
 }
