@@ -293,6 +293,11 @@ void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, flo
             break;
         }
     }
+    if (target == NULL) return;
 
-    // TODO: finish this
+    int *indexBuffer = NULL;
+    size_t indexBufferSize = 0;
+    getIndexBuffer(target, &indexBuffer, &indexBufferSize);
+
+    //TODO: finish this
 }
