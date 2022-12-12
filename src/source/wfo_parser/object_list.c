@@ -26,6 +26,7 @@ static void allocObjectListNode(struct ObjectListNode **objectListNodePtr) {
     objectList->faceList = NULL;
     objectList->name = calloc(name_buffer_size_in_elements + 1, sizeof(char));
     objectList->indexBuffer = NULL;
+    objectList->indexBufferSize = 0;
 
     (*objectListNodePtr) = objectList;
     objectList = NULL;
@@ -124,6 +125,7 @@ void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
         free(objectList->indexBuffer);
         objectList->indexBuffer = NULL;
     }
+    objectList->indexBufferSize = 0;
 
     free(objectList);
     objectList = NULL;
@@ -188,7 +190,15 @@ void flattenObjectList(struct ObjectListNode *objectList) {
 
     objectList->indexBuffer = newIndexBuffer;
     newIndexBuffer = NULL;
+    objectList->indexBufferSize = faceCount * INDEX_BUFFER_SIZE_IN_ELEMENTS;
     deleteFaceList(&objectList->faceList);
 
     flattenObjectList(objectList->next);
+}
+
+void getIndexBuffer(struct ObjectListNode *objectList, int **indexBufferPtr, size_t *sizePtr) {
+    if (objectList == NULL || indexBufferPtr == NULL || sizePtr == NULL) return;
+
+    (*indexBufferPtr) = objectList->indexBuffer;
+    (*sizePtr) = objectList->indexBufferSize;
 }
