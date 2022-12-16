@@ -176,14 +176,17 @@ void deleteWfoParser(struct WfoParser **wfoParserPtr) {
 
     if (wfoParser->_posBuffer != NULL) {
         free(wfoParser->_posBuffer);
+        wfoParser->_posBuffer = NULL;
     }
     wfoParser->_posBufferSize = 0;
     if (wfoParser->_normalBuffer != NULL) {
         free(wfoParser->_normalBuffer);
+        wfoParser->_normalBuffer = NULL;
     }
     wfoParser->_normalBufferSize = 0;
     if (wfoParser->_texCoordBuffer != NULL) {
         free(wfoParser->_texCoordBuffer);
+        wfoParser->_texCoordBuffer = NULL;
     }
     wfoParser->_texCoordBuffSize = 0;
 
