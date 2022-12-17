@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "glad/gl.h"
 #include "model.h"
 
 const size_t max_name_buffer_size_in_elements = 64;

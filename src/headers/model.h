@@ -2,11 +2,10 @@
 #define PY3DENGINE_MODEL_H
 
 #include <stdlib.h>
-#include "glad/gl.h"
 
 struct Model {
-    GLuint _vao;
-    GLuint _vbo;
+    unsigned int _vao;
+    unsigned int _vbo;
     size_t _sizeInVertices;
     char *_nameBuffer;
 };
