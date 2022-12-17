@@ -149,6 +149,18 @@ static void flattenVertexDataList(struct VertexListNode *vertexDataList, size_t 
     buffer = NULL;
 }
 
+static float getVertexDataElement(float *vertexDataBuffer, int index, size_t bufferSize) {
+    if (vertexDataBuffer == NULL || index < 0 || index >= bufferSize || bufferSize == 0) return 0.0f;
+
+    return vertexDataBuffer[index];
+}
+
+static int getIndexBufferElement (int *indexBuffer, int index, size_t bufferSize) {
+    if (indexBuffer == NULL || index < 0 || index >= bufferSize || bufferSize == 0) return -1;
+
+    return indexBuffer[index];
+}
+
 void allocWfoParser(struct WfoParser **wfoParserPtr) {
     if (wfoParserPtr == NULL || (*wfoParserPtr) != NULL) return;
 
@@ -271,36 +283,43 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
 unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name) {
     if (wfoParser == NULL || name == NULL) return 0;
 
-    struct ObjectListNode *target = NULL, *curNode = wfoParser->_objectList;
-    if (curNode == NULL) return 0;
+    struct ObjectListNode *curNode = wfoParser->_objectList;
 
-    while (curNode->next != NULL) {
+    while (curNode != NULL) {
         if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
-            target = curNode;
             break;
         }
     }
 
-    return getFaceCount(target) * 9;
+    // This will handle curNode == NULL
+    return getIndexBufferSize(curNode);
 }
 
 void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, unsigned long limit) {
     if (wfoParser == NULL || name == NULL || dst == NULL || limit == 0) return;
 
-    struct ObjectListNode *target = NULL, *curNode = wfoParser->_objectList;
-    if (curNode == NULL) return;
+    struct ObjectListNode *curNode = wfoParser->_objectList;
 
-    while(curNode->next == NULL) {
+    while(curNode == NULL) {
         if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
-            target = curNode;
             break;
         }
     }
-    if (target == NULL) return;
+    if (curNode == NULL) return;
 
-    int *indexBuffer = NULL;
-    size_t indexBufferSize = 0;
-    getIndexBuffer(target, &indexBuffer, &indexBufferSize);
+    int *indexBuffer = getIndexBuffer(curNode);
+    size_t indexBufferSize = getIndexBufferSize(curNode);
+    if (indexBuffer == NULL || indexBufferSize == 0) return;
 
-    //TODO: finish this
+    // TODO: the end clause on this loop isn't correct if the buffer isn't mod 3 aligned
+    for (int i = 0; i < limit; i+=3) {
+        int posIndex = getIndexBufferElement(indexBuffer, i + 0, indexBufferSize);
+        // yes this is correct, wfo stores vertex indices in ptn format and I want them in pnt format
+        int normalIndex = getIndexBufferElement(indexBuffer, i + 2, indexBufferSize);
+        int texCoordIndex = getIndexBufferElement(indexBuffer, i + 1, indexBufferSize);
+
+        dst[i+0] = getVertexDataElement(wfoParser->_posBuffer, posIndex, wfoParser->_posBufferSize);
+        dst[i+1] = getVertexDataElement(wfoParser->_normalBuffer, normalIndex, wfoParser->_normalBufferSize);
+        dst[i+2] = getVertexDataElement(wfoParser->_texCoordBuffer, texCoordIndex, wfoParser->_texCoordBuffSize);
+    }
 }

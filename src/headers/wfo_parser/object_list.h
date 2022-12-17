@@ -12,8 +12,8 @@ struct ObjectListNode {
 extern void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, int indexBuffer[9]);
 extern void deleteObjectListNode(struct ObjectListNode **objectListNodePtr);
 
-extern unsigned long getFaceCount(struct ObjectListNode *objectList);
 extern void flattenObjectList(struct ObjectListNode *objectList);
-extern void getIndexBuffer(struct ObjectListNode *objectListNode, int **indexBufferPtr, size_t *sizePtr);
+extern int *getIndexBuffer(struct ObjectListNode *objectListNode);
+extern size_t getIndexBufferSize(struct ObjectListNode *objectListNode);
 
 #endif

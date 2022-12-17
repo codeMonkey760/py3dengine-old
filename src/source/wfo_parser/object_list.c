@@ -113,6 +113,20 @@ static void deleteFaceList(struct FaceListNode **faceListNodePtr) {
     (*faceListNodePtr) = NULL;
 }
 
+static unsigned long getFaceCount(struct ObjectListNode *objectList) {
+    if (objectList == NULL) return 0;
+
+    struct FaceListNode *curNode = objectList->faceList;
+    int faceCount = 0;
+
+    while (curNode != NULL) {
+        faceCount++;
+        curNode = curNode->next;
+    }
+
+    return faceCount;
+}
+
 void deleteObjectListNode(struct ObjectListNode **objectListNodePtr) {
     if (objectListNodePtr == NULL || (*objectListNodePtr) == NULL) return;
 
@@ -155,20 +169,6 @@ void appendFaceToObjectList(struct ObjectListNode **objectListPtr, char *name, i
     appendFaceListNode(&objectListNode->faceList, newFaceListNode);
 }
 
-unsigned long getFaceCount(struct ObjectListNode *objectList) {
-    if (objectList == NULL) return 0;
-
-    struct FaceListNode *curNode = objectList->faceList;
-    int faceCount = 0;
-
-    while (curNode != NULL) {
-        faceCount++;
-        curNode = curNode->next;
-    }
-
-    return faceCount;
-}
-
 void flattenObjectList(struct ObjectListNode *objectList) {
     if (objectList == NULL || objectList->indexBuffer != NULL || objectList->faceList == NULL) return;
 
@@ -196,9 +196,14 @@ void flattenObjectList(struct ObjectListNode *objectList) {
     flattenObjectList(objectList->next);
 }
 
-void getIndexBuffer(struct ObjectListNode *objectList, int **indexBufferPtr, size_t *sizePtr) {
-    if (objectList == NULL || indexBufferPtr == NULL || sizePtr == NULL) return;
+int *getIndexBuffer(struct ObjectListNode *objectListNode) {
+    if (objectListNode == NULL) return NULL;
 
-    (*indexBufferPtr) = objectList->indexBuffer;
-    (*sizePtr) = objectList->indexBufferSize;
+    return objectListNode->indexBuffer;
+}
+
+size_t getIndexBufferSize(struct ObjectListNode *objectListNode) {
+    if (objectListNode == NULL) return 0;
+
+    return objectListNode->indexBufferSize;
 }
