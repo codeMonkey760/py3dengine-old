@@ -70,6 +70,36 @@ static void renderEngine(struct Engine *engine){
     renderQuad(engine->quad[1], engine->camera);
 }
 
+static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, const char *name) {
+    if (modelPtr == NULL || (*modelPtr) != NULL) return;
+
+    unsigned long cubeVboSize = getUnIndexedVertexBufferSizeInFloats(wfoParser, name);
+    if (cubeVboSize == 0) return;
+
+    float *vbo = calloc(cubeVboSize, sizeof(float));
+    if (vbo == NULL) return;
+
+    // TODO: there's a problem here, vertex data isn't being copied properly
+    getUnIndexedVertexBuffer(wfoParser, name, vbo, cubeVboSize);
+
+    struct Model *newModel = NULL;
+    allocModel(&newModel);
+    if (newModel == NULL) {
+        free(vbo);
+        vbo = NULL;
+
+        return;
+    }
+
+    setPNTBuffer(newModel, vbo, cubeVboSize / 9);
+
+    free(vbo);
+    vbo = NULL;
+
+    (*modelPtr) = newModel;
+    newModel = NULL;
+}
+
 void allocEngine(struct Engine **enginePtr){
     if (enginePtr == NULL || (*enginePtr) != NULL) return;
 
@@ -87,6 +117,8 @@ void allocEngine(struct Engine **enginePtr){
     engine->quad[0] = NULL;
     engine->quad[1] = NULL;
     engine->camera = NULL;
+    engine->cubeModel = NULL;
+    engine->pyramidModel = NULL;
 
     (*enginePtr) = engine;
 }
@@ -101,6 +133,8 @@ void deleteEngine(struct Engine **enginePtr){
     deleteQuad(&(engine->quad[0]));
     deleteQuad(&(engine->quad[1]));
     deleteCamera(&(engine->camera));
+    deleteModel(&engine->cubeModel);
+    deleteModel(&engine->pyramidModel);
     engine = NULL;
 
     deleteQuadModel();
@@ -173,15 +207,8 @@ void initEngine(struct Engine *engine){
     fclose(wfoFile);
     wfoFile = NULL;
 
-    unsigned long cubeVboSize = getUnIndexedVertexBufferSizeInFloats(wfoParser, "Cube");
-    if (cubeVboSize != 0) {
-        float *vbo = calloc(cubeVboSize, sizeof(float));
-        if (vbo != NULL) {
-            getUnIndexedVertexBuffer(wfoParser, "Cube", vbo, cubeVboSize);
-        }
-        free(vbo);
-        vbo = NULL;
-    }
+    initModel(&engine->cubeModel, wfoParser, "Cube");
+    initModel(&engine->pyramidModel, wfoParser, "Pyramid");
 
     deleteWfoParser(&wfoParser);
 }
