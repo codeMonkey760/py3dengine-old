@@ -289,6 +289,8 @@ unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, 
         if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
             break;
         }
+
+        curNode = curNode->next;
     }
 
     // This will handle curNode == NULL
