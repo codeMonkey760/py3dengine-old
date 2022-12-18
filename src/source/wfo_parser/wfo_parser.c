@@ -123,6 +123,7 @@ static char* readIndicesFromLine(char *curPos, int *indexBuffer) {
 static void flattenVertexDataList(struct VertexListNode *vertexDataList, size_t elementCount, size_t elementSizeInFloats, float **dst) {
     if (vertexDataList == NULL || elementCount == 0 || elementSizeInFloats == 0 || elementSizeInFloats > 3 || dst == NULL || (*dst) != NULL) return;
 
+    debug_log("Allocating %d * %d * %d = %d bytes for vertex data buffer", elementCount, elementSizeInFloats, sizeof(float), elementCount * elementSizeInFloats * sizeof(float));
     float *buffer = calloc(elementCount * elementSizeInFloats, sizeof(float));
     if (buffer == NULL) return;
 

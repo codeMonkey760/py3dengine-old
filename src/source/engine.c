@@ -76,6 +76,11 @@ static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, cons
     unsigned long cubeVboSize = getUnIndexedVertexBufferSizeInFloats(wfoParser, name);
     if (cubeVboSize == 0) return;
 
+    debug_log("Allocating %d * %d = %d for VBO with name %s",
+        cubeVboSize, sizeof(float),
+        cubeVboSize * sizeof(float),
+        name
+    );
     float *vbo = calloc(cubeVboSize, sizeof(float));
     if (vbo == NULL) return;
 

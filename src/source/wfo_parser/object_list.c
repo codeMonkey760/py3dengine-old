@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "logger.h"
 #include "wfo_parser/object_list.h"
 
 #define INDEX_BUFFER_SIZE_IN_ELEMENTS 9
@@ -175,6 +176,12 @@ void flattenObjectList(struct ObjectListNode *objectList) {
     size_t faceCount = getFaceCount(objectList);
     if (faceCount == 0) return;
 
+    debug_log(
+        "Allocating %d * %d * %d = %d for index buffer with name %s",
+        faceCount, INDEX_BUFFER_SIZE_IN_ELEMENTS, sizeof(int),
+        faceCount * INDEX_BUFFER_SIZE_IN_ELEMENTS * sizeof(int),
+        objectList->name
+    );
     int *newIndexBuffer = calloc(faceCount * INDEX_BUFFER_SIZE_IN_ELEMENTS, sizeof(int));
     if (newIndexBuffer == NULL) return;
 
