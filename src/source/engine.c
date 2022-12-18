@@ -124,6 +124,7 @@ void allocEngine(struct Engine **enginePtr){
     engine->camera = NULL;
     engine->cubeModel = NULL;
     engine->pyramidModel = NULL;
+    engine->quadModel = NULL;
 
     (*enginePtr) = engine;
 }
@@ -140,6 +141,7 @@ void deleteEngine(struct Engine **enginePtr){
     deleteCamera(&(engine->camera));
     deleteModel(&engine->cubeModel);
     deleteModel(&engine->pyramidModel);
+    deleteModel(&engine->quadModel);
     engine = NULL;
 
     deleteQuadModel();
@@ -197,7 +199,7 @@ void initEngine(struct Engine *engine){
     posW[0] = -2.0f;
     color[0] = 0.8f;
     color[2] = 0.2f;
-    allocQuad(&curQuad);
+    allocQuad(&curQuad, engine->quadModel);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[0] = curQuad;
@@ -206,7 +208,7 @@ void initEngine(struct Engine *engine){
     posW[0] = 2.0f;
     color[0] = 0.2f;
     color[2] = 0.8f;
-    allocQuad(&curQuad);
+    allocQuad(&curQuad, engine->quadModel);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[1] = curQuad;

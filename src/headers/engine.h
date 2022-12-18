@@ -22,6 +22,7 @@ struct Engine {
     struct Camera *camera;
     struct Model *cubeModel;
     struct Model *pyramidModel;
+    struct Model *quadModel;
 };
 
 extern void allocEngine(struct Engine **enginePtr);

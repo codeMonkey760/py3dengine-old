@@ -13,9 +13,10 @@ struct Quad {
 
     float wMtxCache[16]; //cache for world mtx
     bool wMtxCacheDirty;
+    struct Model *model;
 };
 
-extern void allocQuad(struct Quad **quadPtr);
+extern void allocQuad(struct Quad **quadPtr, struct Model *model);
 extern void deleteQuad(struct Quad **quadPtr);
 
 extern void updateQuad(struct Quad *quad, float dt);

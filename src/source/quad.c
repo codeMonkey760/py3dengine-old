@@ -2,8 +2,8 @@
 
 #include "util.h"
 #include "shader.h"
-#include "quadmodel.h"
 #include "quad.h"
+#include "model.h"
 
 static void refreshWorldMatrix(struct Quad *quad) {
     if (quad == NULL || quad->wMtxCacheDirty == false) return;
@@ -25,15 +25,11 @@ static void refreshWorldMatrix(struct Quad *quad) {
     quad->wMtxCacheDirty = false;
 }
 
-void allocQuad(struct Quad **quadPtr) {
-    if (quadPtr == NULL || (*quadPtr != NULL)) {
-        return;
-    }
+void allocQuad(struct Quad **quadPtr, struct Model *model) {
+    if (quadPtr == NULL || (*quadPtr != NULL) || model == NULL) return;
 
     struct Quad *newQuad = calloc(1, sizeof(struct Quad));
-    if (newQuad == NULL) {
-        return;
-    }
+    if (newQuad == NULL) return;
 
     Vec3Identity(newQuad->_posW);
     newQuad->_posW[3] = 1.0f;
@@ -46,6 +42,8 @@ void allocQuad(struct Quad **quadPtr) {
     newQuad->wMtxCacheDirty = true;
 
     refreshWorldMatrix(newQuad);
+
+    newQuad->model = model;
 
     (*quadPtr) = newQuad;
 }
@@ -76,9 +74,9 @@ void renderQuad(struct Quad *quad, struct Camera *camera) {
     Mat4Mult(wvpMtx, quad->wMtxCache, wvpMtx);
     setWVPMtx(wvpMtx);
 
-    bindQuadModel();
-    renderQuadModel();
-    unbindQuadModel();
+    bindModel(quad->model);
+    renderModel(quad->model);
+    unbindModel(quad->model);
 
     disableShader();
 }
