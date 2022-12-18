@@ -295,7 +295,8 @@ unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, 
     }
 
     // This will handle curNode == NULL
-    return getIndexBufferSize(curNode);
+    // TODO: this is a nasty hack
+    return getIndexBufferSize(curNode) / 3 * 8;
 }
 
 void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, unsigned long limit) {
