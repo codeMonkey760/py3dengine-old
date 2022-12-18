@@ -175,7 +175,20 @@ void initEngine(struct Engine *engine){
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
 
     initShader();
-    initQuadModel();
+
+    struct WfoParser *wfoParser = NULL;
+    allocWfoParser(&wfoParser);
+
+    FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
+    parseWaveFrontFile(wfoParser, wfoFile);
+    fclose(wfoFile);
+    wfoFile = NULL;
+
+    initModel(&engine->cubeModel, wfoParser, "Cube");
+    initModel(&engine->pyramidModel, wfoParser, "Pyramid");
+    initModel(&engine->quadModel, wfoParser, "Quad");
+
+    deleteWfoParser(&wfoParser);
 
     struct Quad *curQuad = NULL;
     float posW[3] = {0.0f};
@@ -203,19 +216,6 @@ void initEngine(struct Engine *engine){
     allocCamera(&camera);
     engine->camera = camera;
     camera = NULL;
-
-    struct WfoParser *wfoParser = NULL;
-    allocWfoParser(&wfoParser);
-
-    FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
-    parseWaveFrontFile(wfoParser, wfoFile);
-    fclose(wfoFile);
-    wfoFile = NULL;
-
-    initModel(&engine->cubeModel, wfoParser, "Cube");
-    initModel(&engine->pyramidModel, wfoParser, "Pyramid");
-
-    deleteWfoParser(&wfoParser);
 }
 
 void runEngine(struct Engine *engine) {
