@@ -5,7 +5,6 @@
 
 #include "logger.h"
 #include "util.h"
-#include "quadmodel.h"
 #include "shader.h"
 #include "engine.h"
 
@@ -144,7 +143,6 @@ void deleteEngine(struct Engine **enginePtr){
     deleteModel(&engine->quadModel);
     engine = NULL;
 
-    deleteQuadModel();
     deleteShader();
 
     glfwTerminate();

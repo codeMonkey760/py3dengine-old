@@ -21,7 +21,6 @@ add_executable(
     src/source/util.c
     lib/glad/src/gl.c
     src/source/shader.c
-    src/source/quadmodel.c
     src/source/quad.c
     src/source/camera.c
     src/source/logger.c
