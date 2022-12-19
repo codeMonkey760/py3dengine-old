@@ -103,7 +103,7 @@ static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, cons
         return;
     }
 
-    setPNTBuffer(newModel, vbo, cubeVboSize / 9);
+    setPNTBuffer(newModel, vbo, cubeVboSize / 8);
 
     free(vbo);
     vbo = NULL;
