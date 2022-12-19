@@ -18,7 +18,7 @@ struct Engine {
 
     GLFWwindow *window;
 
-    struct Quad *quad[2];
+    struct Quad *quad[3];
     struct Camera *camera;
     struct Model *cubeModel;
     struct Model *pyramidModel;

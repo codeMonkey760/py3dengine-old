@@ -59,6 +59,7 @@ static void updateEngine(struct Engine *engine, float dt){
 
     updateQuad(engine->quad[0], dt);
     updateQuad(engine->quad[1], dt);
+    updateQuad(engine->quad[2], dt);
     updateCamera(engine->camera, dt);
 }
 
@@ -67,6 +68,7 @@ static void renderEngine(struct Engine *engine){
 
     renderQuad(engine->quad[0], engine->camera);
     renderQuad(engine->quad[1], engine->camera);
+    renderQuad(engine->quad[2], engine->camera);
 }
 
 static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, const char *name) {
@@ -128,6 +130,7 @@ void allocEngine(struct Engine **enginePtr){
 
     engine->quad[0] = NULL;
     engine->quad[1] = NULL;
+    engine->quad[2] = NULL;
     engine->camera = NULL;
     engine->cubeModel = NULL;
     engine->pyramidModel = NULL;
@@ -145,6 +148,7 @@ void deleteEngine(struct Engine **enginePtr){
 
     deleteQuad(&(engine->quad[0]));
     deleteQuad(&(engine->quad[1]));
+    deleteQuad(&(engine->quad[2]));
     deleteCamera(&(engine->camera));
     deleteModel(&engine->cubeModel);
     deleteModel(&engine->pyramidModel);
@@ -199,25 +203,39 @@ void initEngine(struct Engine *engine){
     deleteWfoParser(&wfoParser);
 
     struct Quad *curQuad = NULL;
-    float posW[3] = {0.0f};
+    float posW[3] = {0.0f, 0.0f, 2.0f};
+    float scale[3] = {1.0f, 1.0f, 1.0f};
     float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
-    posW[0] = -2.0f;
+    posW[0] = -3.0f;
     color[0] = 0.8f;
     color[2] = 0.2f;
-    allocQuad(&curQuad, engine->quadModel);
+    allocQuad(&curQuad, engine->cubeModel);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[0] = curQuad;
     curQuad = NULL;
 
-    posW[0] = 2.0f;
+    posW[0] = 0.0f;
     color[0] = 0.2f;
     color[2] = 0.8f;
-    allocQuad(&curQuad, engine->quadModel);
+    allocQuad(&curQuad, engine->pyramidModel);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[1] = curQuad;
+    curQuad = NULL;
+
+    posW[0] = 3.0f;
+    color[0] = 0.8f;
+    color[1] = 0.8f;
+    color[2] = 0.2f;
+    scale[0] = 2.0f;
+    scale[1] = 2.0f;
+    allocQuad(&curQuad, engine->quadModel);
+    setPosWQuad(curQuad, posW);
+    setScaleQuad(curQuad, scale);
+    setDiffuseColorQuad(curQuad, color);
+    engine->quad[2] = curQuad;
     curQuad = NULL;
 
     struct Camera *camera = NULL;
