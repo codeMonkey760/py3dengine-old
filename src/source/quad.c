@@ -59,6 +59,13 @@ void deleteQuad(struct Quad **quadPtr) {
 
 void updateQuad(struct Quad *quad, float dt) {
     if (quad == NULL) return;
+
+    float deltaRot[4];
+    QuaternionIdentity(deltaRot);
+    QuaternionFromAxisAngle(0.0f, 1.0f, 0.0f, dt * 45.0f, deltaRot);
+
+    QuaternionMult(quad->_orientation, deltaRot, quad->_orientation);
+    quad->wMtxCacheDirty = true;
 }
 
 void renderQuad(struct Quad *quad, struct Camera *camera) {
