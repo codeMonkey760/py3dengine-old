@@ -267,11 +267,11 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
     debug_log("Found %d positions, %d normals, %d texture coordinates", posCount, normalCount, texCoordCount);
 
     flattenVertexDataList(posList, posCount, 3, &wfoParser->_posBuffer);
-    wfoParser->_posBufferSize = posCount;
+    wfoParser->_posBufferSize = posCount * 3;
     flattenVertexDataList(normalList, normalCount, 3, &wfoParser->_normalBuffer);
-    wfoParser->_normalBufferSize = normalCount;
+    wfoParser->_normalBufferSize = normalCount * 3;
     flattenVertexDataList(texCoordList, texCoordCount, 2, &wfoParser->_texCoordBuffer);
-    wfoParser->_texCoordBuffSize = texCoordCount;
+    wfoParser->_texCoordBuffSize = texCoordCount * 2;
     flattenObjectList(objectList);
 
     wfoParser->_objectList = objectList;
@@ -316,16 +316,26 @@ void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, flo
     int *indexBuffer = getIndexBuffer(curNode);
     size_t indexBufferSize = getIndexBufferSize(curNode);
     if (indexBuffer == NULL || indexBufferSize == 0) return;
+    int elementCount = 0;
 
     // TODO: the end clause on this loop isn't correct if the buffer isn't mod 3 aligned
-    for (int i = 0; i < limit; i+=3) {
-        int posIndex = getIndexBufferElement(indexBuffer, i + 0, indexBufferSize);
+    for (int i = 0; i < indexBufferSize; i+=3) {
+        int posIndex = getIndexBufferElement(indexBuffer, i + 0, indexBufferSize) - 1;
         // yes this is correct, wfo stores vertex indices in ptn format and I want them in pnt format
-        int normalIndex = getIndexBufferElement(indexBuffer, i + 2, indexBufferSize);
-        int texCoordIndex = getIndexBufferElement(indexBuffer, i + 1, indexBufferSize);
+        int normalIndex = getIndexBufferElement(indexBuffer, i + 2, indexBufferSize) - 1;
+        int texCoordIndex = getIndexBufferElement(indexBuffer, i + 1, indexBufferSize) - 1;
 
-        dst[i+0] = getVertexDataElement(wfoParser->_posBuffer, posIndex, wfoParser->_posBufferSize);
-        dst[i+1] = getVertexDataElement(wfoParser->_normalBuffer, normalIndex, wfoParser->_normalBufferSize);
-        dst[i+2] = getVertexDataElement(wfoParser->_texCoordBuffer, texCoordIndex, wfoParser->_texCoordBuffSize);
+        dst[elementCount*8+0] = getVertexDataElement(wfoParser->_posBuffer, (posIndex * 3) + 0, wfoParser->_posBufferSize);
+        dst[elementCount*8+1] = getVertexDataElement(wfoParser->_posBuffer, (posIndex * 3) + 1, wfoParser->_posBufferSize);
+        dst[elementCount*8+2] = getVertexDataElement(wfoParser->_posBuffer, (posIndex * 3) + 2, wfoParser->_posBufferSize);
+
+        dst[elementCount*8+3] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 0, wfoParser->_normalBufferSize);
+        dst[elementCount*8+4] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 1, wfoParser->_normalBufferSize);
+        dst[elementCount*8+5] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 1, wfoParser->_normalBufferSize);
+
+        dst[elementCount*8+6] = getVertexDataElement(wfoParser->_texCoordBuffer, (texCoordIndex * 2) + 0, wfoParser->_texCoordBuffSize);
+        dst[elementCount*8+7] = getVertexDataElement(wfoParser->_texCoordBuffer, (texCoordIndex * 2) + 1, wfoParser->_texCoordBuffSize);
+
+        elementCount++;
     }
 }
