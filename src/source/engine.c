@@ -85,6 +85,14 @@ static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, cons
 
     // TODO: there's a problem here, vertex data isn't being copied properly
     getUnIndexedVertexBuffer(wfoParser, name, vbo, cubeVboSize);
+    printf("Dumping vbo contents for %s\n", name);
+    for (int i = 0; i < cubeVboSize; ++i) {
+        if (i != 0 && i % 8 == 0) {
+            printf("\n");
+        }
+        printf("%.2f ", vbo[i]);
+    }
+    printf("\nDone with vbo dump\n");
 
     struct Model *newModel = NULL;
     allocModel(&newModel);
@@ -100,6 +108,30 @@ static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, cons
     free(vbo);
     vbo = NULL;
 
+    (*modelPtr) = newModel;
+    newModel = NULL;
+}
+
+// TODO: remove this, its test code
+static void initQuadModel(struct Model **modelPtr) {
+    if (modelPtr == NULL || (*modelPtr) != NULL) return;
+
+    size_t elementSize = 6;
+    float vbo[48] = {
+        -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+
+         0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+         0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f
+    };
+
+    struct Model *newModel = NULL;
+    allocModel(&newModel);
+    if (newModel == NULL) return;
+
+    setPNTBuffer(newModel, vbo, elementSize);
     (*modelPtr) = newModel;
     newModel = NULL;
 }
@@ -187,6 +219,7 @@ void initEngine(struct Engine *engine){
     initModel(&engine->cubeModel, wfoParser, "Cube");
     initModel(&engine->pyramidModel, wfoParser, "Pyramid");
     initModel(&engine->quadModel, wfoParser, "Quad");
+    //TODO: remove this --> initQuadModel(&engine->quadModel);
 
     deleteWfoParser(&wfoParser);
 
