@@ -4,6 +4,8 @@
 #include <stdbool.h>
 
 struct Camera {
+    float _posW[3];
+
     float _viewMtxCache[16];
     bool _viewMtxCacheDirty;
     float _projMtxCache[16];
@@ -18,5 +20,6 @@ extern void deleteCamera(struct Camera **cameraPtr);
 extern void updateCamera(struct Camera *camera, float dt);
 
 extern void getVPMtx(struct Camera *camera, float dst[16]);
+extern void getCameraPositionW(struct Camera *camera, float dst[3]);
 
 #endif

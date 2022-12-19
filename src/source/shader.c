@@ -1,31 +1,59 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "logger.h"
 #include "shader.h"
 #include "glad/gl.h"
 
 static GLuint vertexShader = -1;
 static GLuint fragShader = -1;
 static GLuint program = -1;
+
 static GLint diffuseColorIndex = -1;
+static GLint cameraPositionIndex = -1;
+static GLint wMtxIndex = -1;
+static GLint witMtxIndex = -1;
 static GLint wvpMtxIndex = -1;
 
 static const char *vertex_shader_source =
-        "#version 460 core\n"
+        "#version 460 core\n\n"
+
         "layout(location = 0) in vec3 posL;\n"
-        "uniform mat4 gWVPMtx;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
+        "layout(location = 1) in vec3 normL;\n\n"
+
+        "uniform mat4 gWMtx;\n"
+        "uniform mat4 gWITMtx;\n"
+        "uniform mat4 gWVPMtx;\n\n"
+
+        "out vec3 posW;\n"
+        "out vec3 normW;\n\n"
+
+        "void main() {\n"
+        "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
+        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n\n"
+
+        "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
         "}\n";
 
 static const char *fragment_shader_source =
-        "#version 460 core\n"
-        "uniform vec4 gDiffuseColor;\n"
-        "layout(location = 0) out vec4 outputColor;\n"
-        "void main()\n"
-        "{\n"
-        "   outputColor = gDiffuseColor;\n"
+        "#version 460 core\n\n"
+
+        "in vec3 posW;\n"
+        "in vec3 normW;\n\n"
+
+        "uniform vec3 gDiffuseColor;\n"
+        "uniform vec3 gCamPos;\n\n"
+
+        "layout(location = 0) out vec4 outputColor;\n\n"
+
+        "void main() {\n"
+        "    vec3 normWFixed = normalize(normW);\n"
+        "    vec3 toCamera = normalize(gCamPos - posW);\n\n"
+
+        "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
+        "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
+
+        "    outputColor = vec4(gDiffuseColor * lightValue, 1.0f);\n"
         "}\n";
 
 static void compileShader(GLuint shader) {
@@ -93,6 +121,17 @@ static void linkProgram(GLuint pgm) {
     link_log = NULL;
 }
 
+static GLint getUniformIndex(char *name) {
+    if (program == -1) return -1;
+
+    GLint index = glGetUniformLocation(program, name);
+    if (index == -1) {
+        error_log("[Shader]: Unable to retrieve shader uniform location for %s", name);
+    }
+
+    return index;
+}
+
 void enableShader() {
     glUseProgram(program);
 }
@@ -115,8 +154,11 @@ void initShader() {
     glAttachShader(program, fragShader);
     linkProgram(program);
 
-    diffuseColorIndex = glGetUniformLocation(program, "gDiffuseColor");
-    wvpMtxIndex = glGetUniformLocation(program, "gWVPMtx");
+    diffuseColorIndex = getUniformIndex("gDiffuseColor");
+    cameraPositionIndex = getUniformIndex("gCamPos");
+    wMtxIndex = getUniformIndex("gWMtx");
+    witMtxIndex = getUniformIndex("gWITMtx");
+    wvpMtxIndex = getUniformIndex("gWVPMtx");
 }
 
 void deleteShader() {
@@ -131,8 +173,20 @@ void deleteShader() {
     program = -1;
 }
 
-void setDiffuseColor(float newDiffuseColor[4]) {
-    glUniform4fv(diffuseColorIndex, 1, newDiffuseColor);
+void setDiffuseColor(float newDiffuseColor[3]) {
+    glUniform3fv(diffuseColorIndex, 1, newDiffuseColor);
+}
+
+void setCameraPosition(float newCameraPos[3]) {
+    glUniform3fv(cameraPositionIndex, 1, newCameraPos);
+}
+
+void setWMtx(float newWMtx[16]) {
+    glUniformMatrix4fv(wMtxIndex, 1, GL_TRUE, newWMtx);
+}
+
+void setWITMtx(float newWITMtx[16]) {
+    glUniformMatrix4fv(witMtxIndex, 1, GL_TRUE, newWITMtx);
 }
 
 void setWVPMtx(float newWVPMtx[16]) {

@@ -76,6 +76,17 @@ void renderQuad(struct Quad *quad, struct Camera *camera) {
     enableShader();
     setDiffuseColor(quad->_diffuseColor);
 
+    float cameraPos[3] = {0.0f};
+    getCameraPositionW(camera, cameraPos);
+    setCameraPosition(cameraPos);
+
+    setWMtx(quad->wMtxCache);
+
+    float witMtx[16] = {0.0f};
+    Mat4Inverse(witMtx, quad->wMtxCache);
+    Mat4Transpose(witMtx, witMtx);
+    setWITMtx(witMtx);
+
     float wvpMtx[16] = {0.0f};
     getVPMtx(camera, wvpMtx);
     Mat4Mult(wvpMtx, quad->wMtxCache, wvpMtx);
@@ -109,8 +120,8 @@ void setScaleQuad(struct Quad *quad, float newScale[3]) {
     quad->wMtxCacheDirty = true;
 }
 
-void setDiffuseColorQuad(struct Quad *quad, float newDiffuseColor[4]) {
+void setDiffuseColorQuad(struct Quad *quad, float newDiffuseColor[3]) {
     if (quad == NULL) return;
 
-    Vec4Copy(quad->_diffuseColor, newDiffuseColor);
+    Vec3Copy(quad->_diffuseColor, newDiffuseColor);
 }

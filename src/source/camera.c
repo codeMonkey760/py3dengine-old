@@ -103,3 +103,9 @@ void getVPMtx(struct Camera *camera, float dst[16]) {
 
     Mat4Copy(dst, camera->_viewProjMtxCache);
 }
+
+void getCameraPositionW(struct Camera *camera, float dst[3]) {
+    if (camera == NULL || dst == NULL) return;
+
+    Vec3Copy(dst, camera->_posW);
+}

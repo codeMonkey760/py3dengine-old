@@ -185,6 +185,7 @@ void initEngine(struct Engine *engine){
 
     glfwSwapInterval(1);
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
 
     initShader();
 
@@ -205,7 +206,7 @@ void initEngine(struct Engine *engine){
     struct Quad *curQuad = NULL;
     float posW[3] = {0.0f, 0.0f, 2.0f};
     float scale[3] = {1.0f, 1.0f, 1.0f};
-    float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    float color[3] = {0.0f, 0.0f, 0.0f};
 
     posW[0] = -3.0f;
     color[0] = 0.8f;
@@ -253,7 +254,7 @@ void runEngine(struct Engine *engine) {
         cur_ts = (float) glfwGetTime();
         float dt = cur_ts - prev_ts;
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         updateEngine(engine, dt);
         renderEngine(engine);
