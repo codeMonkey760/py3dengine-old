@@ -82,17 +82,19 @@ void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInE
         return;
     }
 
+    glBindBuffer(GL_ARRAY_BUFFER, newVbo);
     glBufferData(GL_ARRAY_BUFFER, ((long) bufferSizeInElements) * 3 * 96, buffer, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(positionShaderIndex);
     glEnableVertexAttribArray(normalShaderIndex);
     glEnableVertexAttribArray(texCoordShaderIndex);
 
-    glVertexAttribPointer(positionShaderIndex, 3, GL_FLOAT, GL_FALSE, 96, (const void *) 0);
-    glVertexAttribPointer(normalShaderIndex, 3, GL_FLOAT, GL_FALSE, 96, (const void *) 12);
-    glVertexAttribPointer(texCoordShaderIndex, 2, GL_FLOAT, GL_FALSE, 96, (const void *) 24);
+    glVertexAttribPointer(positionShaderIndex, 3, GL_FLOAT, GL_FALSE, 32, (const void *) 0);
+    glVertexAttribPointer(normalShaderIndex, 3, GL_FLOAT, GL_FALSE, 32, (const void *) 12);
+    glVertexAttribPointer(texCoordShaderIndex, 2, GL_FLOAT, GL_FALSE, 32, (const void *) 24);
 
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     deleteVAO(model);
     deleteVBO(model);
