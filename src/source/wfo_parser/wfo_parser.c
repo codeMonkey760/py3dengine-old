@@ -304,10 +304,12 @@ void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, flo
 
     struct ObjectListNode *curNode = wfoParser->_objectList;
 
-    while(curNode == NULL) {
+    while(curNode != NULL) {
         if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
             break;
         }
+
+        curNode = curNode->next;
     }
     if (curNode == NULL) return;
 
