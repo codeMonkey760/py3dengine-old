@@ -8,17 +8,17 @@
 #include "wfo_parser/object_list.h"
 #include "wfo_parser/wfo_parser.h"
 
-static const int line_buffer_size_in_elements = 256;
-static const int type_buffer_size_in_elements = 16;
-static const int name_buffer_size_in_elements = 64;
-static const int index_buffer_size_in_elements = 9;
+#define LINE_BUFFER_SIZE_IN_ELEMENTS 256
+#define TYPE_BUFFER_SIZE_IN_ELEMENTS 16
+#define NAME_BUFFER_SIZE_IN_ELEMENTS 64
+#define INDEX_BUFFER_SIZE_IN_ELEMENTS 9
 
 static void clearCharBuffer(char *lineBuffer, int sizeInElements) {
     memset(lineBuffer, 0, sizeInElements * sizeof(char));
 }
 
 static void clearIndexBuffer(int *indexBuffer) {
-    memset(indexBuffer, 0, index_buffer_size_in_elements * sizeof(int));
+    memset(indexBuffer, 0, INDEX_BUFFER_SIZE_IN_ELEMENTS * sizeof(int));
 }
 
 static char* readStringFromLine(char *curPos, char *dst, int limit) {
@@ -211,48 +211,48 @@ void deleteWfoParser(struct WfoParser **wfoParserPtr) {
 void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
     if (wfoParser == NULL || wfo == NULL) return;
 
-    char lineBuffer[line_buffer_size_in_elements+1];
+    char lineBuffer[LINE_BUFFER_SIZE_IN_ELEMENTS+1];
     char *curPos = NULL;
-    char typeBuffer[type_buffer_size_in_elements+1];
-    char nameBuffer[name_buffer_size_in_elements+1];
+    char typeBuffer[TYPE_BUFFER_SIZE_IN_ELEMENTS+1];
+    char nameBuffer[NAME_BUFFER_SIZE_IN_ELEMENTS+1];
     float dataBuffer[3];
-    int indexBuffer[index_buffer_size_in_elements];
+    int indexBuffer[INDEX_BUFFER_SIZE_IN_ELEMENTS];
     int lineNumber = 0;
     size_t posCount = 0, normalCount = 0, texCoordCount = 0;
 
     struct VertexListNode *posList = NULL, *normalList = NULL, *texCoordList = NULL;
     struct ObjectListNode *objectList = NULL;
 
-    clearCharBuffer(lineBuffer, line_buffer_size_in_elements+1);
+    clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
     curPos = lineBuffer;
-    clearCharBuffer(nameBuffer, name_buffer_size_in_elements+1);
-    strncpy(nameBuffer, "None", name_buffer_size_in_elements);
+    clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS+1);
+    strncpy(nameBuffer, "None", NAME_BUFFER_SIZE_IN_ELEMENTS);
 
-    while(fgets(lineBuffer, line_buffer_size_in_elements, wfo) != NULL) {
+    while(fgets(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS, wfo) != NULL) {
         lineNumber++;
-        clearCharBuffer(typeBuffer, type_buffer_size_in_elements+1);
-        curPos = readStringFromLine(curPos, typeBuffer, name_buffer_size_in_elements);
+        clearCharBuffer(typeBuffer, TYPE_BUFFER_SIZE_IN_ELEMENTS+1);
+        curPos = readStringFromLine(curPos, typeBuffer, TYPE_BUFFER_SIZE_IN_ELEMENTS);
         curPos = advancePastSpaces(curPos);
 
-        if (strncmp(typeBuffer, "v", type_buffer_size_in_elements) == 0) {
+        if (strncmp(typeBuffer, "v", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 3);
             appendVertexData(&posList, typeBuffer, dataBuffer, 3);
             posCount++;
-        } else if (strncmp(typeBuffer, "vn", type_buffer_size_in_elements) == 0) {
+        } else if (strncmp(typeBuffer, "vn", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 3);
             appendVertexData(&normalList, typeBuffer, dataBuffer, 3);
             normalCount++;
-        } else if (strncmp(typeBuffer, "vt", type_buffer_size_in_elements) == 0) {
+        } else if (strncmp(typeBuffer, "vt", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 2);
             appendVertexData(&texCoordList, typeBuffer, dataBuffer, 2);
             texCoordCount++;
-        } else if (strncmp(typeBuffer, "o", type_buffer_size_in_elements) == 0) {
-            clearCharBuffer(nameBuffer, name_buffer_size_in_elements + 1);
-            readStringFromLine(curPos, nameBuffer, name_buffer_size_in_elements);
-        } else if (strncmp(typeBuffer, "f", type_buffer_size_in_elements) == 0) {
+        } else if (strncmp(typeBuffer, "o", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS + 1);
+            readStringFromLine(curPos, nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS);
+        } else if (strncmp(typeBuffer, "f", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             clearIndexBuffer(indexBuffer);
             readIndicesFromLine(curPos, indexBuffer);
             appendFaceToObjectList(&objectList, nameBuffer, indexBuffer);
@@ -260,7 +260,7 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
             debug_log("WFO Parser: Ignoring line #%d: unsupported type '%s'", lineNumber, typeBuffer);
         }
 
-        clearCharBuffer(lineBuffer, line_buffer_size_in_elements+1);
+        clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
         curPos = lineBuffer;
     }
 
@@ -287,7 +287,7 @@ unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, 
     struct ObjectListNode *curNode = wfoParser->_objectList;
 
     while (curNode != NULL) {
-        if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
+        if (strncmp(curNode->name, name, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             break;
         }
 
@@ -299,13 +299,13 @@ unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, 
     return getIndexBufferSize(curNode) / 3 * 8;
 }
 
-void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, unsigned long limit) {
+void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, size_t limit) {
     if (wfoParser == NULL || name == NULL || dst == NULL || limit == 0) return;
 
     struct ObjectListNode *curNode = wfoParser->_objectList;
 
     while(curNode != NULL) {
-        if (strncmp(curNode->name, name, name_buffer_size_in_elements) == 0) {
+        if (strncmp(curNode->name, name, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             break;
         }
 
