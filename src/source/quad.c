@@ -18,7 +18,7 @@ static void refreshWorldMatrix(struct Quad *quad) {
     Mat4TranslationFA(tMtx, quad->_posW);
 
     float wMtx[16] = {0.0f};
-    Mat4Mult(wMtx, rMtx, sMtx);
+    Mat4Mult(wMtx, sMtx, rMtx);
     Mat4Mult(wMtx, wMtx, tMtx);
 
     Mat4Copy(quad->wMtxCache, wMtx);
