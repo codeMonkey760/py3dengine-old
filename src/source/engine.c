@@ -10,6 +10,48 @@
 
 #include "wfo_parser/wfo_parser.h"
 
+static const char *vertex_shader_source =
+        "#version 460 core\n\n"
+
+        "layout(location = 0) in vec3 posL;\n"
+        "layout(location = 1) in vec3 normL;\n\n"
+
+        "uniform mat4 gWMtx;\n"
+        "uniform mat4 gWITMtx;\n"
+        "uniform mat4 gWVPMtx;\n\n"
+
+        "out vec3 posW;\n"
+        "out vec3 normW;\n\n"
+
+        "void main() {\n"
+        "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
+        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n\n"
+
+        "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
+        "}\n";
+
+static const char *fragment_shader_source =
+        "#version 460 core\n\n"
+
+        "in vec3 posW;\n"
+        "in vec3 normW;\n\n"
+
+        "uniform vec3 gDiffuseColor;\n"
+        "uniform vec3 gCamPos;\n\n"
+
+        "layout(location = 0) out vec4 outputColor;\n\n"
+
+        "void main() {\n"
+        "    vec3 normWFixed = normalize(normW);\n"
+        "    vec3 toCamera = normalize(gCamPos - posW);\n\n"
+
+        "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
+        "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
+
+        "    outputColor = vec4(gDiffuseColor * lightValue, 1.0f);\n"
+        "}\n";
+
+
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
