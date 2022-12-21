@@ -331,7 +331,7 @@ void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, flo
 
         dst[elementCount*8+3] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 0, wfoParser->_normalBufferSize);
         dst[elementCount*8+4] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 1, wfoParser->_normalBufferSize);
-        dst[elementCount*8+5] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 1, wfoParser->_normalBufferSize);
+        dst[elementCount*8+5] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 2, wfoParser->_normalBufferSize);
 
         dst[elementCount*8+6] = getVertexDataElement(wfoParser->_texCoordBuffer, (texCoordIndex * 2) + 0, wfoParser->_texCoordBuffSize);
         dst[elementCount*8+7] = getVertexDataElement(wfoParser->_texCoordBuffer, (texCoordIndex * 2) + 1, wfoParser->_texCoordBuffSize);
