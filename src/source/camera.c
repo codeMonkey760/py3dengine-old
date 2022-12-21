@@ -9,7 +9,6 @@ static void refreshViewMatrix(struct Camera *camera) {
     float yaw = 0.0f;
     float pitch = 0.0f;
 
-    float camPosW[3] = {0.0f,0.0f,-2.0f};
     float camTargetW[3] = {0.0f,0.0f,0.0f};
     float camUpW[3] = {0.0f,1.0f,0.0f};
 
@@ -21,9 +20,9 @@ static void refreshViewMatrix(struct Camera *camera) {
     QuaternionFromAxisAngle(1.0f,0.0f,0.0f,pitch,qX);
     QuaternionMult(qY,qX,qTot);
 
-    QuaternionVec3Rotation(camPosW,qTot,camPosW);
+    QuaternionVec3Rotation(camera->_posW,qTot,camera->_posW);
 
-    Mat4LookAtLH(camera->_viewMtxCache,camPosW,camTargetW,camUpW);
+    Mat4LookAtLH(camera->_viewMtxCache,camera->_posW,camTargetW,camUpW);
     camera->_viewMtxCacheDirty = false;
 }
 
@@ -77,6 +76,9 @@ void allocCamera(struct Camera **cameraPtr) {
     camera->_projMtxCacheDirty = true;
     Mat4Identity(camera->_viewProjMtxCache);
     camera->_viewProjMtxCacheDirty = true;
+
+    float camPos[3] = {0.0f, 0.0f, -2.0f};
+    Vec3Copy(camera->_posW, camPos);
 
     refreshViewProjMatrix(camera);
 
