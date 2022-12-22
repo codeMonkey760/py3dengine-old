@@ -1,9 +1,7 @@
 #include <stdlib.h>
 
 #include "util.h"
-#include "shader.h"
 #include "quad.h"
-#include "model.h"
 
 static void refreshWorldMatrix(struct Quad *quad) {
     if (quad == NULL || quad->wMtxCacheDirty == false) return;
@@ -25,8 +23,8 @@ static void refreshWorldMatrix(struct Quad *quad) {
     quad->wMtxCacheDirty = false;
 }
 
-void allocQuad(struct Quad **quadPtr, struct Model *model) {
-    if (quadPtr == NULL || (*quadPtr != NULL) || model == NULL) return;
+void allocQuad(struct Quad **quadPtr, struct Model *model, struct Shader *shader) {
+    if (quadPtr == NULL || (*quadPtr != NULL) || model == NULL || shader == NULL) return;
 
     struct Quad *newQuad = calloc(1, sizeof(struct Quad));
     if (newQuad == NULL) return;
@@ -44,6 +42,7 @@ void allocQuad(struct Quad **quadPtr, struct Model *model) {
     refreshWorldMatrix(newQuad);
 
     newQuad->model = model;
+    newQuad->shader = shader;
 
     (*quadPtr) = newQuad;
 }
@@ -53,7 +52,12 @@ void deleteQuad(struct Quad **quadPtr) {
         return;
     }
 
-    free((*quadPtr));
+    struct Quad *quad = (*quadPtr);
+    quad->model = NULL;
+    quad->shader = NULL;
+
+    free(quad);
+    quad = NULL;
     (*quadPtr) = NULL;
 }
 
@@ -69,34 +73,36 @@ void updateQuad(struct Quad *quad, float dt) {
 }
 
 void renderQuad(struct Quad *quad, struct Camera *camera) {
-    if (quad == NULL) return;
+    if (quad == NULL || camera == NULL || quad->model == NULL || quad->shader == NULL) return;
 
     refreshWorldMatrix(quad);
 
-    enableShader();
-    setDiffuseColor(quad->_diffuseColor);
+    struct Shader *shader = quad->shader;
+
+    enableShader(shader);
+    setDiffuseColor(shader, quad->_diffuseColor);
 
     float cameraPos[3] = {0.0f};
     getCameraPositionW(camera, cameraPos);
-    setCameraPosition(cameraPos);
+    setCameraPosition(shader, cameraPos);
 
-    setWMtx(quad->wMtxCache);
+    setWMtx(shader, quad->wMtxCache);
 
     float witMtx[16] = {0.0f};
     Mat4Inverse(witMtx, quad->wMtxCache);
     Mat4Transpose(witMtx, witMtx);
-    setWITMtx(witMtx);
+    setWITMtx(shader, witMtx);
 
     float wvpMtx[16] = {0.0f};
     getVPMtx(camera, wvpMtx);
     Mat4Mult(wvpMtx, quad->wMtxCache, wvpMtx);
-    setWVPMtx(wvpMtx);
+    setWVPMtx(shader, wvpMtx);
 
     bindModel(quad->model);
     renderModel(quad->model);
     unbindModel(quad->model);
 
-    disableShader();
+    disableShader(shader);
 }
 
 void setPosWQuad(struct Quad *quad, float newPosW[3]) {

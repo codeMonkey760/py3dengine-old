@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "model.h"
+#include "shader.h"
 #include "camera.h"
 
 struct Quad {
@@ -14,9 +16,10 @@ struct Quad {
     float wMtxCache[16]; //cache for world mtx
     bool wMtxCacheDirty;
     struct Model *model;
+    struct Shader *shader;
 };
 
-extern void allocQuad(struct Quad **quadPtr, struct Model *model);
+extern void allocQuad(struct Quad **quadPtr, struct Model *model, struct Shader *shader);
 extern void deleteQuad(struct Quad **quadPtr);
 
 extern void updateQuad(struct Quad *quad, float dt);
