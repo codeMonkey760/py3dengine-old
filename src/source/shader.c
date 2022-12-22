@@ -70,8 +70,8 @@ static void linkProgram(GLuint pgm) {
     link_log = NULL;
 }
 
-static GLint getUniformIndex(char *name) {
-    if (program == -1) return -1;
+static GLint getUniformIndex(GLuint program, char *name) {
+    if (program == -1 || name == NULL) return -1;
 
     GLint index = glGetUniformLocation(program, name);
     if (index == -1) {
@@ -92,13 +92,6 @@ static void deleteGLShader(struct Shader *shader, GLuint *glShaderPtr) {
     (*glShaderPtr) = 0;
 }
 
-static void deleteShaderLog(char **logPtr) {
-    if (logPtr == NULL || (*logPtr) == NULL) return;
-
-    free( (*logPtr) );
-    (*logPtr) = NULL;
-}
-
 void allocShader(struct Shader **shaderPtr) {
     if (shaderPtr == NULL || (*shaderPtr) != NULL) return;
 
@@ -114,10 +107,6 @@ void allocShader(struct Shader **shaderPtr) {
     newShader->_wMtxLoc = -1;
     newShader->_witMtxLoc = -1;
     newShader->_wvpMtxLoc = -1;
-
-    newShader->_vertexShaderLog = NULL;
-    newShader->_fragShaderLog = NULL;
-    newShader->_programLinkLog = NULL;
 }
 
 void deleteShader(struct Shader **shaderPtr) {
@@ -127,9 +116,6 @@ void deleteShader(struct Shader **shaderPtr) {
 
     deleteGLShader(shader, &shader->_vertexShader);
     deleteGLShader(shader, &shader->_fragShader);
-    deleteShaderLog(&shader->_vertexShaderLog);
-    deleteShaderLog(&shader->_fragShaderLog);
-    deleteShaderLog(&shader->_programLinkLog);
 
     glDeleteProgram(shader->_program);
     shader->_program = 0;
@@ -145,25 +131,36 @@ void deleteShader(struct Shader **shaderPtr) {
     (*shaderPtr) = NULL;
 }
 
-void initShader(struct Shader *shader, char *vertexShaderSource, char *fragShaderSource) {
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertex_shader_source, 0);
-    compileShader(vertexShader);
+void initShader(struct Shader *shader, const char *vertexShaderSource, const char *fragShaderSource) {
+    if (shader == NULL || vertexShaderSource == NULL || fragShaderSource == NULL) return;
 
-    fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragShader, 1, &fragment_shader_source, 0);
-    compileShader(fragShader);
+    GLint vs = glCreateShader(GL_VERTEX_SHADER);
+    if (vs == 0) return;
+    glShaderSource(vs, 1, &vertexShaderSource, 0);
+    compileShader(vs);
+    shader->_vertexShader = vs;
+    vs = 0;
 
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragShader);
-    linkProgram(program);
+    GLint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    if (fs == 0) return;
+    glShaderSource(fs, 1, &fragShaderSource, 0);
+    compileShader(fs);
+    shader->_fragShader = fs;
+    fs = 0;
 
-    diffuseColorIndex = getUniformIndex("gDiffuseColor");
-    cameraPositionIndex = getUniformIndex("gCamPos");
-    wMtxIndex = getUniformIndex("gWMtx");
-    witMtxIndex = getUniformIndex("gWITMtx");
-    wvpMtxIndex = getUniformIndex("gWVPMtx");
+    GLint pgm = glCreateProgram();
+    if (pgm == 0) return;
+    glAttachShader(pgm, shader->_vertexShader);
+    glAttachShader(pgm, shader->_fragShader);
+    linkProgram(pgm);
+    shader->_program = pgm;
+    pgm = 0;
+
+    shader->_diffuseColorLoc = getUniformIndex(shader->_program, "gDiffuseColor");
+    shader->_cameraPositionLoc = getUniformIndex(shader->_program, "gCamPos");
+    shader->_wMtxLoc = getUniformIndex(shader->_program, "gWMtx");
+    shader->_witMtxLoc = getUniformIndex(shader->_program, "gWITMtx");
+    shader->_wvpMtxLoc = getUniformIndex(shader->_program, "gWVPMtx");
 }
 
 void enableShader(struct Shader *shader) {
@@ -179,31 +176,31 @@ void disableShader(struct Shader *shader) {
 }
 
 void setDiffuseColor(struct Shader *shader, float newDiffuseColor[3]) {
-    if (shader == NULL) return;
+    if (shader == NULL || shader->_diffuseColorLoc == -1) return;
 
-    glUniform3fv(diffuseColorIndex, 1, newDiffuseColor);
+    glUniform3fv(shader->_diffuseColorLoc, 1, newDiffuseColor);
 }
 
 void setCameraPosition(struct Shader *shader, float newCameraPos[3]) {
-    if (shader == NULL) return;
+    if (shader == NULL || shader->_cameraPositionLoc == -1) return;
 
-    glUniform3fv(cameraPositionIndex, 1, newCameraPos);
+    glUniform3fv(shader->_cameraPositionLoc, 1, newCameraPos);
 }
 
 void setWMtx(struct Shader *shader, float newWMtx[16]) {
-    if (shader == NULL) return;
+    if (shader == NULL || shader->_wMtxLoc == -1) return;
 
-    glUniformMatrix4fv(wMtxIndex, 1, GL_TRUE, newWMtx);
+    glUniformMatrix4fv(shader->_wMtxLoc, 1, GL_TRUE, newWMtx);
 }
 
 void setWITMtx(struct Shader *shader, float newWITMtx[16]) {
-    if (shader == NULL) return;
+    if (shader == NULL || shader->_witMtxLoc == -1) return;
 
-    glUniformMatrix4fv(witMtxIndex, 1, GL_TRUE, newWITMtx);
+    glUniformMatrix4fv(shader->_witMtxLoc, 1, GL_TRUE, newWITMtx);
 }
 
 void setWVPMtx(struct Shader *shader, float newWVPMtx[16]) {
-    if (shader == NULL) return;
+    if (shader == NULL || shader->_wvpMtxLoc == -1) return;
 
-    glUniformMatrix4fv(wvpMtxIndex, 1, GL_TRUE, newWVPMtx);
+    glUniformMatrix4fv(shader->_wvpMtxLoc, 1, GL_TRUE, newWVPMtx);
 }

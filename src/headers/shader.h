@@ -11,23 +11,14 @@ struct Shader {
     int _wMtxLoc;
     int _witMtxLoc;
     int _wvpMtxLoc;
-
-    char *_vertexShaderLog;
-    char *_fragShaderLog;
-    char *_programLinkLog;
 };
-
 
 extern void allocShader(struct Shader **shaderPtr);
 extern void deleteShader(struct Shader **shaderPtr);
 
-extern void initShader(struct Shader *shader, char *vertexShaderSource, char *fragShaderSource);
+extern void initShader(struct Shader *shader, const char *vertexShaderSource, const char *fragShaderSource);
 extern void enableShader(struct Shader *shader);
 extern void disableShader(struct Shader *shader);
-
-extern char *getVertexShaderCompileLog(struct Shader *shader);
-extern char *getFragShaderCompileLog(struct Shader *shader);
-extern char *getProgramLinkLog(struct Shader *shader);
 
 extern void setDiffuseColor(struct Shader *shader, float newDiffuseColor[3]);
 void setCameraPosition(struct Shader *shader, float newCameraPos[3]);
