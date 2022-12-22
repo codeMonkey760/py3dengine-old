@@ -127,16 +127,7 @@ static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, cons
     float *vbo = calloc(cubeVboSize, sizeof(float));
     if (vbo == NULL) return;
 
-    // TODO: there's a problem here, vertex data isn't being copied properly
     getUnIndexedVertexBuffer(wfoParser, name, vbo, cubeVboSize);
-    printf("Dumping vbo contents for %s\n", name);
-    for (int i = 0; i < cubeVboSize; ++i) {
-        if (i != 0 && i % 8 == 0) {
-            printf("\n");
-        }
-        printf("%.2f ", vbo[i]);
-    }
-    printf("\nDone with vbo dump\n");
 
     struct Model *newModel = NULL;
     allocModel(&newModel);
