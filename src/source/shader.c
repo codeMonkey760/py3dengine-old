@@ -107,6 +107,9 @@ void allocShader(struct Shader **shaderPtr) {
     newShader->_wMtxLoc = -1;
     newShader->_witMtxLoc = -1;
     newShader->_wvpMtxLoc = -1;
+
+    (*shaderPtr) = newShader;
+    newShader = NULL;
 }
 
 void deleteShader(struct Shader **shaderPtr) {
