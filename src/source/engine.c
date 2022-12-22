@@ -177,6 +177,7 @@ void allocEngine(struct Engine **enginePtr){
     engine->cubeModel = NULL;
     engine->pyramidModel = NULL;
     engine->quadModel = NULL;
+    engine->shader = NULL;
 
     (*enginePtr) = engine;
 }
@@ -195,9 +196,8 @@ void deleteEngine(struct Engine **enginePtr){
     deleteModel(&engine->cubeModel);
     deleteModel(&engine->pyramidModel);
     deleteModel(&engine->quadModel);
+    deleteShader(&engine->shader);
     engine = NULL;
-
-    deleteShader();
 
     glfwTerminate();
 
@@ -229,8 +229,6 @@ void initEngine(struct Engine *engine){
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
-    initShader();
-
     struct WfoParser *wfoParser = NULL;
     allocWfoParser(&wfoParser);
 
@@ -245,6 +243,9 @@ void initEngine(struct Engine *engine){
 
     deleteWfoParser(&wfoParser);
 
+    allocShader(&engine->shader);
+    initShader(engine->shader, vertex_shader_source, fragment_shader_source);
+
     struct Quad *curQuad = NULL;
     float posW[3] = {0.0f, 0.0f, 2.0f};
     float scale[3] = {1.0f, 1.0f, 1.0f};
@@ -253,7 +254,7 @@ void initEngine(struct Engine *engine){
     posW[0] = -3.0f;
     color[0] = 0.8f;
     color[2] = 0.2f;
-    allocQuad(&curQuad, engine->cubeModel);
+    allocQuad(&curQuad, engine->cubeModel, engine->shader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[0] = curQuad;
@@ -262,7 +263,7 @@ void initEngine(struct Engine *engine){
     posW[0] = 0.0f;
     color[0] = 0.2f;
     color[2] = 0.8f;
-    allocQuad(&curQuad, engine->pyramidModel);
+    allocQuad(&curQuad, engine->pyramidModel, engine->shader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[1] = curQuad;
@@ -274,7 +275,7 @@ void initEngine(struct Engine *engine){
     color[2] = 0.2f;
     scale[0] = 2.0f;
     scale[1] = 2.0f;
-    allocQuad(&curQuad, engine->quadModel);
+    allocQuad(&curQuad, engine->quadModel, engine->shader);
     setPosWQuad(curQuad, posW);
     setScaleQuad(curQuad, scale);
     setDiffuseColorQuad(curQuad, color);

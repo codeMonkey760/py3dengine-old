@@ -8,6 +8,7 @@
 #include "quad.h"
 #include "camera.h"
 #include "model.h"
+#include "shader.h"
 
 struct Engine {
     float _elapsed_time;
@@ -23,6 +24,7 @@ struct Engine {
     struct Model *cubeModel;
     struct Model *pyramidModel;
     struct Model *quadModel;
+    struct Shader *shader;
 };
 
 extern void allocEngine(struct Engine **enginePtr);
