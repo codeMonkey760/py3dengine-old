@@ -5,6 +5,7 @@
 
 #include "logger.h"
 #include "util.h"
+#include "python_wrapper.h"
 #include "shader.h"
 #include "engine.h"
 
@@ -192,12 +193,16 @@ void deleteEngine(struct Engine **enginePtr){
 
     glfwTerminate();
 
+    finalizePython();
+
     free((*enginePtr));
     (*enginePtr) = NULL;
 }
 
 void initEngine(struct Engine *engine){
     if (engine == NULL) return;
+
+    initializePython();
 
     glfwSetErrorCallback(error_callback);
 

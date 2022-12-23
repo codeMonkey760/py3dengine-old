@@ -4,7 +4,7 @@ project(py3dengine C)
 set(CMAKE_C_STANDARD 17)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/lib/glad/include)
-find_package(Python COMPONENTS Interpreter)
+find_package(Python COMPONENTS Interpreter Development)
 add_custom_command(
         OUTPUT lib/glad/include/glad/gl.h lib/glad/include/KHR/khrplatform.h lib/glad/src/gl.c
         COMMAND ${Python_EXECUTABLE} -m glad --out-path lib/glad --api gl:core c
@@ -31,5 +31,7 @@ add_executable(
     src/source/wfo_parser/wfo_parser.c
     src/source/wfo_parser/vertex_data_list.c
     src/source/wfo_parser/object_list.c
+    src/source/python_wrapper.c
 )
-target_link_libraries(py3dengine glfw m)
+target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
+target_link_libraries(py3dengine glfw Python::Python m)
