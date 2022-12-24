@@ -34,6 +34,7 @@ add_executable(
     src/source/wfo_parser/object_list.c
     src/source/python_wrapper.c
     src/source/material.c
+    src/source/resource_manager.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python m)
