@@ -35,6 +35,26 @@ void deleteString(struct String **stringPtr) {
     (*stringPtr) = NULL;
 }
 
+bool stringEqualsCStr(struct String *s1, const char *s2) {
+    if (s1 == NULL || s2 == NULL) return false;
+    if (s1->_len == 0) return false;
+    if (s1->_c_str == NULL) return false;
+
+    unsigned long s2len = strlen(s2);
+    if (s1->_len != s2len) return false;
+
+    return strncmp(s1->_c_str, s2, s1->_len) == 0;
+}
+
+bool stringEquals(struct String *s1, struct String *s2) {
+    if (s1 == NULL || s2 == NULL) return false;
+    if (s1->_len == 0 || s2->_len == 0) return false;
+    if (s1->_c_str == NULL || s2->_c_str == NULL) return false;
+
+    if (s1->_len != s2->_len) return false;
+    return strncmp(s1->_c_str, s2->_c_str, s1->_len) == 0;
+}
+
 void setChars(struct String *string, char *chars) {
     if (string == NULL || chars == NULL) return;
 
