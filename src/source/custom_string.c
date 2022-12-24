@@ -44,8 +44,8 @@ void setChars(struct String *string, char *chars) {
     char *newBuffer = calloc(num_chars + 1, sizeof(char));
     if (newBuffer == NULL) return;
 
+    memset(newBuffer, 0, (num_chars + 1) * sizeof(char));
     strncpy(newBuffer, chars, num_chars);
-    newBuffer[num_chars] = 0;
 
     deleteCharBuffer(string);
     string->_c_str = newBuffer;
