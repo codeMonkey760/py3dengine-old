@@ -58,6 +58,8 @@ static void error_callback(int code, const char* description) {
 }
 
 static void updateStats(struct Engine *engine, float dt) {
+    // TODO: these static variables won't work for multiple engine objects
+    // Not that I foresee that happening ... but the interface implies that as a use case
     static float since_last_calc = 0.0f;
     static int frame_count = 0;
 
