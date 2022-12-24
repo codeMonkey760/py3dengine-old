@@ -244,7 +244,6 @@ void initEngine(struct Engine *engine){
 
     struct Quad *curQuad = NULL;
     float posW[3] = {0.0f, 0.0f, 2.0f};
-    float scale[3] = {1.0f, 1.0f, 1.0f};
     float color[3] = {0.0f, 0.0f, 0.0f};
 
     posW[0] = -3.0f;
@@ -269,11 +268,8 @@ void initEngine(struct Engine *engine){
     color[0] = 0.8f;
     color[1] = 0.8f;
     color[2] = 0.2f;
-    scale[0] = 2.0f;
-    scale[1] = 2.0f;
     allocQuad(&curQuad, engine->quadModel, engine->shader);
     setPosWQuad(curQuad, posW);
-    setScaleQuad(curQuad, scale);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[2] = curQuad;
     curQuad = NULL;
@@ -282,6 +278,9 @@ void initEngine(struct Engine *engine){
     allocCamera(&camera);
     engine->camera = camera;
     camera = NULL;
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 }
 
 void runEngine(struct Engine *engine) {
