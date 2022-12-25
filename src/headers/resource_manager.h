@@ -12,7 +12,7 @@ struct ResourceManager {
 extern void allocResourceManager(struct ResourceManager **resourceManagerPtr);
 extern void deleteResourceManager(struct ResourceManager **resourceManagerPtr);
 
-extern void storeShaderResource(struct ResourceManager *manager, struct Shader *shader);
+extern void storeShader(struct ResourceManager *manager, struct Shader *shader);
 extern void storeModel(struct ResourceManager *manager, struct Model *model);
 extern void storeMaterial(struct ResourceManager *manager, struct Material *material);
 

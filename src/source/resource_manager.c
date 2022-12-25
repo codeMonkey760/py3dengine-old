@@ -19,7 +19,7 @@ static void allocListNode(struct ListNode **listNodePtr) {
 
     struct ListNode *newNode = calloc(1, sizeof(struct ListNode));
     newNode->resource = NULL;
-    newNode->type = 0;
+    newNode->type = TYPE_INVALID;
     newNode->name = NULL;
 
     (*listNodePtr) = newNode;
@@ -45,7 +45,7 @@ static void storeResourceByType(
     unsigned int type,
     struct String *name
 ) {
-    if (manager == NULL || resource == NULL || type == 0 || name == NULL) return;
+    if (manager == NULL || resource == NULL || type == TYPE_INVALID || name == NULL) return;
 
     struct ListNode *prevNode = NULL, *curNode = manager->_root;
     while (curNode != NULL) {
@@ -108,7 +108,7 @@ void deleteResourceManager(struct ResourceManager **resourceManagerPtr){
     (*resourceManagerPtr) = NULL;
 }
 
-void storeShaderResource(struct ResourceManager *manager, struct Shader *shader){
+void storeShader(struct ResourceManager *manager, struct Shader *shader){
     if (manager == NULL || shader == NULL) return;
 
     struct String *shaderName = getShaderName(shader);
