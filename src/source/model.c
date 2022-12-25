@@ -1,9 +1,9 @@
 #include <string.h>
 
 #include "glad/gl.h"
+#include "custom_string.h"
 #include "model.h"
 
-const size_t max_name_buffer_size_in_elements = 64;
 // TODO: these should be in a vertex format file / struct
 const GLuint positionShaderIndex = 0;
 const GLuint normalShaderIndex = 1;
@@ -28,15 +28,6 @@ static void deleteVBO(struct Model *model) {
     model->_sizeInVertices = 0;
 }
 
-static void deleteNameBuffer(struct Model *model) {
-    if (model == NULL) return;
-
-    if (model->_nameBuffer != NULL) {
-        free(model->_nameBuffer);
-        model->_nameBuffer = NULL;
-    }
-}
-
 void allocModel(struct Model **modelPtr) {
     if (modelPtr == NULL || (*modelPtr) != NULL) return;
 
@@ -44,7 +35,8 @@ void allocModel(struct Model **modelPtr) {
     newModel->_vao = -1;
     newModel->_vbo = -1;
     newModel->_sizeInVertices = 0;
-    newModel->_nameBuffer = NULL;
+
+    newModel->_name = NULL;
 
     (*modelPtr) = newModel;
     newModel = NULL;
@@ -57,7 +49,7 @@ void deleteModel(struct Model **modelPtr) {
 
     deleteVBO(model);
     deleteVAO(model);
-    deleteNameBuffer(model);
+    deleteString(&model->_name);
 
     free(model);
     model = NULL;
@@ -104,20 +96,6 @@ void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInE
     model->_sizeInVertices = bufferSizeInElements;
 }
 
-void setName(struct Model *model, const char *newName) {
-    if (model == NULL || newName == NULL) return;
-
-    size_t newNameLen = strnlen(newName, max_name_buffer_size_in_elements);
-    if (newNameLen == 0) return;
-
-    char *newNameBuffer = calloc(newNameLen+1, sizeof(char));
-    strncpy(newNameBuffer, newName, newNameLen);
-
-    deleteNameBuffer(model);
-
-    model->_nameBuffer = newNameBuffer;
-}
-
 void bindModel(struct Model *model) {
     if (model == NULL || model->_vao == -1) return;
 
@@ -134,4 +112,25 @@ void renderModel(struct Model *model) {
     if (model == NULL || model->_vao == -1 || model->_sizeInVertices == 0) return;
 
     glDrawArrays(GL_TRIANGLES, 0, (int) model->_sizeInVertices);
+}
+
+struct String *getModelName(struct Model *model) {
+    if (model->_name == NULL) return NULL;
+
+    return model->_name;
+}
+
+void setModelName(struct Model *model, const char *newName) {
+    if (model == NULL) return;
+
+    if (newName == NULL) {
+        deleteString(&model->_name);
+        return;
+    }
+
+    if (model->_name == NULL) {
+        allocString(&model->_name, newName);
+    } else {
+        setChars(model->_name, newName);
+    }
 }

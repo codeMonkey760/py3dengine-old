@@ -11,6 +11,8 @@ struct Shader {
     int _wMtxLoc;
     int _witMtxLoc;
     int _wvpMtxLoc;
+
+    struct String *_name;
 };
 
 extern void allocShader(struct Shader **shaderPtr);
@@ -21,9 +23,12 @@ extern void enableShader(struct Shader *shader);
 extern void disableShader(struct Shader *shader);
 
 extern void setDiffuseColor(struct Shader *shader, float newDiffuseColor[3]);
-void setCameraPosition(struct Shader *shader, float newCameraPos[3]);
-void setWMtx(struct Shader *shader, float newWMtx[16]);
-void setWITMtx(struct Shader *shader, float newWITMtx[16]);
+extern void setCameraPosition(struct Shader *shader, float newCameraPos[3]);
+extern void setWMtx(struct Shader *shader, float newWMtx[16]);
+extern void setWITMtx(struct Shader *shader, float newWITMtx[16]);
 extern void setWVPMtx(struct Shader *shader, float newWVPMtx[16]);
+
+extern struct String * getShaderName(struct Shader *shader);
+extern void setShaderName(struct Shader *shader, const char *newName);
 
 #endif

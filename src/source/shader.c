@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "logger.h"
+#include "custom_string.h"
 #include "shader.h"
 #include "glad/gl.h"
 
@@ -108,6 +109,8 @@ void allocShader(struct Shader **shaderPtr) {
     newShader->_witMtxLoc = -1;
     newShader->_wvpMtxLoc = -1;
 
+    newShader->_name = NULL;
+
     (*shaderPtr) = newShader;
     newShader = NULL;
 }
@@ -128,6 +131,7 @@ void deleteShader(struct Shader **shaderPtr) {
     shader->_wMtxLoc = -1;
     shader->_witMtxLoc = -1;
     shader->_wvpMtxLoc = -1;
+    deleteString(&shader->_name);
 
     free(shader);
     shader = NULL;
@@ -206,4 +210,26 @@ void setWVPMtx(struct Shader *shader, float newWVPMtx[16]) {
     if (shader == NULL || shader->_wvpMtxLoc == -1) return;
 
     glUniformMatrix4fv(shader->_wvpMtxLoc, 1, GL_TRUE, newWVPMtx);
+}
+
+struct String *getShaderName(struct Shader *shader) {
+    if (shader == NULL || shader->_name == NULL) return NULL;
+
+    return shader->_name;
+}
+
+void setShaderName(struct Shader *shader, const char *newName) {
+    if (shader == NULL) return;
+
+    if (newName == NULL) {
+        deleteString(&shader->_name);
+
+        return;
+    }
+
+    if (shader->_name == NULL) {
+        allocString(&shader->_name, newName);
+    } else {
+        setChars(shader->_name, newName);
+    }
 }

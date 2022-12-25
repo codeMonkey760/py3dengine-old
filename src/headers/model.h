@@ -7,16 +7,20 @@ struct Model {
     unsigned int _vao;
     unsigned int _vbo;
     size_t _sizeInVertices;
-    char *_nameBuffer;
+
+    struct String *_name;
 };
 
 extern void allocModel(struct Model **modelPtr);
 extern void deleteModel(struct Model **modelPtr);
 
 extern void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInElements);
-extern void setName(struct Model *model, const char *newName);
+
 extern void bindModel(struct Model *model);
 extern void unbindModel(struct Model *model);
 extern void renderModel(struct Model *model);
+
+extern struct String *getModelName(struct Model *model);
+extern void setModelName(struct Model *model, const char *newName);
 
 #endif

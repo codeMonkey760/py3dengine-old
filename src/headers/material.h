@@ -17,8 +17,7 @@ struct Material {
 extern void allocMaterial(struct Material **materialPtr);
 extern void deleteMaterial(struct Material **materialPtr);
 
-extern const char * getMaterialName(struct Material *material);
-
+extern struct String *getMaterialName(struct Material *material);
 extern void setMaterialName(struct Material *material, const char *newName);
 extern void setMaterialShader(struct Material *material, struct Shader *newShader);
 

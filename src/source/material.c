@@ -34,21 +34,29 @@ void deleteMaterial(struct Material **materialPtr) {
     (*materialPtr) = NULL;
 }
 
-const char * getMaterialName(struct Material *material) {
+struct String *getMaterialName(struct Material *material) {
     if (material == NULL) return NULL;
 
-    return getChars(material->_name);
+    return material->_name;
 }
 
 void setMaterialName(struct Material *material, const char *newName) {
-    if (material == NULL || newName == NULL) return;
+    if (material == NULL) return;
 
-    setChars(material->_name, newName);
+    if (newName == NULL) {
+        deleteString(material->_name);
+        return;
+    }
+
+    if (material->_name == NULL) {
+        allocString(&material->_name, newName);
+    } else {
+        setChars(material->_name, newName);
+    }
 }
 
 void setMaterialShader(struct Material *material, struct Shader *newShader) {
     if (material == NULL) return;
 
-    // TODO: is NULL a valid value here? It is after initialization
     material->_shader = newShader;
 }
