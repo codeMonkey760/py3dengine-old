@@ -50,6 +50,7 @@ void Mat4Copy (float dst[16], float src[16]);
 float degreesToRadians (float d);
 float radiansToDegrees (float r);
 void Vec3Identity(float out[3]);
+void Vec3Fill(float out[3], float value);
 void Vec3Add (float dst[3], float a[3], float b[3]);
 void Vec3Subtract (float dst[3], float a[3], float b[3]);
 void Vec3Copy(float dst[3], float src[3]);

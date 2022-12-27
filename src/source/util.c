@@ -378,11 +378,15 @@ void Mat4Copy(float dst[16], float src[16]) {
 }
 
 void Vec3Identity(float out[3]) {
+    Vec3Fill(out, 0.0f);
+}
+
+void Vec3Fill(float out[3], float value) {
     int i;
     if (out == NULL) return;
 
     for (i = 0; i < 3; ++i) {
-        out[i] = 0.0f;
+        out[i] = value;
     }
 }
 
