@@ -257,6 +257,12 @@ void attachComponent(struct GameObject *gameObject, struct BaseComponent *newCom
     newComponent->_owner = gameObject;
 }
 
+struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName) {
+    critical_log("%s", "[GameObject]: GameObject::getGameObjectComponentByType is not yet implemented");
+
+    return NULL;
+}
+
 struct String *getGameObjectName(struct GameObject *gameObject) {
     if (gameObject == NULL) return NULL;
 

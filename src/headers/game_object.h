@@ -29,6 +29,7 @@ extern void removeChildByName(struct GameObject *gameObject, const char* name);
 extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name);
 
 extern void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent);
+extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
 
 extern struct String *getGameObjectName(struct GameObject *gameObject);
 extern void setGameObjectName(struct GameObject *gameObject, char *newName);
