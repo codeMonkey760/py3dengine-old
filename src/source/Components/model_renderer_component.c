@@ -15,7 +15,10 @@ static void render(void *component, struct Camera *camera) {
 
     struct ModelRendererComponent *mrc = (struct ModelRendererComponent *) component;
 
-    // TODO: copy the stuff in quad::render
+    if (mrc->shader == NULL || mrc->model == NULL) return;
+
+    // TODO: I cant go any further with this until I have a transform component
+    // that I can retrieve from the owner game object
 }
 
 static void delete(void **componentPtr) {
