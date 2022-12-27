@@ -5,15 +5,13 @@
 
 #define COMPONENT_TYPE_ROTATION 1
 
-static bool isComponentValid(void *component) {
+static bool isComponentValid(struct BaseComponent *component) {
     if (component == NULL) return false;
 
-    struct BaseComponent *baseComponent = (struct BaseComponent *) component;
-
-    return baseComponent->_type == COMPONENT_TYPE_ROTATION;
+    return component->_type == COMPONENT_TYPE_ROTATION;
 }
 
-static void update(void *component, float dt) {
+static void update(struct BaseComponent *component, float dt) {
     if (!isComponentValid(component)) return;
 
     struct RotationComponent *rotCom = (struct RotationComponent *) component;
@@ -31,7 +29,7 @@ static void update(void *component, float dt) {
     // TODO: rotate parent game object with the delta rot Quaternion
 }
 
-static void delete(void **componentPtr) {
+static void delete(struct BaseComponent **componentPtr) {
     if (componentPtr == NULL) return;
 
     if (!isComponentValid((*componentPtr))) return;
@@ -62,6 +60,8 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
 
 extern void deleteRotationComponent(struct RotationComponent **componentPtr) {
     if (componentPtr == NULL || (*componentPtr) == NULL) return;
+
+    finalizeBaseComponent((struct BaseComponent *) (*componentPtr));
 
     free( (*componentPtr) );
     (*componentPtr) = NULL;

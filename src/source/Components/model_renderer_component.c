@@ -2,15 +2,13 @@
 
 #define COMPONENT_TYPE_MODEL_RENDERER 2
 
-static bool isComponentValid(void *component) {
+static bool isComponentValid(struct BaseComponent *component) {
     if (component == NULL) return false;
 
-    struct BaseComponent *base = (struct BaseComponent *) component;
-
-    return base->_type == COMPONENT_TYPE_MODEL_RENDERER;
+    return component->_type == COMPONENT_TYPE_MODEL_RENDERER;
 }
 
-static void render(void *component, struct Camera *camera) {
+static void render(struct BaseComponent *component, struct Camera *camera) {
     if (!isComponentValid(component) || camera == NULL) return;
 
     struct ModelRendererComponent *mrc = (struct ModelRendererComponent *) component;
@@ -21,7 +19,7 @@ static void render(void *component, struct Camera *camera) {
     // that I can retrieve from the owner game object
 }
 
-static void delete(void **componentPtr) {
+static void delete(struct BaseComponent **componentPtr) {
     if (componentPtr == NULL) return;
 
     if (!isComponentValid( (*componentPtr) )) return;
@@ -51,6 +49,8 @@ void allocModelRendererComponent(struct ModelRendererComponent **componentPtr) {
 
 void deleteModelRendererComponent(struct ModelRendererComponent **componentPtr) {
     if (componentPtr == NULL || (*componentPtr) == NULL) return;
+
+    finalizeBaseComponent((struct BaseComponent *) (*componentPtr));
 
     free( (*componentPtr) );
     (*componentPtr) = NULL;
