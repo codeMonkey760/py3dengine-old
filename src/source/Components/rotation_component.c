@@ -50,6 +50,14 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
     baseComponent->update = update;
     baseComponent->render = NULL;
     baseComponent->delete = delete;
+
+    newComponent->_rotSpeed = 0.0f;
+    Vec3Identity(newComponent->_rotAxis);
+    newComponent->_rotAxis[2] = 1.0f;
+
+    (*componentPtr) = newComponent;
+    newComponent = NULL;
+    baseComponent = NULL;
 }
 
 extern void deleteRotationComponent(struct RotationComponent **componentPtr) {
