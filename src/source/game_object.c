@@ -258,7 +258,16 @@ void attachComponent(struct GameObject *gameObject, struct BaseComponent *newCom
 }
 
 struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName) {
-    critical_log("%s", "[GameObject]: GameObject::getGameObjectComponentByType is not yet implemented");
+    if (gameObject == NULL || typeName == NULL) return NULL;
+
+    struct ComponentListNode *curNode = gameObject->components;
+    while (curNode != NULL) {
+        if (stringEquals(getComponentTypeName(curNode->component), typeName)) {
+            return curNode->component;
+        }
+
+        curNode = curNode->next;
+    }
 
     return NULL;
 }
