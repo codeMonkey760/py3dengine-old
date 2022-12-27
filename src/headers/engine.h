@@ -11,6 +11,8 @@
 #include "model.h"
 #include "shader.h"
 
+struct GameObject;
+
 struct Engine {
     float _elapsed_time;
     float _fps;
@@ -22,7 +24,7 @@ struct Engine {
 
     struct ResourceManager *resourceManager;
 
-    struct Quad *quad[3];
+    struct GameObject *root;
     struct Camera *camera;
 };
 

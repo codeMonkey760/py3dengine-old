@@ -119,10 +119,11 @@ void deleteSceneImporter(struct SceneImporter **importerPtr) {
     (*importerPtr) = NULL;
 }
 
-void initSceneImporter(struct SceneImporter *importer, struct ResourceManager *newManager) {
+void initSceneImporter(struct SceneImporter *importer, struct ResourceManager *newManager, struct GameObject **rootPtr) {
     if (importer == NULL) return;
 
     importer->manager = newManager;
+    importer->sceneRootPtr = rootPtr;
 }
 
 void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
@@ -173,6 +174,8 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     deleteWfoParser(&wfoParser);
     fclose(wfoFile);
+
+    if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 
     struct GameObject *root = NULL, *curGO = NULL;
     struct ModelRendererComponent *curMRC = NULL;
@@ -263,5 +266,5 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     attachChild(root, curGO);
     curGO = NULL;
 
-    deleteGameObject(&root);
+    (*importer->sceneRootPtr) = root;
 }

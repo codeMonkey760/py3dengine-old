@@ -6,9 +6,9 @@
 #include "logger.h"
 #include "util.h"
 #include "python_wrapper.h"
-#include "shader.h"
 #include "engine.h"
 #include "scene_importer.h"
+#include "game_object.h"
 
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
@@ -59,18 +59,14 @@ static void updateEngine(struct Engine *engine, float dt){
     updateStats(engine, dt);
     printStats(engine, dt);
 
-    updateQuad(engine->quad[0], dt);
-    updateQuad(engine->quad[1], dt);
-    updateQuad(engine->quad[2], dt);
+    updateGameObject(engine->root, dt);
     updateCamera(engine->camera, dt);
 }
 
 static void renderEngine(struct Engine *engine){
     if (engine == NULL) return;
 
-    renderQuad(engine->quad[0], engine->camera);
-    renderQuad(engine->quad[1], engine->camera);
-    renderQuad(engine->quad[2], engine->camera);
+    renderGameObject(engine->root, engine->camera);
 }
 
 void allocEngine(struct Engine **enginePtr){
@@ -89,9 +85,7 @@ void allocEngine(struct Engine **enginePtr){
 
     engine->resourceManager = NULL;
 
-    engine->quad[0] = NULL;
-    engine->quad[1] = NULL;
-    engine->quad[2] = NULL;
+    engine->root = NULL;
     engine->camera = NULL;
 
     (*enginePtr) = engine;
@@ -105,9 +99,7 @@ void deleteEngine(struct Engine **enginePtr){
     engine->window = NULL;
     deleteResourceManager(&engine->resourceManager);
 
-    deleteQuad(&(engine->quad[0]));
-    deleteQuad(&(engine->quad[1]));
-    deleteQuad(&(engine->quad[2]));
+    deleteGameObject(&engine->root);
     deleteCamera(&(engine->camera));
     engine = NULL;
 
@@ -156,61 +148,10 @@ void initEngine(struct Engine *engine){
         critical_log("%s", "[Engine]: Unable to allocate scene importer. Scene parsing will fail");
     }
 
-    initSceneImporter(importer, engine->resourceManager);
+    initSceneImporter(importer, engine->resourceManager, &engine->root);
     importScene(importer, NULL);
 
     deleteSceneImporter(&importer);
-
-    struct Quad *curQuad = NULL;
-    struct Model *curModel = NULL;
-    struct Shader *curShader = NULL;
-    float posW[3] = {0.0f, 0.0f, 2.0f};
-    float color[3] = {0.0f, 0.0f, 0.0f};
-
-    curShader = getShaderResource(engine->resourceManager, "SolidColorShader");
-    if (curShader == NULL) {
-        critical_log("%s", "Failed to retrieve \"SolidColorShader\" shader");
-    }
-
-    posW[0] = -3.0f;
-    color[0] = 0.8f;
-    color[2] = 0.2f;
-    curModel = getModelResource(engine->resourceManager, "Cube");
-    if (curModel == NULL) {
-        critical_log("%s", "Failed to retrieve \"Cube\" model");
-    }
-    allocQuad(&curQuad, curModel, curShader);
-    setPosWQuad(curQuad, posW);
-    setDiffuseColorQuad(curQuad, color);
-    engine->quad[0] = curQuad;
-    curQuad = NULL;
-
-    posW[0] = 0.0f;
-    color[0] = 0.2f;
-    color[2] = 0.8f;
-    curModel = getModelResource(engine->resourceManager, "Pyramid");
-    if (curModel == NULL) {
-        critical_log("%s", "Failed to retrieve \"Pyramid\" model");
-    }
-    allocQuad(&curQuad, curModel, curShader);
-    setPosWQuad(curQuad, posW);
-    setDiffuseColorQuad(curQuad, color);
-    engine->quad[1] = curQuad;
-    curQuad = NULL;
-
-    posW[0] = 3.0f;
-    color[0] = 0.8f;
-    color[1] = 0.8f;
-    color[2] = 0.2f;
-    curModel = getModelResource(engine->resourceManager, "Quad");
-    if (curModel == NULL) {
-        critical_log("%s", "Failed to retrieve \"Quad\" model");
-    }
-    allocQuad(&curQuad, curModel, curShader);
-    setPosWQuad(curQuad, posW);
-    setDiffuseColorQuad(curQuad, color);
-    engine->quad[2] = curQuad;
-    curQuad = NULL;
 
     struct Camera *camera = NULL;
     allocCamera(&camera);
