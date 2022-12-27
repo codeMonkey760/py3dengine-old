@@ -219,6 +219,7 @@ void attachComponent(struct GameObject *gameObject, struct BaseComponent *newCom
     } else {
         prevNode->next = newNode;
     }
+    newComponent->_owner = gameObject;
 }
 
 struct String *getGameObjectName(struct GameObject *gameObject) {
