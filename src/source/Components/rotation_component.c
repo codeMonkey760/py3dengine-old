@@ -45,6 +45,7 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
 
     struct BaseComponent *baseComponent = (struct BaseComponent *) newComponent;
     baseComponent->_type = COMPONENT_TYPE_ROTATION;
+    baseComponent->_name = NULL;
     baseComponent->update = update;
     baseComponent->render = NULL;
     baseComponent->delete = delete;
