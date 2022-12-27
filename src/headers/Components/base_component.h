@@ -4,17 +4,23 @@
 #include "camera.h"
 #include "custom_string.h"
 
+struct GameObject;
+
 struct BaseComponent {
     unsigned int _type;
     struct String *_name;
+    struct GameObject *_owner;
     void (*update)(struct BaseComponent *, float);
     void (*render)(struct BaseComponent *, struct Camera *);
     void (*delete)(struct BaseComponent **);
 };
 
+extern void initializeBaseComponent(struct BaseComponent *component);
 extern void finalizeBaseComponent(struct BaseComponent *component);
 
 extern struct String *getComponentName(struct BaseComponent *component);
 extern void setComponentName(struct BaseComponent *component, const char *newName);
+
+extern struct GameObject *getComponentOwner(struct BaseComponent *component);
 
 #endif

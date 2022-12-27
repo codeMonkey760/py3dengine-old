@@ -2,6 +2,19 @@
 
 #include "Components/base_component.h"
 
+#define COMPONENT_TYPE_INVALID 0
+
+void initializeBaseComponent(struct BaseComponent *component) {
+    if (component == NULL) return;
+
+    component->_type = COMPONENT_TYPE_INVALID;
+    component->_name = NULL;
+    component->_owner = NULL;
+    component->update = NULL;
+    component->render = NULL;
+    component->delete = NULL;
+}
+
 void finalizeBaseComponent(struct BaseComponent *component) {
     if (component == NULL) return;
 
@@ -27,4 +40,10 @@ void setComponentName(struct BaseComponent *component, const char *newName) {
     } else {
         setChars(component->_name, newName);
     }
+}
+
+struct GameObject *getComponentOwner(struct BaseComponent *component) {
+    if (component == NULL) return NULL;
+
+    return component->_owner;
 }
