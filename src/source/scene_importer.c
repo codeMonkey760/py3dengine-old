@@ -177,7 +177,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     struct GameObject *root = NULL, *curGO = NULL;
     struct ModelRendererComponent *curMRC = NULL;
     struct RotationComponent *curRC = NULL;
-    float posW[3] = {0.0f};
+    float posW[3] = {0.0f, 0.0f, 2.0f};
     float axis[3] = {0.0f};
 
     // Root Game Object
@@ -215,7 +215,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     allocGameObject(&curGO);
     setGameObjectName(curGO, "Pyramid");
 
-    // pyramid is positioned at origin by default
+    setTransformPosition(getGameObjectTransform(curGO), posW);
 
     allocModelRendererComponent(&curMRC);
     setComponentName((struct BaseComponent *) curMRC, "Pyramid.MRC");
