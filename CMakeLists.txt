@@ -35,6 +35,8 @@ add_executable(
     src/source/python_wrapper.c
     src/source/material.c
     src/source/resource_manager.c
-        src/source/scene_importer.c src/headers/scene_importer.h)
+    src/source/scene_importer.c
+    src/source/Components/rotation_component.c
+)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python m)
