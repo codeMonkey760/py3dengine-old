@@ -2,6 +2,8 @@
 
 #include "util.h"
 #include "Components/rotation_component.h"
+#include "game_object.h"
+#include "Components/transform_component.h"
 
 #define COMPONENT_TYPE_ROTATION 1
 
@@ -26,7 +28,9 @@ static void update(struct BaseComponent *component, float dt) {
         deltaRot
     );
 
-    // TODO: rotate parent game object with the delta rot Quaternion
+    struct TransformComponent *transform = getGameObjectTransform(getComponentOwner(component));
+    if (transform == NULL) return;
+    rotateTransform(transform, deltaRot);
 }
 
 static void delete(struct BaseComponent **componentPtr) {
