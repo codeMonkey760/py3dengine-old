@@ -1,3 +1,4 @@
+#include "util.h"
 #include "Components/model_renderer_component.h"
 #include "game_object.h"
 #include "Components/transform_component.h"
@@ -21,7 +22,8 @@ static void render(struct BaseComponent *component, struct Camera *camera) {
     if (transform == NULL) return;
 
     enableShader(mrc->shader);
-    float color[3] = {1.0f};
+    float color[3] = {0.0f};
+    Vec3Fill(color, 1.0f);
     setDiffuseColor(mrc->shader, color);
 
     float cameraPosition[3] = {0.0f};
@@ -30,6 +32,11 @@ static void render(struct BaseComponent *component, struct Camera *camera) {
 
     setWMtx(mrc->shader, getTransformWorldMtx(transform));
     setWITMtx(mrc->shader, getTransformWITMtx(transform));
+
+    float wvpMtx[16] = {0.0f};
+    getVPMtx(camera, wvpMtx);
+    Mat4Mult(wvpMtx, getTransformWorldMtx(transform), wvpMtx);
+    setWVPMtx(mrc->shader, wvpMtx);
 
     bindModel(mrc->model);
     renderModel(mrc->model);
