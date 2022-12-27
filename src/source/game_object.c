@@ -127,6 +127,13 @@ void updateGameObject(struct GameObject *gameObject, float dt) {
 
         curNode = curNode->next;
     }
+
+    struct ChildListNode *curChild = gameObject->children;
+    while (curChild != NULL) {
+        updateGameObject(curChild->child, dt);
+
+        curChild = curChild->next;
+    }
 }
 
 void renderGameObject(struct GameObject *gameObject, struct Camera *camera) {
@@ -140,6 +147,13 @@ void renderGameObject(struct GameObject *gameObject, struct Camera *camera) {
         }
 
         curNode = curNode->next;
+    }
+
+    struct ChildListNode *curChild = gameObject->children;
+    while (curChild != NULL) {
+        renderGameObject(curChild->child, camera);
+
+        curChild = curChild->next;
     }
 }
 
