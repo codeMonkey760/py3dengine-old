@@ -50,10 +50,8 @@ void allocTransformComponent(struct TransformComponent **componentPtr) {
     if (newComponent == NULL) return;
 
     struct BaseComponent *base = (struct BaseComponent *) newComponent;
+    initializeBaseComponent(base);
     base->_type = COMPONENT_TYPE_TRANSFORM;
-    base->_name = NULL;
-    base->update = NULL;
-    base->render = NULL;
     base->delete = delete;
 
     Vec3Identity(newComponent->_position);
@@ -66,6 +64,7 @@ void allocTransformComponent(struct TransformComponent **componentPtr) {
 
     (*componentPtr) = newComponent;
     newComponent = NULL;
+    base = NULL;
 }
 
 void deleteTransformComponent(struct TransformComponent **componentPtr) {

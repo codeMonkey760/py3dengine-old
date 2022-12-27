@@ -43,12 +43,11 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
     struct RotationComponent *newComponent = calloc(1, sizeof(struct RotationComponent));
     if (newComponent == NULL) return;
 
-    struct BaseComponent *baseComponent = (struct BaseComponent *) newComponent;
-    baseComponent->_type = COMPONENT_TYPE_ROTATION;
-    baseComponent->_name = NULL;
-    baseComponent->update = update;
-    baseComponent->render = NULL;
-    baseComponent->delete = delete;
+    struct BaseComponent *base = (struct BaseComponent *) newComponent;
+    initializeBaseComponent(base);
+    base->_type = COMPONENT_TYPE_ROTATION;
+    base->update = update;
+    base->delete = delete;
 
     newComponent->_rotSpeed = 0.0f;
     Vec3Identity(newComponent->_rotAxis);
@@ -56,7 +55,7 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
 
     (*componentPtr) = newComponent;
     newComponent = NULL;
-    baseComponent = NULL;
+    base = NULL;
 }
 
 extern void deleteRotationComponent(struct RotationComponent **componentPtr) {
