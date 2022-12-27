@@ -202,6 +202,27 @@ void removeChildByName(struct GameObject *gameObject, const char* name) {
     // TODO: implement GameObject::removeChildByName
 }
 
+struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name) {
+    if (gameObject == NULL || name == NULL) return NULL;
+
+    if (stringEquals(gameObject->name, name)) {
+        return gameObject;
+    }
+
+    struct ChildListNode *curNode = gameObject->children;
+    struct GameObject *ret = NULL;
+    while (curNode != NULL) {
+        ret = findGameObjectByName(curNode->child, name);
+        if (ret != NULL) {
+            return ret;
+        }
+
+        curNode = curNode->next;
+    }
+
+    return ret;
+}
+
 void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent) {
     if (gameObject == NULL || newComponent == NULL) return;
 
