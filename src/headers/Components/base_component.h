@@ -7,7 +7,7 @@ struct BaseComponent {
     unsigned int _type;
     void (*update)(void *, float);
     void (*render)(void *, struct Camera *);
-    void (*deleter)(void **);
+    void (*delete)(void **);
 };
 
 #endif

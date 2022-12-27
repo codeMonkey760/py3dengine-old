@@ -31,7 +31,7 @@ static void update(void *component, float dt) {
     // TODO: rotate parent game object with the delta rot Quaternion
 }
 
-static void deleter(void **componentPtr) {
+static void delete(void **componentPtr) {
     if (componentPtr == NULL) return;
 
     if (!isComponentValid((*componentPtr))) return;
@@ -49,7 +49,7 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
     baseComponent->_type = COMPONENT_TYPE_ROTATION;
     baseComponent->update = update;
     baseComponent->render = NULL;
-    baseComponent->deleter = deleter;
+    baseComponent->delete = delete;
 }
 
 extern void deleteRotationComponent(struct RotationComponent **componentPtr) {
