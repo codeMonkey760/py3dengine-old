@@ -8,6 +8,7 @@ void initializeBaseComponent(struct BaseComponent *component) {
     if (component == NULL) return;
 
     component->_type = COMPONENT_TYPE_INVALID;
+    component->_typeName = NULL;
     component->_name = NULL;
     component->_owner = NULL;
     component->update = NULL;
@@ -40,6 +41,12 @@ void setComponentName(struct BaseComponent *component, const char *newName) {
     } else {
         setChars(component->_name, newName);
     }
+}
+
+struct String *getComponentTypeName(struct BaseComponent *component) {
+    if (component == NULL) return NULL;
+
+    return component->_typeName;
 }
 
 struct GameObject *getComponentOwner(struct BaseComponent *component) {

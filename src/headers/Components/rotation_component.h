@@ -3,6 +3,8 @@
 
 #include "Components/base_component.h"
 
+#define COMPONENT_TYPE_NAME_ROTATION "rotation"
+
 struct RotationComponent {
     struct BaseComponent base;
     float _rotSpeed;

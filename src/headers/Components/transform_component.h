@@ -3,6 +3,8 @@
 
 #include "Components/base_component.h"
 
+#define COMPONENT_TYPE_NAME_TRANSFORM "transform"
+
 struct TransformComponent {
     struct BaseComponent base;
 

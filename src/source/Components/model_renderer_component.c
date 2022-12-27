@@ -62,6 +62,7 @@ void allocModelRendererComponent(struct ModelRendererComponent **componentPtr) {
     struct BaseComponent *base = (struct BaseComponent *) newComponent;
     initializeBaseComponent(base);
     base->_type = COMPONENT_TYPE_MODEL_RENDERER;
+    allocString(&base->_typeName, COMPONENT_TYPE_NAME_MODEL_RENDERER);
     base->render = render;
     base->delete = delete;
 

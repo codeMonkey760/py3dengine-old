@@ -52,6 +52,7 @@ void allocTransformComponent(struct TransformComponent **componentPtr) {
     struct BaseComponent *base = (struct BaseComponent *) newComponent;
     initializeBaseComponent(base);
     base->_type = COMPONENT_TYPE_TRANSFORM;
+    allocString(&base->_typeName, COMPONENT_TYPE_NAME_TRANSFORM);
     base->delete = delete;
 
     Vec3Identity(newComponent->_position);

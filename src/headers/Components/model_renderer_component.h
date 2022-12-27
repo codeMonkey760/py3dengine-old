@@ -5,6 +5,8 @@
 #include "shader.h"
 #include "model.h"
 
+#define COMPONENT_TYPE_NAME_MODEL_RENDERER "model_renderer"
+
 struct ModelRendererComponent {
     struct BaseComponent base;
     struct Shader *shader;
