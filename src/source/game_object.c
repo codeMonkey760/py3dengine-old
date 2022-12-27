@@ -54,6 +54,32 @@ static void deleteComponentListNode(struct ComponentListNode **listNodePtr) {
     (*listNodePtr) = NULL;
 }
 
+static void allocChildListNode(struct ChildListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
+
+    struct ChildListNode *newNode = calloc(1, sizeof(struct ChildListNode));
+    if (newNode == NULL) return;
+
+    newNode->child = NULL;
+    newNode->next = NULL;
+
+    (*listNodePtr) = newNode;
+    newNode = NULL;
+}
+
+static void deleteChildListNode(struct ChildListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
+
+    struct ChildListNode *node = (*listNodePtr);
+    deleteGameObject(&node->child);
+
+    deleteChildListNode(&node->next);
+
+    free(node);
+    node = NULL;
+    (*listNodePtr) = NULL;
+}
+
 void allocGameObject(struct GameObject **gameObjectPtr) {
     if (gameObjectPtr == NULL || (*gameObjectPtr) != NULL) return;
 
@@ -75,11 +101,7 @@ void deleteGameObject(struct GameObject **gameObjectPtr) {
 
     struct GameObject *gameObject = (*gameObjectPtr);
     deleteComponentListNode(&gameObject->components);
-    // TODO: so ... do Game Objects delete their children? ... they dont alloc them
-    /* In previous projects I've had a special class that constructs and tears down scene graphs */
-    /* But what about situational deletion rather than scene boot and tear down? */
-    // TODO: in the far far future Game Objects may emit events when detached from the scene graph
-    // TODO: does setting the parent NULL here or deleting the Game Object count in that situation?
+    deleteChildListNode(&gameObject->children);
     gameObject->parent = NULL;
 
     deleteString(&(gameObject->name));
@@ -126,8 +148,40 @@ void attachChild(struct GameObject *parent, struct GameObject *newChild) {
         return;
     }
 
-    struct GameObject *curChild = parent->children;
-    while (curChild)
+    struct ChildListNode *prevNode = NULL, *curNode = parent->children;
+    while (curNode != NULL) {
+        if (stringEquals(getGameObjectName(curNode->child), newChildName)) {
+            error_log("%s", "Cannot attach child game object unless its name is unique");
+            return;
+        }
+
+        prevNode = curNode;
+        curNode = curNode->next;
+    }
+
+    struct ChildListNode *newNode = NULL;
+    allocChildListNode(&newNode);
+    if (newNode == NULL) return;
+    newNode->child = newChild;
+
+    if (prevNode == NULL) {
+        parent->children = newNode;
+    } else {
+        prevNode->next = newNode;
+    }
+    newChild->parent = parent;
+}
+
+void removeChild(struct GameObject *gameObject, struct GameObject *target) {
+    critical_log("%s", "GameObject::removeChild is not yet implemented");
+
+    // TODO: implement GameObject::removeChild
+}
+
+void removeChildByName(struct GameObject *gameObject, const char* name) {
+    critical_log("%s", "GameObject::removeChildByName is not yet implemented");
+
+    // TODO: implement GameObject::removeChildByName
 }
 
 void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent) {
