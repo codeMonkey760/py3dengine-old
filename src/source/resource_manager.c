@@ -1,5 +1,6 @@
 #include "custom_string.h"
 #include "resource_manager.h"
+#include "logger.h"
 
 #define TYPE_INVALID 0
 #define TYPE_SHADER 1
@@ -13,6 +14,20 @@ struct ListNode {
 
     struct ListNode *next;
 };
+
+static void deleteResourceByType(void **resourcePtr, unsigned int type) {
+    if (resourcePtr == NULL || (*resourcePtr == NULL) || type == TYPE_INVALID) return;
+
+    if (type == TYPE_SHADER) {
+        deleteShader((struct Shader **) resourcePtr);
+    } else if (type == TYPE_MODEL) {
+        deleteModel((struct Model **) resourcePtr);
+    } else if (type == TYPE_MATERIAL) {
+        deleteMaterial((struct Material **) resourcePtr);
+    } else {
+        critical_log("%s", "[Resource Manager]: Unable able to delete resource. Unrecognized type. Memory leak certain.");
+    }
+}
 
 static void allocListNode(struct ListNode **listNodePtr) {
     if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
@@ -30,9 +45,11 @@ static void deleteListNode(struct ListNode **listNodePtr) {
     if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
 
     struct ListNode *listNode = (*listNodePtr);
-    // TODO: delete the resource?
+    deleteResourceByType(&listNode->resource, listNode->type);
     listNode->type = 0;
     deleteString(&listNode->name);
+
+    deleteListNode(&listNode->next);
 
     free(listNode);
     listNode = NULL;
@@ -101,7 +118,7 @@ void deleteResourceManager(struct ResourceManager **resourceManagerPtr){
 
     struct ResourceManager *manager = (*resourceManagerPtr);
 
-    // TODO: delete resource list
+    deleteListNode(&manager->_root);
 
     free(manager);
     manager = NULL;

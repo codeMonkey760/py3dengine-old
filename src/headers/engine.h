@@ -5,6 +5,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "resource_manager.h"
 #include "quad.h"
 #include "camera.h"
 #include "model.h"
@@ -19,11 +20,10 @@ struct Engine {
 
     GLFWwindow *window;
 
+    struct ResourceManager *resourceManager;
+
     struct Quad *quad[3];
     struct Camera *camera;
-    struct Model *cubeModel;
-    struct Model *pyramidModel;
-    struct Model *quadModel;
     struct Shader *shader;
 };
 

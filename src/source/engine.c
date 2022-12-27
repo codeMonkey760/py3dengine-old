@@ -8,8 +8,7 @@
 #include "python_wrapper.h"
 #include "shader.h"
 #include "engine.h"
-
-#include "wfo_parser/wfo_parser.h"
+#include "scene_importer.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -116,39 +115,7 @@ static void renderEngine(struct Engine *engine){
     renderQuad(engine->quad[2], engine->camera);
 }
 
-static void initModel(struct Model **modelPtr, struct WfoParser *wfoParser, const char *name) {
-    if (modelPtr == NULL || (*modelPtr) != NULL) return;
 
-    unsigned long cubeVboSize = getUnIndexedVertexBufferSizeInFloats(wfoParser, name);
-    if (cubeVboSize == 0) return;
-
-    debug_log("Allocating %d * %d = %d for VBO with name %s",
-        cubeVboSize, sizeof(float),
-        cubeVboSize * sizeof(float),
-        name
-    );
-    float *vbo = calloc(cubeVboSize, sizeof(float));
-    if (vbo == NULL) return;
-
-    getUnIndexedVertexBuffer(wfoParser, name, vbo, cubeVboSize);
-
-    struct Model *newModel = NULL;
-    allocModel(&newModel);
-    if (newModel == NULL) {
-        free(vbo);
-        vbo = NULL;
-
-        return;
-    }
-
-    setPNTBuffer(newModel, vbo, cubeVboSize / 8);
-
-    free(vbo);
-    vbo = NULL;
-
-    (*modelPtr) = newModel;
-    newModel = NULL;
-}
 
 void allocEngine(struct Engine **enginePtr){
     if (enginePtr == NULL || (*enginePtr) != NULL) return;
@@ -164,13 +131,12 @@ void allocEngine(struct Engine **enginePtr){
 
     engine->window = NULL;
 
+    engine->resourceManager = NULL;
+
     engine->quad[0] = NULL;
     engine->quad[1] = NULL;
     engine->quad[2] = NULL;
     engine->camera = NULL;
-    engine->cubeModel = NULL;
-    engine->pyramidModel = NULL;
-    engine->quadModel = NULL;
     engine->shader = NULL;
 
     (*enginePtr) = engine;
@@ -182,14 +148,12 @@ void deleteEngine(struct Engine **enginePtr){
     struct Engine *engine = (*enginePtr);
     glfwDestroyWindow(engine->window);
     engine->window = NULL;
+    deleteResourceManager(&engine->resourceManager);
 
     deleteQuad(&(engine->quad[0]));
     deleteQuad(&(engine->quad[1]));
     deleteQuad(&(engine->quad[2]));
     deleteCamera(&(engine->camera));
-    deleteModel(&engine->cubeModel);
-    deleteModel(&engine->pyramidModel);
-    deleteModel(&engine->quadModel);
     deleteShader(&engine->shader);
     engine = NULL;
 
@@ -227,31 +191,38 @@ void initEngine(struct Engine *engine){
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
-    struct WfoParser *wfoParser = NULL;
-    allocWfoParser(&wfoParser);
+    allocResourceManager(&engine->resourceManager);
+    if (engine->resourceManager == NULL) {
+        critical_log("%s", "[Engine]: Unable to allocate resource manager. Resource importing will fail");
+    }
 
-    FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
-    parseWaveFrontFile(wfoParser, wfoFile);
-    fclose(wfoFile);
-    wfoFile = NULL;
+    struct SceneImporter *importer = NULL;
+    allocSceneImporter(&importer);
+    if (importer == NULL) {
+        critical_log("%s", "[Engine]: Unable to allocate scene importer. Scene parsing will fail");
+    }
 
-    initModel(&engine->cubeModel, wfoParser, "Cube");
-    initModel(&engine->pyramidModel, wfoParser, "Pyramid");
-    initModel(&engine->quadModel, wfoParser, "Quad");
+    initSceneImporter(importer, engine->resourceManager);
+    importScene(importer, NULL);
 
-    deleteWfoParser(&wfoParser);
+    deleteSceneImporter(&importer);
 
     allocShader(&engine->shader);
     initShader(engine->shader, vertex_shader_source, fragment_shader_source);
 
     struct Quad *curQuad = NULL;
+    struct Model *curModel = NULL;
     float posW[3] = {0.0f, 0.0f, 2.0f};
     float color[3] = {0.0f, 0.0f, 0.0f};
 
     posW[0] = -3.0f;
     color[0] = 0.8f;
     color[2] = 0.2f;
-    allocQuad(&curQuad, engine->cubeModel, engine->shader);
+    curModel = getModelResource(engine->resourceManager, "Cube");
+    if (curModel == NULL) {
+        critical_log("%s", "Failed to retrieve \"Cube\" model");
+    }
+    allocQuad(&curQuad, curModel, engine->shader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[0] = curQuad;
@@ -260,7 +231,11 @@ void initEngine(struct Engine *engine){
     posW[0] = 0.0f;
     color[0] = 0.2f;
     color[2] = 0.8f;
-    allocQuad(&curQuad, engine->pyramidModel, engine->shader);
+    curModel = getModelResource(engine->resourceManager, "Pyramid");
+    if (curModel == NULL) {
+        critical_log("%s", "Failed to retrieve \"Pyramid\" model");
+    }
+    allocQuad(&curQuad, curModel, engine->shader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[1] = curQuad;
@@ -270,7 +245,11 @@ void initEngine(struct Engine *engine){
     color[0] = 0.8f;
     color[1] = 0.8f;
     color[2] = 0.2f;
-    allocQuad(&curQuad, engine->quadModel, engine->shader);
+    curModel = getModelResource(engine->resourceManager, "Quad");
+    if (curModel == NULL) {
+        critical_log("%s", "Failed to retrieve \"Quad\" model");
+    }
+    allocQuad(&curQuad, curModel, engine->shader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[2] = curQuad;
