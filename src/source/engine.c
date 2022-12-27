@@ -10,48 +10,6 @@
 #include "engine.h"
 #include "scene_importer.h"
 
-static const char *vertex_shader_source =
-        "#version 460 core\n\n"
-
-        "layout(location = 0) in vec3 posL;\n"
-        "layout(location = 1) in vec3 normL;\n\n"
-
-        "uniform mat4 gWMtx;\n"
-        "uniform mat4 gWITMtx;\n"
-        "uniform mat4 gWVPMtx;\n\n"
-
-        "out vec3 posW;\n"
-        "out vec3 normW;\n\n"
-
-        "void main() {\n"
-        "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
-        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n\n"
-
-        "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
-        "}\n";
-
-static const char *fragment_shader_source =
-        "#version 460 core\n\n"
-
-        "in vec3 posW;\n"
-        "in vec3 normW;\n\n"
-
-        "uniform vec3 gDiffuseColor;\n"
-        "uniform vec3 gCamPos;\n\n"
-
-        "layout(location = 0) out vec4 outputColor;\n\n"
-
-        "void main() {\n"
-        "    vec3 normWFixed = normalize(normW);\n"
-        "    vec3 toCamera = normalize(gCamPos - posW);\n\n"
-
-        "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
-        "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
-
-        "    outputColor = vec4(gDiffuseColor * lightValue, 1.0f);\n"
-        "}\n";
-
-
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
@@ -115,8 +73,6 @@ static void renderEngine(struct Engine *engine){
     renderQuad(engine->quad[2], engine->camera);
 }
 
-
-
 void allocEngine(struct Engine **enginePtr){
     if (enginePtr == NULL || (*enginePtr) != NULL) return;
 
@@ -137,7 +93,6 @@ void allocEngine(struct Engine **enginePtr){
     engine->quad[1] = NULL;
     engine->quad[2] = NULL;
     engine->camera = NULL;
-    engine->shader = NULL;
 
     (*enginePtr) = engine;
 }
@@ -154,7 +109,6 @@ void deleteEngine(struct Engine **enginePtr){
     deleteQuad(&(engine->quad[1]));
     deleteQuad(&(engine->quad[2]));
     deleteCamera(&(engine->camera));
-    deleteShader(&engine->shader);
     engine = NULL;
 
     glfwTerminate();
@@ -207,13 +161,16 @@ void initEngine(struct Engine *engine){
 
     deleteSceneImporter(&importer);
 
-    allocShader(&engine->shader);
-    initShader(engine->shader, vertex_shader_source, fragment_shader_source);
-
     struct Quad *curQuad = NULL;
     struct Model *curModel = NULL;
+    struct Shader *curShader = NULL;
     float posW[3] = {0.0f, 0.0f, 2.0f};
     float color[3] = {0.0f, 0.0f, 0.0f};
+
+    curShader = getShaderResource(engine->resourceManager, "SolidColorShader");
+    if (curShader == NULL) {
+        critical_log("%s", "Failed to retrieve \"SolidColorShader\" shader");
+    }
 
     posW[0] = -3.0f;
     color[0] = 0.8f;
@@ -222,7 +179,7 @@ void initEngine(struct Engine *engine){
     if (curModel == NULL) {
         critical_log("%s", "Failed to retrieve \"Cube\" model");
     }
-    allocQuad(&curQuad, curModel, engine->shader);
+    allocQuad(&curQuad, curModel, curShader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[0] = curQuad;
@@ -235,7 +192,7 @@ void initEngine(struct Engine *engine){
     if (curModel == NULL) {
         critical_log("%s", "Failed to retrieve \"Pyramid\" model");
     }
-    allocQuad(&curQuad, curModel, engine->shader);
+    allocQuad(&curQuad, curModel, curShader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[1] = curQuad;
@@ -249,7 +206,7 @@ void initEngine(struct Engine *engine){
     if (curModel == NULL) {
         critical_log("%s", "Failed to retrieve \"Quad\" model");
     }
-    allocQuad(&curQuad, curModel, engine->shader);
+    allocQuad(&curQuad, curModel, curShader);
     setPosWQuad(curQuad, posW);
     setDiffuseColorQuad(curQuad, color);
     engine->quad[2] = curQuad;

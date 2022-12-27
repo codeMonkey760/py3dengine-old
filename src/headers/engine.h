@@ -24,7 +24,6 @@ struct Engine {
 
     struct Quad *quad[3];
     struct Camera *camera;
-    struct Shader *shader;
 };
 
 extern void allocEngine(struct Engine **enginePtr);
