@@ -1,4 +1,6 @@
 #include "Components/model_renderer_component.h"
+#include "game_object.h"
+#include "Components/transform_component.h"
 
 #define COMPONENT_TYPE_MODEL_RENDERER 2
 
@@ -15,8 +17,25 @@ static void render(struct BaseComponent *component, struct Camera *camera) {
 
     if (mrc->shader == NULL || mrc->model == NULL) return;
 
-    // TODO: I cant go any further with this until I have a transform component
-    // that I can retrieve from the owner game object
+    struct TransformComponent *transform = getGameObjectTransform(getComponentOwner(component));
+    if (transform == NULL) return;
+
+    enableShader(mrc->shader);
+    float color[3] = {1.0f};
+    setDiffuseColor(mrc->shader, color);
+
+    float cameraPosition[3] = {0.0f};
+    getCameraPositionW(camera, cameraPosition);
+    setCameraPosition(mrc->shader, cameraPosition);
+
+    setWMtx(mrc->shader, getTransformWorldMtx(transform));
+    setWITMtx(mrc->shader, getTransformWITMtx(transform));
+
+    bindModel(mrc->model);
+    renderModel(mrc->model);
+    unbindModel(mrc->model);
+
+    disableShader(mrc->shader);
 }
 
 static void delete(struct BaseComponent **componentPtr) {
