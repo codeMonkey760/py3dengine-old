@@ -1,6 +1,10 @@
 #include "logger.h"
 #include "wfo_parser/wfo_parser.h"
 #include "scene_importer.h"
+#include "game_object.h"
+#include "Components/model_renderer_component.h"
+#include "Components/rotation_component.h"
+#include "Components/transform_component.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -169,4 +173,95 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     deleteWfoParser(&wfoParser);
     fclose(wfoFile);
+
+    struct GameObject *root = NULL, *curGO = NULL;
+    struct ModelRendererComponent *curMRC = NULL;
+    struct RotationComponent *curRC = NULL;
+    float posW[3] = {0.0f};
+    float axis[3] = {0.0f};
+
+    // Root Game Object
+    allocGameObject(&root);
+    setGameObjectName(root, "Root");
+
+    // The Cube
+    allocGameObject(&curGO);
+    setGameObjectName(curGO, "Cube");
+
+    posW[0] = -3.0f;
+    setTransformPosition(getGameObjectTransform(curGO), posW);
+    posW[0] = 0.0f;
+
+    allocModelRendererComponent(&curMRC);
+    setComponentName((struct BaseComponent *) curMRC, "Cube.MRC");
+    setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Cube"));
+    setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
+    attachComponent(curGO, (struct BaseComponent *) curMRC);
+    curMRC = NULL;
+
+    allocRotationComponent(&curRC);
+    setComponentName((struct BaseComponent *) curRC, "Cube.RC");
+    axis[0] = 1.0f;
+    setRotationComponentAxis(curRC, axis);
+    axis[0] = 0.0f;
+    setRotationComponentSpeed(curRC, 45.0f);
+    attachComponent(curGO, (struct BaseComponent *) curRC);
+    curRC = NULL;
+
+    attachChild(root, curGO);
+    curGO = NULL;
+
+    // The Pyramid
+    allocGameObject(&curGO);
+    setGameObjectName(curGO, "Pyramid");
+
+    // pyramid is positioned at origin by default
+
+    allocModelRendererComponent(&curMRC);
+    setComponentName((struct BaseComponent *) curMRC, "Pyramid.MRC");
+    setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Pyramid"));
+    setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
+    attachComponent(curGO, (struct BaseComponent *) curMRC);
+    curMRC = NULL;
+
+    allocRotationComponent(&curRC);
+    setComponentName((struct BaseComponent *) curRC, "Pyramid.RC");
+    axis[1] = 1.0f;
+    setRotationComponentAxis(curRC, axis);
+    axis[1] = 0.0f;
+    setRotationComponentSpeed(curRC, 25.0f);
+    attachComponent(curGO, (struct BaseComponent *) curRC);
+    curRC = NULL;
+
+    attachChild(root, curGO);
+    curGO = NULL;
+
+    // The Quad
+    allocGameObject(&curGO);
+    setGameObjectName(curGO, "Quad");
+
+    posW[0] = 3.0f;
+    setTransformPosition(getGameObjectTransform(curGO), posW);
+    posW[0] = 0.0f;
+
+    allocModelRendererComponent(&curMRC);
+    setComponentName((struct BaseComponent *) curMRC, "Quad.MRC");
+    setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Quad"));
+    setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
+    attachComponent(curGO, (struct BaseComponent *) curMRC);
+    curMRC = NULL;
+
+    allocRotationComponent(&curRC);
+    setComponentName((struct BaseComponent *) curRC, "Quad.RC");
+    axis[2] = 1.0f;
+    setRotationComponentAxis(curRC, axis);
+    axis[2] = 0.0f;
+    setRotationComponentSpeed(curRC, 90.0f);
+    attachComponent(curGO, (struct BaseComponent *) curRC);
+    curRC = NULL;
+
+    attachChild(root, curGO);
+    curGO = NULL;
+
+    deleteGameObject(&root);
 }
