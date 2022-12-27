@@ -4,6 +4,7 @@
 #include "logger.h"
 #include "game_object.h"
 #include "Components/base_component.h"
+#include "Components/transform_component.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;
@@ -91,6 +92,8 @@ void allocGameObject(struct GameObject **gameObjectPtr) {
     gameObject->children = NULL;
     gameObject->parent = NULL;
     gameObject->name = NULL;
+    gameObject->transform = NULL;
+    allocTransformComponent(&gameObject->transform);
 
     (*gameObjectPtr) = gameObject;
     gameObject = NULL;
@@ -104,7 +107,8 @@ void deleteGameObject(struct GameObject **gameObjectPtr) {
     deleteChildListNode(&gameObject->children);
     gameObject->parent = NULL;
 
-    deleteString(&(gameObject->name));
+    deleteString(&gameObject->name);
+    deleteTransformComponent(&gameObject->transform);
 
     free(gameObject);
     gameObject = NULL;
@@ -231,4 +235,10 @@ void setGameObjectName(struct GameObject *gameObject, char *newName) {
     } else {
         setChars(gameObject->name, newName);
     }
+}
+
+struct TransformComponent *getGameObjectTransform(struct GameObject *gameObject) {
+    if (gameObject == NULL) return NULL;
+
+    return gameObject->transform;
 }

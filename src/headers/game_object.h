@@ -2,6 +2,7 @@
 #define PY3DENGINE_GAME_OBJECT_H
 
 struct ComponentListNode;
+struct TransformComponent;
 struct ChildListNode;
 struct BaseComponent;
 struct Camera;
@@ -12,6 +13,7 @@ struct GameObject {
     struct ChildListNode *children;
     struct GameObject *parent;
     struct String *name;
+    struct TransformComponent *transform;
 };
 
 extern void allocGameObject(struct GameObject **gameObjectPtr);
@@ -28,5 +30,7 @@ extern void attachComponent(struct GameObject *gameObject, struct BaseComponent 
 
 extern struct String *getGameObjectName(struct GameObject *gameObject);
 extern void setGameObjectName(struct GameObject *gameObject, char *newName);
+
+extern struct TransformComponent *getGameObjectTransform(struct GameObject *gameObject);
 
 #endif
