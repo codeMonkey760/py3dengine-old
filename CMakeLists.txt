@@ -39,6 +39,7 @@ add_executable(
     src/source/Components/rotation_component.c
     src/source/Components/model_renderer_component.c
     src/source/Components/base_component.c
+    src/source/Components/transform_component.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python m)
