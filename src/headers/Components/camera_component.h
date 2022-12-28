@@ -10,13 +10,23 @@ struct CameraComponent {
     float fovxInDegrees;
     unsigned int renderTargetWidth;
     unsigned int renderTargetHeight;
-    float farPlaneDistance;
     float nearPlaneDistance;
+    float farPlaneDistance;
+
+    float pMtxCache[16];
+    bool isMatrixCacheDirty;
 };
 
 extern void allocCameraComponent(struct CameraComponent **componentPtr);
 extern void deleteCameraComponent(struct CameraComponent **componentPtr);
 
-
+extern void setLens(
+    struct CameraComponent *component,
+    float fovxInDegrees,
+    unsigned int renderTargetWidth,
+    unsigned int renderTargetHeight,
+    float nearPlaneDistance,
+    float farPlaneDistance
+);
 
 #endif
