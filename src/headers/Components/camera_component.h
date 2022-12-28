@@ -20,9 +20,9 @@ struct CameraComponent {
 extern void allocCameraComponent(struct CameraComponent **componentPtr);
 extern void deleteCameraComponent(struct CameraComponent **componentPtr);
 
-extern const float *getProjMatrix(struct CameraComponent *component);
+extern const float *getCameraComponentProjMatrix(struct CameraComponent *component);
 
-extern void setLens(
+extern void setCameraComponentLens(
     struct CameraComponent *component,
     float fovxInDegrees,
     unsigned int renderTargetWidth,
@@ -31,16 +31,16 @@ extern void setLens(
     float farPlaneDistance
 );
 
-extern void zoom(struct CameraComponent *component, float displacement);
-extern void setFov(struct CameraComponent *component, float newFovXInDegrees);
+extern void cameraComponentZoom(struct CameraComponent *component, float displacement);
+extern void setCameraComponentFov(struct CameraComponent *component, float newFovXInDegrees);
 
-extern void resizeRenderTarget(
+extern void resizeCameraComponentRenderTarget(
     struct CameraComponent *component,
     unsigned int newRenderTargetWidth,
     unsigned int newRenderTargetHeight
 );
 
-extern void setNearPlaceDistance(struct CameraComponent *component, float newNearPlaneDistance);
-extern void setFarPlaneDistance(struct CameraComponent *component, float newFarPlaneDistance);
+extern void setCameraComponentNearPlaceDistance(struct CameraComponent *component, float newNearPlaneDistance);
+extern void setCameraComponentFarPlaneDistance(struct CameraComponent *component, float newFarPlaneDistance);
 
 #endif

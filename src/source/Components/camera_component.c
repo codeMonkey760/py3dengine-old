@@ -20,6 +20,27 @@ static void delete(struct BaseComponent **componentPtr) {
     deleteCameraComponent((struct CameraComponent **) componentPtr);
 }
 
+static void refreshProjMatrixCache(struct CameraComponent *component) {
+    if (component == NULL || component->isMatrixCacheDirty == false) return;
+
+    float aspectRatio = ((float) component->renderTargetWidth) / ((float) component->renderTargetHeight);
+    float aspectRatioInv = ((float) component->renderTargetHeight) / ((float) component->renderTargetWidth);
+    float fov_y_radians = DEG_TO_RAD(aspectRatioInv * component->fovxInDegrees);
+    float w = 1.0f / (aspectRatio * tanf(fov_y_radians) / 2.0f);
+    float h = 1.0f / (tanf(fov_y_radians / 2.0f));
+    float far_z = component->farPlaneDistance;
+    float near_z = component->nearPlaneDistance;
+
+    Mat4Identity(component->pMtxCache);
+    component->pMtxCache[0] = w;
+    component->pMtxCache[5] = h;
+    component->pMtxCache[10] = far_z / (far_z - near_z);
+    component->pMtxCache[11] = 1.0f;
+    component->pMtxCache[14] = (-1.0f * near_z * far_z) / (far_z - near_z);
+
+    component->isMatrixCacheDirty = false;
+}
+
 void allocCameraComponent(struct CameraComponent **componentPtr) {
     if (componentPtr == NULL || (*componentPtr) != NULL) return;
 
@@ -55,9 +76,15 @@ void deleteCameraComponent(struct CameraComponent **componentPtr) {
     (*componentPtr) = NULL;
 }
 
-// TODO: implement CameraComponent::getProjMatrix
+const float *getCameraComponentProjMatrix(struct CameraComponent *component) {
+    if (component == NULL) return NULL;
 
-void setLens(
+    refreshProjMatrixCache(component);
+
+    return component->pMtxCache;
+}
+
+void setCameraComponentLens(
     struct CameraComponent *component,
     float fovxInDegrees,
     unsigned int renderTargetWidth,
@@ -74,21 +101,21 @@ void setLens(
     component->farPlaneDistance = farPlaneDistance;
 }
 
-void zoom(struct CameraComponent *component, float displacement) {
+void cameraComponentZoom(struct CameraComponent *component, float displacement) {
     if (component == NULL) return;
 
     component->fovxInDegrees += displacement;
     component->isMatrixCacheDirty = true;
 }
 
-void setFov(struct CameraComponent *component, float newFovXInDegrees) {
+void setCameraComponentFov(struct CameraComponent *component, float newFovXInDegrees) {
     if (component == NULL) return;
 
     component->fovxInDegrees = newFovXInDegrees;
     component->isMatrixCacheDirty = true;
 }
 
-void resizeRenderTarget(
+void resizeCameraComponentRenderTarget(
     struct CameraComponent *component,
     unsigned int newRenderTargetWidth,
     unsigned int newRenderTargetHeight
@@ -100,14 +127,14 @@ void resizeRenderTarget(
     component->isMatrixCacheDirty = true;
 }
 
-void setNearPlaceDistance(struct CameraComponent *component, float newNearPlaneDistance) {
+void setCameraComponentNearPlaceDistance(struct CameraComponent *component, float newNearPlaneDistance) {
     if (component == NULL) return;
 
     component->nearPlaneDistance = newNearPlaneDistance;
     component->isMatrixCacheDirty = true;
 }
 
-void setFarPlaneDistance(struct CameraComponent *component, float newFarPlaneDistance) {
+void setCameraComponentFarPlaneDistance(struct CameraComponent *component, float newFarPlaneDistance) {
     if (component == NULL) return;
 
     component->farPlaneDistance = newFarPlaneDistance;
