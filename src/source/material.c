@@ -44,7 +44,7 @@ void setMaterialName(struct Material *material, const char *newName) {
     if (material == NULL) return;
 
     if (newName == NULL) {
-        deleteString(material->_name);
+        deleteString(&material->_name);
         return;
     }
 
