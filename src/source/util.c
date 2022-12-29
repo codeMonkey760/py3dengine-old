@@ -408,7 +408,7 @@ void Vec3Subtract(float out[3], float a[3], float b[3]) {
     }
 }
 
-void Vec3Copy(float dst[3], float src[3]) {
+void Vec3Copy(float dst[3], const float src[3]) {
     int i;
     if (dst == NULL || src == NULL) return;
 

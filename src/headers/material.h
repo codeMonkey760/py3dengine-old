@@ -21,4 +21,8 @@ extern struct String *getMaterialName(struct Material *material);
 extern void setMaterialName(struct Material *material, const char *newName);
 extern void setMaterialShader(struct Material *material, struct Shader *newShader);
 
+extern const float *getMaterialDiffuseColor(struct Material *material);
+extern void setMaterialDiffuseColorRGB(struct Material *material, float r, float g, float b);
+extern void setMaterialDiffuseColor(struct Material *material, const float newDiffuseColor[3]);
+
 #endif

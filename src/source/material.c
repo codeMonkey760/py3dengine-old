@@ -60,3 +60,23 @@ void setMaterialShader(struct Material *material, struct Shader *newShader) {
 
     material->_shader = newShader;
 }
+
+const float *getMaterialDiffuseColor(struct Material *material) {
+    if (material == NULL) return NULL;
+
+    return material->diffuseColor;
+}
+
+void setMaterialDiffuseColorRGB(struct Material *material, float r, float g, float b) {
+    if (material == NULL) return;
+
+    material->diffuseColor[0] = r;
+    material->diffuseColor[1] = g;
+    material->diffuseColor[2] = b;
+}
+
+void setMaterialDiffuseColor(struct Material *material, const float newDiffuseColor[3]) {
+    if (material == NULL || newDiffuseColor == NULL) return;
+
+    Vec3Copy(material->diffuseColor, newDiffuseColor);
+}
