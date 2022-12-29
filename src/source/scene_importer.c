@@ -210,7 +210,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setComponentName((struct BaseComponent *) curMRC, "Cube.MRC");
     setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Cube"));
     setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "Cube"));
+    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidBlue"));
     attachComponent(curGO, (struct BaseComponent *) curMRC);
     curMRC = NULL;
 
@@ -236,7 +236,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setComponentName((struct BaseComponent *) curMRC, "Pyramid.MRC");
     setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Pyramid"));
     setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "Pyramid"));
+    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidYellow"));
     attachComponent(curGO, (struct BaseComponent *) curMRC);
     curMRC = NULL;
 
@@ -264,7 +264,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setComponentName((struct BaseComponent *) curMRC, "Quad.MRC");
     setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Quad"));
     setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "Quad"));
+    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidRed"));
     attachComponent(curGO, (struct BaseComponent *) curMRC);
     curMRC = NULL;
 
