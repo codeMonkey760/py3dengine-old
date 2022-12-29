@@ -22,9 +22,7 @@ add_executable(
     src/source/util.c
     lib/glad/src/gl.c
     src/source/shader.c
-    src/source/quad.c
-    src/source/camera.c
-    src/source/logger.c
+        src/source/logger.c
     src/source/engine.c
     src/source/custom_string.c
     src/source/game_object.c

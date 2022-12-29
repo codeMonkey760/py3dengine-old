@@ -6,8 +6,6 @@
 #include <GLFW/glfw3.h>
 
 #include "resource_manager.h"
-#include "quad.h"
-#include "camera.h"
 #include "model.h"
 #include "shader.h"
 
