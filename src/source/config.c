@@ -12,19 +12,19 @@
 
 #define SCREEN_WIDTH_DEFAULT 1280
 #define SCREEN_WIDTH_CONFIG_NAME "screen_width"
-static unsigned int screen_width = SCREEN_WIDTH_DEFAULT;
+static int screen_width = SCREEN_WIDTH_DEFAULT;
 
 #define SCREEN_HEIGHT_DEFAULT 720
 #define SCREEN_HEIGHT_CONFIG_NAME "screen_height"
-static unsigned int screen_height = SCREEN_HEIGHT_DEFAULT;
+static int screen_height = SCREEN_HEIGHT_DEFAULT;
 
 #define SCREEN_LEFT_DEFAULT 100
 #define SCREEN_LEFT_CONFIG_NAME "screen_left"
-static unsigned int screen_left = SCREEN_LEFT_DEFAULT;
+static int screen_left = SCREEN_LEFT_DEFAULT;
 
 #define SCREEN_TOP_DEFAULT 100
 #define SCREEN_TOP_CONFIG_NAME "screen_top"
-static unsigned int screen_top = SCREEN_TOP_DEFAULT;
+static int screen_top = SCREEN_TOP_DEFAULT;
 
 #define FULL_SCREEN_DEFAULT false
 #define FULL_SCREEN_CONFIG_NAME "full_screen"
@@ -32,7 +32,7 @@ static bool full_screen = FULL_SCREEN_DEFAULT;
 
 #define SWAP_INTERVAL_DEFAULT 0
 #define SWAP_INTERVAL_CONFIG_NAME "swap_interval"
-static unsigned int swap_interval = SWAP_INTERVAL_DEFAULT;
+static int swap_interval = SWAP_INTERVAL_DEFAULT;
 
 static void clearCharBuffer(char *buffer, size_t numChars) {
     if (buffer == NULL || numChars == 0) return;
@@ -59,7 +59,7 @@ static char *readStringIntoCharBuffer(char *buffer, char *src, size_t maxLenInEl
     char *curPosBuffer = buffer;
     unsigned int count = 0;
 
-    while ((*curPosSrc) != 0 && !isspace((*curPosSrc) && (*curPosSrc) != '=' && count < maxLenInElements)) {
+    while ((*curPosSrc) != 0 && !isspace((*curPosSrc)) && (*curPosSrc) != '=' && count < maxLenInElements) {
         (*curPosBuffer) = (*curPosSrc);
 
         curPosBuffer++;
@@ -82,17 +82,17 @@ static char *consumeEquals(char *curPos) {
 
 static void storeValue(char *name, char *value) {
     if (strncmp(name, SCREEN_WIDTH_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-        screen_width = strtoul(value, NULL, 10);
+        screen_width = (int) strtol(value, NULL, 10);
     } else if (strncmp(name, SCREEN_HEIGHT_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-        screen_height = strtoul(value, NULL, 10);
+        screen_height = (int) strtol(value, NULL, 10);
     } else if (strncmp(name, SCREEN_LEFT_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-        screen_left = strtoul(value, NULL, 10);
+        screen_left = (int) strtol(value, NULL, 10);
     } else if (strncmp(name, SCREEN_TOP_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-        screen_top = strtoul(value, NULL, 10);
+        screen_top = (int) strtol(value, NULL, 10);
     } else if (strncmp(name, FULL_SCREEN_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
         full_screen = strncmp(value, "true", 4) == 0;
     } else if (strncmp(name, SWAP_INTERVAL_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-        swap_interval = strtoul(value, NULL, 10);
+        swap_interval = (int) strtol(value, NULL, 10);
     } else {
         warning_log("[Config]: Unrecognized configuration setting \"%s\"", name);
         return;
@@ -114,11 +114,18 @@ void parseConfig(FILE *config) {
 
     while (fgets(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS, config)) {
         lineNumber++;
+        curPos = lineBuffer;
 
-        if (strnlen(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS) < 2) continue;
+        if (strnlen(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS) < 2) {
+            clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
+            continue;
+        }
 
         curPos = advancePastSpaces(curPos);
-        if (*curPos == 0 || *curPos == '#') continue;
+        if (*curPos == 0 || *curPos == '#') {
+            clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
+            continue;
+        }
 
         clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS+1);
         curPos = readStringIntoCharBuffer(nameBuffer, curPos, NAME_BUFFER_SIZE_IN_ELEMENTS);
@@ -131,6 +138,7 @@ void parseConfig(FILE *config) {
         readStringIntoCharBuffer(valueBuffer, curPos, VALUE_BUFFER_SIZE_IN_ELEMENTS);
 
         storeValue(nameBuffer, valueBuffer);
+        clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
     }
 }
 
@@ -148,19 +156,19 @@ void parseConfigFile(const char *fileName) {
     fclose(config);
 }
 
-unsigned int getConfigScreenWidth() {
+int getConfigScreenWidth() {
     return screen_width;
 }
 
-unsigned int getConfigScreenHeight() {
+int getConfigScreenHeight() {
     return screen_height;
 }
 
-unsigned int getConfigScreenLeft() {
+int getConfigScreenLeft() {
     return screen_left;
 }
 
-unsigned int getConfigScreenTop() {
+int getConfigScreenTop() {
     return screen_top;
 }
 
@@ -168,6 +176,6 @@ bool getConfigFullScreen() {
     return full_screen;
 }
 
-unsigned int getConfigSwapInterval() {
+int getConfigSwapInterval() {
     return swap_interval;
 }
