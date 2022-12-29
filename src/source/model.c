@@ -75,6 +75,7 @@ void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInE
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, newVbo);
+    // TODO: valgrind has been reporting a bad read here for some time now
     glBufferData(GL_ARRAY_BUFFER, ((long) bufferSizeInElements) * 3 * 96, buffer, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(positionShaderIndex);
