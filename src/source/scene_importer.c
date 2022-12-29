@@ -174,33 +174,16 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     storeShader(importer->manager, curShader);
     curShader = NULL;
 
+    FILE *mtlFile = fopen("resources/solid_objs.mtl", "r");
+    if (mtlFile == NULL) {
+        error_log("%s", "[SceneImporter]: Could not open \"solid_objs.mtl\". Material parsing will fail.");
+    } else {
+        parseMaterialFile(importer->manager, mtlFile);
+    }
+    fclose(mtlFile);
+
     deleteWfoParser(&wfoParser);
     fclose(wfoFile);
-
-    struct Material *curMaterial = NULL;
-    curShader = getShaderResource(importer->manager, "SolidColorShader");
-
-    allocMaterial(&curMaterial);
-    setMaterialName(curMaterial, "SolidBlue");
-    setMaterialDiffuseColorRGB(curMaterial, 0.0f, 0.0f, 1.0f);
-    setMaterialShader(curMaterial, curShader);
-    storeMaterial(importer->manager, curMaterial);
-    curMaterial = NULL;
-
-    allocMaterial(&curMaterial);
-    setMaterialName(curMaterial, "SolidYellow");
-    setMaterialDiffuseColorRGB(curMaterial, 1.0f, 1.0f, 0.0f);
-    setMaterialShader(curMaterial, curShader);
-    storeMaterial(importer->manager, curMaterial);
-    curMaterial = NULL;
-
-    allocMaterial(&curMaterial);
-    setMaterialName(curMaterial, "SolidRed");
-    setMaterialDiffuseColorRGB(curMaterial, 1.0f, 0.0f, 0.0f);
-    setMaterialShader(curMaterial, curShader);
-    storeMaterial(importer->manager, curMaterial);
-    curMaterial = NULL;
-    curShader = NULL;
 
     if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 
@@ -227,7 +210,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setComponentName((struct BaseComponent *) curMRC, "Cube.MRC");
     setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Cube"));
     setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidBlue"));
+    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "Cube"));
     attachComponent(curGO, (struct BaseComponent *) curMRC);
     curMRC = NULL;
 
@@ -253,7 +236,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setComponentName((struct BaseComponent *) curMRC, "Pyramid.MRC");
     setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Pyramid"));
     setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidYellow"));
+    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "Pyramid"));
     attachComponent(curGO, (struct BaseComponent *) curMRC);
     curMRC = NULL;
 
@@ -281,7 +264,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setComponentName((struct BaseComponent *) curMRC, "Quad.MRC");
     setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Quad"));
     setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidRed"));
+    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "Quad"));
     attachComponent(curGO, (struct BaseComponent *) curMRC);
     curMRC = NULL;
 
