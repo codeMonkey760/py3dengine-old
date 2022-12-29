@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "logger.h"
+#include "config.h"
 #include "util.h"
 #include "python_wrapper.h"
 #include "engine.h"
@@ -119,6 +120,8 @@ void deleteEngine(struct Engine **enginePtr){
 void initEngine(struct Engine *engine){
     if (engine == NULL) return;
 
+    parseConfigFile("config.ini");
+
     initializePython();
 
     glfwSetErrorCallback(error_callback);
@@ -127,7 +130,7 @@ void initEngine(struct Engine *engine){
         return;
     }
 
-    GLFWwindow *glfwWindow = glfwCreateWindow(800, 600, "Py3DEngine", NULL, NULL);
+    GLFWwindow *glfwWindow = glfwCreateWindow(getConfigScreenWidth(), getConfigScreenHeight(), "Py3DEngine", NULL, NULL);
     if (glfwWindow == NULL) {
         return;
     }
