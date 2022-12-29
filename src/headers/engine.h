@@ -25,7 +25,7 @@ struct Engine {
     struct ResourceManager *resourceManager;
 
     struct GameObject *root;
-    struct Camera *camera;
+    struct GameObject *activeCamera;
 };
 
 extern void allocEngine(struct Engine **enginePtr);

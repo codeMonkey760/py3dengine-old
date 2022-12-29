@@ -26,7 +26,7 @@ static void refreshProjMatrixCache(struct CameraComponent *component) {
     float aspectRatio = ((float) component->renderTargetWidth) / ((float) component->renderTargetHeight);
     float aspectRatioInv = ((float) component->renderTargetHeight) / ((float) component->renderTargetWidth);
     float fov_y_radians = DEG_TO_RAD(aspectRatioInv * component->fovxInDegrees);
-    float w = 1.0f / (aspectRatio * tanf(fov_y_radians) / 2.0f);
+    float w = 1.0f / (aspectRatio * tanf(fov_y_radians / 2.0f));
     float h = 1.0f / (tanf(fov_y_radians / 2.0f));
     float far_z = component->farPlaneDistance;
     float near_z = component->nearPlaneDistance;

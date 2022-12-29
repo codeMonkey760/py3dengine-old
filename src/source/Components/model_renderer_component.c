@@ -1,7 +1,9 @@
 #include "util.h"
+#include "custom_string.h"
 #include "Components/model_renderer_component.h"
 #include "game_object.h"
 #include "Components/transform_component.h"
+#include "rendering_context.h"
 
 #define COMPONENT_TYPE_MODEL_RENDERER 2
 
@@ -11,8 +13,8 @@ static bool isComponentValid(struct BaseComponent *component) {
     return component->_type == COMPONENT_TYPE_MODEL_RENDERER;
 }
 
-static void render(struct BaseComponent *component, struct Camera *camera) {
-    if (!isComponentValid(component) || camera == NULL) return;
+static void render(struct BaseComponent *component, struct RenderingContext *renderingContext) {
+    if (!isComponentValid(component) || renderingContext == NULL) return;
 
     struct ModelRendererComponent *mrc = (struct ModelRendererComponent *) component;
 
@@ -26,16 +28,14 @@ static void render(struct BaseComponent *component, struct Camera *camera) {
     Vec3Fill(color, 1.0f);
     setDiffuseColor(mrc->shader, color);
 
-    float cameraPosition[3] = {0.0f};
-    getCameraPositionW(camera, cameraPosition);
-    setCameraPosition(mrc->shader, cameraPosition);
+    setCameraPosition(mrc->shader, renderingContext->cameraPositionW);
 
     setWMtx(mrc->shader, getTransformWorldMtx(transform));
     setWITMtx(mrc->shader, getTransformWITMtx(transform));
 
     float wvpMtx[16] = {0.0f};
-    getVPMtx(camera, wvpMtx);
-    Mat4Mult(wvpMtx, getTransformWorldMtx(transform), wvpMtx);
+    Mat4Identity(wvpMtx);
+    Mat4Mult(wvpMtx, getTransformWorldMtx(transform), renderingContext->vpMtx);
     setWVPMtx(mrc->shader, wvpMtx);
 
     bindModel(mrc->model);

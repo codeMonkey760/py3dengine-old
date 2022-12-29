@@ -1,10 +1,9 @@
 #ifndef PY3DENGINE_BASE_COMPONENT_H
 #define PY3DENGINE_BASE_COMPONENT_H
 
-#include "camera.h"
-#include "custom_string.h"
-
+struct String;
 struct GameObject;
+struct RenderingContext;
 
 struct BaseComponent {
     unsigned int _type;
@@ -12,7 +11,7 @@ struct BaseComponent {
     struct String *_name;
     struct GameObject *_owner;
     void (*update)(struct BaseComponent *, float);
-    void (*render)(struct BaseComponent *, struct Camera *);
+    void (*render)(struct BaseComponent *, struct RenderingContext *);
     void (*delete)(struct BaseComponent **);
 };
 

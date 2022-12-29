@@ -9,6 +9,7 @@
 #include "engine.h"
 #include "scene_importer.h"
 #include "game_object.h"
+#include "rendering_context.h"
 
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
@@ -60,13 +61,16 @@ static void updateEngine(struct Engine *engine, float dt){
     printStats(engine, dt);
 
     updateGameObject(engine->root, dt);
-    updateCamera(engine->camera, dt);
 }
 
 static void renderEngine(struct Engine *engine){
     if (engine == NULL) return;
 
-    renderGameObject(engine->root, engine->camera);
+    struct RenderingContext *renderingContext = NULL;
+    allocRenderingContext(&renderingContext);
+    initRenderingContext(renderingContext, engine->activeCamera);
+
+    renderGameObject(engine->root, renderingContext);
 }
 
 void allocEngine(struct Engine **enginePtr){
@@ -86,7 +90,7 @@ void allocEngine(struct Engine **enginePtr){
     engine->resourceManager = NULL;
 
     engine->root = NULL;
-    engine->camera = NULL;
+    engine->activeCamera = NULL;
 
     (*enginePtr) = engine;
 }
@@ -100,7 +104,7 @@ void deleteEngine(struct Engine **enginePtr){
     deleteResourceManager(&engine->resourceManager);
 
     deleteGameObject(&engine->root);
-    deleteCamera(&(engine->camera));
+    engine->activeCamera = NULL;
     engine = NULL;
 
     glfwTerminate();
@@ -150,13 +154,12 @@ void initEngine(struct Engine *engine){
 
     initSceneImporter(importer, engine->resourceManager, &engine->root);
     importScene(importer, NULL);
+    engine->activeCamera = findGameObjectByName(engine->root, "Camera");
+    if (engine->activeCamera == NULL) {
+        warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
+    }
 
     deleteSceneImporter(&importer);
-
-    struct Camera *camera = NULL;
-    allocCamera(&camera);
-    engine->camera = camera;
-    camera = NULL;
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);

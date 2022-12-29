@@ -5,6 +5,7 @@
 #include "Components/model_renderer_component.h"
 #include "Components/rotation_component.h"
 #include "Components/transform_component.h"
+#include "Components/camera_component.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -180,6 +181,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     struct GameObject *root = NULL, *curGO = NULL;
     struct ModelRendererComponent *curMRC = NULL;
     struct RotationComponent *curRC = NULL;
+    struct CameraComponent *curCC = NULL;
     float posW[3] = {0.0f, 0.0f, 2.0f};
     float axis[3] = {0.0f};
 
@@ -262,6 +264,23 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     setRotationComponentSpeed(curRC, 90.0f);
     attachComponent(curGO, (struct BaseComponent *) curRC);
     curRC = NULL;
+
+    attachChild(root, curGO);
+    curGO = NULL;
+
+    // The Camera
+    allocGameObject(&curGO);
+    setGameObjectName(curGO, "Camera");
+
+    posW[2] = -2.0f;
+    setTransformPosition(getGameObjectTransform(curGO), posW);
+    posW[2] = 0.0f;
+
+    allocCameraComponent(&curCC);
+    setComponentName((struct BaseComponent *) curCC, "Camera.CC");
+    setCameraComponentLens(curCC, 100.0f, 800, 600, 0.05f, 10.0f);
+    attachComponent(curGO, (struct BaseComponent *) curCC);
+    curCC = NULL;
 
     attachChild(root, curGO);
     curGO = NULL;

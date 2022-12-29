@@ -5,8 +5,8 @@ struct ComponentListNode;
 struct TransformComponent;
 struct ChildListNode;
 struct BaseComponent;
-struct Camera;
 struct String;
+struct RenderingContext;
 
 struct GameObject {
     struct ComponentListNode *components;
@@ -20,7 +20,7 @@ extern void allocGameObject(struct GameObject **gameObjectPtr);
 extern void deleteGameObject(struct GameObject **gameObjectPtr);
 
 extern void updateGameObject(struct GameObject *gameObject, float dt);
-extern void renderGameObject(struct GameObject *gameObject, struct Camera *camera);
+extern void renderGameObject(struct GameObject *gameObject, struct RenderingContext *renderingContext);
 
 extern void attachChild(struct GameObject *parent, struct GameObject *newChild);
 extern void removeChild(struct GameObject *gameObject, struct GameObject *target);

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "Components/base_component.h"
+#include "custom_string.h"
 
 #define COMPONENT_TYPE_INVALID 0
 

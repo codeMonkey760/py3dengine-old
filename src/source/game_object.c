@@ -136,14 +136,14 @@ void updateGameObject(struct GameObject *gameObject, float dt) {
     }
 }
 
-void renderGameObject(struct GameObject *gameObject, struct Camera *camera) {
-    if (gameObject == NULL || camera == NULL) return;
+void renderGameObject(struct GameObject *gameObject, struct RenderingContext *renderingContext) {
+    if (gameObject == NULL || renderingContext == NULL) return;
 
     struct ComponentListNode *curNode = gameObject->components;
     while (curNode != NULL) {
         struct BaseComponent *curComponent = curNode->component;
         if (curComponent != NULL && curComponent->render != NULL) {
-            curComponent->render(curComponent, camera);
+            curComponent->render(curComponent, renderingContext);
         }
 
         curNode = curNode->next;
@@ -151,7 +151,7 @@ void renderGameObject(struct GameObject *gameObject, struct Camera *camera) {
 
     struct ChildListNode *curChild = gameObject->children;
     while (curChild != NULL) {
-        renderGameObject(curChild->child, camera);
+        renderGameObject(curChild->child, renderingContext);
 
         curChild = curChild->next;
     }
@@ -205,7 +205,7 @@ void removeChildByName(struct GameObject *gameObject, const char* name) {
 struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name) {
     if (gameObject == NULL || name == NULL) return NULL;
 
-    if (stringEquals(gameObject->name, name)) {
+    if (stringEqualsCStr(gameObject->name, name)) {
         return gameObject;
     }
 
@@ -262,7 +262,7 @@ struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject
 
     struct ComponentListNode *curNode = gameObject->components;
     while (curNode != NULL) {
-        if (stringEquals(getComponentTypeName(curNode->component), typeName)) {
+        if (stringEqualsCStr(getComponentTypeName(curNode->component), typeName)) {
             return curNode->component;
         }
 
