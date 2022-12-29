@@ -7,6 +7,8 @@
 #include "wfo_parser/vertex_data_list.h"
 #include "wfo_parser/object_list.h"
 #include "wfo_parser/wfo_parser.h"
+#include "resource_manager.h"
+#include "material.h"
 
 #define LINE_BUFFER_SIZE_IN_ELEMENTS 256
 #define TYPE_BUFFER_SIZE_IN_ELEMENTS 16
@@ -279,6 +281,53 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
     deleteVertexDataList(&posList);
     deleteVertexDataList(&normalList);
     deleteVertexDataList(&texCoordList);
+}
+
+void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
+    if (manager == NULL || mtl == NULL) return;
+
+    char lineBuffer[LINE_BUFFER_SIZE_IN_ELEMENTS+1];
+    char *curPos;
+    char typeBuffer[TYPE_BUFFER_SIZE_IN_ELEMENTS+1];
+    char nameBuffer[NAME_BUFFER_SIZE_IN_ELEMENTS+1];
+    float dataBuffer[3] = {0.0f};
+    int lineNumber = 0;
+
+    clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
+    curPos = lineBuffer;
+
+    struct Material *curMaterial = NULL;
+    while (fgets(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS, mtl)) {
+        lineNumber++;
+        clearCharBuffer(typeBuffer, TYPE_BUFFER_SIZE_IN_ELEMENTS+1);
+        curPos = readStringFromLine(curPos, typeBuffer, TYPE_BUFFER_SIZE_IN_ELEMENTS);
+        curPos = advancePastSpaces(curPos);
+
+        if (strncmp(typeBuffer, "newmtl", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS+1);
+            curPos = readStringFromLine(curPos, nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS);
+            if (curMaterial != NULL) {
+                storeMaterial(manager, curMaterial);
+                curMaterial = NULL;
+            }
+            allocMaterial(&curMaterial);
+            setMaterialName(curMaterial, nameBuffer);
+        } else if (strncmp(typeBuffer, "Kd", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            if (curMaterial == NULL) {
+                error_log("%s", "[WfoParser]: Trying to write diffuse color into NULL material.");
+                continue;
+            }
+            readFloatsFromLine(curPos, dataBuffer, 3);
+            setMaterialDiffuseColor(curMaterial, dataBuffer);
+        } else {
+            debug_log("[WfoParser]: Ignoring line #%d, unsupported type %s", lineNumber, typeBuffer);
+        }
+    }
+
+    if (curMaterial != NULL) {
+        storeMaterial(manager, curMaterial);
+        curMaterial = NULL;
+    }
 }
 
 unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name) {

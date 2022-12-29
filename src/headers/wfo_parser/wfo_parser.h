@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+struct ResourceManager;
+
 struct WfoParser {
     struct ObjectListNode *_objectList;
 
@@ -18,6 +20,7 @@ extern void allocWfoParser(struct WfoParser **wfoParserPtr);
 extern void deleteWfoParser(struct WfoParser **wfoParserPtr);
 
 extern void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo);
+extern void parseMaterialFile(struct ResourceManager *manager, FILE *mtl);
 
 extern unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name);
 extern void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, size_t limit);
