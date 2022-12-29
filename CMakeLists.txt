@@ -36,6 +36,7 @@ add_executable(
     src/source/material.c
     src/source/resource_manager.c
     src/source/scene_importer.c
+    src/source/rendering_context.c
     src/source/Components/rotation_component.c
     src/source/Components/model_renderer_component.c
     src/source/Components/base_component.c
