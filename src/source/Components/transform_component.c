@@ -43,6 +43,29 @@ static void refreshMatrixCaches(struct TransformComponent *component) {
     component->_matrixCacheDirty = false;
 }
 
+static void refreshViewMatrixCache(struct TransformComponent *component) {
+    if (component == NULL || component->_viewMtxCacheDirty == false) return;
+
+    float yaw = 0.0f;
+    float pitch = 0.0f;
+
+    float camTargetW[3] = {0.0f,0.0f,0.0f};
+    float camUpW[3] = {0.0f,1.0f,0.0f};
+
+    float qY[4] = {0.0f};
+    float qX[4] = {0.0f};
+    float qTot[4] = {0.0f};
+
+    QuaternionFromAxisAngle(0.0f,1.0f,0.0f,yaw,qY);
+    QuaternionFromAxisAngle(1.0f,0.0f,0.0f,pitch,qX);
+    QuaternionMult(qY,qX,qTot);
+
+    QuaternionVec3Rotation(component->_position, qTot, component->_position);
+
+    Mat4LookAtLH(component->_viewMtxCache, component->_position, camTargetW, camUpW);
+    component->_viewMtxCacheDirty = false;
+}
+
 void allocTransformComponent(struct TransformComponent **componentPtr) {
     if (componentPtr == NULL || (*componentPtr) != NULL) return;
 
@@ -63,6 +86,9 @@ void allocTransformComponent(struct TransformComponent **componentPtr) {
     Mat4Identity(newComponent->_witMtxCache);
     newComponent->_matrixCacheDirty = true;
 
+    Mat4Identity(newComponent->_viewMtxCache);
+    newComponent->_viewMtxCacheDirty = true;
+
     (*componentPtr) = newComponent;
     newComponent = NULL;
     base = NULL;
@@ -82,6 +108,7 @@ void moveTransform(struct TransformComponent *component, float displacement[3]) 
 
     Vec3Add(component->_position, component->_position, displacement);
     component->_matrixCacheDirty = true;
+    component->_viewMtxCacheDirty = true;
 }
 
 void setTransformPosition(struct TransformComponent *component, float newPosition[3]) {
@@ -89,6 +116,7 @@ void setTransformPosition(struct TransformComponent *component, float newPositio
 
     Vec3Copy(component->_position, newPosition);
     component->_matrixCacheDirty = true;
+    component->_viewMtxCacheDirty = true;
 }
 
 void rotateTransform(struct TransformComponent *component, float displacement[4]) {
@@ -96,6 +124,7 @@ void rotateTransform(struct TransformComponent *component, float displacement[4]
 
     QuaternionMult(component->_orientation, displacement, component->_orientation);
     component->_matrixCacheDirty = true;
+    component->_viewMtxCacheDirty = true;
 }
 
 void setTransformOrientation(struct TransformComponent *component, float newOrientation[4]) {
@@ -103,6 +132,7 @@ void setTransformOrientation(struct TransformComponent *component, float newOrie
 
     QuaternionCopy(component->_orientation, newOrientation);
     component->_matrixCacheDirty = true;
+    component->_viewMtxCacheDirty = true;
 }
 
 void stretchTransform(struct TransformComponent *component, float factors[3]) {
@@ -112,6 +142,7 @@ void stretchTransform(struct TransformComponent *component, float factors[3]) {
     component->_scale[1] *= factors[1];
     component->_scale[2] *= factors[2];
     component->_matrixCacheDirty = true;
+    component->_viewMtxCacheDirty = true;
 }
 
 void setTransformScale(struct TransformComponent *component, float newScale[3]) {
@@ -119,6 +150,7 @@ void setTransformScale(struct TransformComponent *component, float newScale[3]) 
 
     Vec3Copy(component->_scale, newScale);
     component->_matrixCacheDirty = true;
+    component->_viewMtxCacheDirty = true;
 }
 
 float *getTransformWorldMtx(struct TransformComponent *component) {
@@ -135,4 +167,12 @@ float *getTransformWITMtx(struct TransformComponent *component) {
     refreshMatrixCaches(component);
 
     return component->_witMtxCache;
+}
+
+float *getTransformViewMtx(struct TransformComponent *component) {
+    if (component == NULL) return NULL;
+
+    refreshViewMatrixCache(component);
+
+    return component->_viewMtxCache;
 }

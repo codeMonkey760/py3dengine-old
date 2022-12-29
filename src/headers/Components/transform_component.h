@@ -16,7 +16,9 @@ struct TransformComponent {
 
     float _wMtxCache[16];
     float _witMtxCache[16];
+    float _viewMtxCache[16];
     bool _matrixCacheDirty;
+    bool _viewMtxCacheDirty;
 };
 
 extern void allocTransformComponent(struct TransformComponent **componentPtr);
@@ -33,5 +35,6 @@ extern void setTransformScale(struct TransformComponent *component, float newSca
 
 extern float *getTransformWorldMtx(struct TransformComponent *component);
 extern float *getTransformWITMtx(struct TransformComponent *component);
+extern float *getTransformViewMtx(struct TransformComponent *component);
 
 #endif
