@@ -20,6 +20,7 @@ void initializeBaseComponent(struct BaseComponent *component) {
 void finalizeBaseComponent(struct BaseComponent *component) {
     if (component == NULL) return;
 
+    deleteString(&component->_typeName);
     deleteString(&component->_name);
 }
 
