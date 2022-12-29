@@ -66,7 +66,7 @@ static void storeResourceByType(
 
     struct ListNode *prevNode = NULL, *curNode = manager->_root;
     while (curNode != NULL) {
-        if (stringEquals(curNode->name, name)) return;
+        if (curNode->type == type && stringEquals(curNode->name, name)) return;
 
         prevNode = curNode;
         curNode = curNode->next;
