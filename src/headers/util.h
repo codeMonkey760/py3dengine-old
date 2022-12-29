@@ -31,7 +31,7 @@ Please read COPYING.txt for details
 #define RAD_TO_DEG(X) ((X) * 57.295779579)
 
 void Mat4Identity(float target[16]);
-void Mat4Mult (float ret[16], float m[16], float n[16]);
+void Mat4Mult (float ret[16], const float m[16], const float n[16]);
 void Mat4TranslationFA(float a[16], float v[3]);
 void Mat4TranslationF (float a[16], float x, float y, float z);
 void Mat4ScalingF (float a[16], float x, float y, float z);

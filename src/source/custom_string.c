@@ -11,7 +11,7 @@ static void deleteCharBuffer(struct String *string) {
     string->_len = 0;
 }
 
-void allocString(struct String **stringPtr, char *chars) {
+void allocString(struct String **stringPtr, const char *chars) {
     if (stringPtr == NULL || (*stringPtr) != NULL) return;
 
     struct String *string = NULL;
@@ -55,7 +55,7 @@ bool stringEquals(struct String *s1, struct String *s2) {
     return strncmp(s1->_c_str, s2->_c_str, s1->_len) == 0;
 }
 
-void setChars(struct String *string, char *chars) {
+void setChars(struct String *string, const char *chars) {
     if (string == NULL || chars == NULL) return;
 
     unsigned long num_chars = strlen(chars);
@@ -79,7 +79,7 @@ unsigned long getLength(struct String *string) {
     return string->_len;
 }
 
-char *getChars(struct String *string) {
+const char *getChars(struct String *string) {
     if (string == NULL) return NULL;
 
     return string->_c_str;

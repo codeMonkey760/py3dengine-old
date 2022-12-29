@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "util.h"
+#include "custom_string.h"
 #include "Components/rotation_component.h"
 #include "game_object.h"
 #include "Components/transform_component.h"

@@ -321,7 +321,7 @@ bool Mat4Inverse(float invOut[16], float m[16]) {
 }
 
 // non gsl version
-void Mat4Mult(float ret[16], float m[16], float n[16]) {
+void Mat4Mult(float ret[16], const float m[16], const float n[16]) {
     int i;
     float temp[16] = {0.0f};
 
