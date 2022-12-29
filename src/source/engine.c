@@ -71,6 +71,7 @@ static void renderEngine(struct Engine *engine){
     initRenderingContext(renderingContext, engine->activeCamera);
 
     renderGameObject(engine->root, renderingContext);
+    deleteRenderingContext(&renderingContext);
 }
 
 void allocEngine(struct Engine **enginePtr){
