@@ -2,6 +2,7 @@
 #include "wfo_parser/wfo_parser.h"
 #include "scene_importer.h"
 #include "game_object.h"
+#include "material.h"
 #include "Components/model_renderer_component.h"
 #include "Components/rotation_component.h"
 #include "Components/transform_component.h"
@@ -175,6 +176,31 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     deleteWfoParser(&wfoParser);
     fclose(wfoFile);
+
+    struct Material *curMaterial = NULL;
+    curShader = getShaderResource(importer->manager, "SolidColorShader");
+
+    allocMaterial(&curMaterial);
+    setMaterialName(curMaterial, "SolidBlue");
+    setMaterialDiffuseColorRGB(curMaterial, 0.0f, 0.0f, 1.0f);
+    setMaterialShader(curMaterial, curShader);
+    storeMaterial(importer->manager, curMaterial);
+    curMaterial = NULL;
+
+    allocMaterial(&curMaterial);
+    setMaterialName(curMaterial, "SolidYellow");
+    setMaterialDiffuseColorRGB(curMaterial, 0.0f, 1.0f, 1.0f);
+    setMaterialShader(curMaterial, curShader);
+    storeMaterial(importer->manager, curMaterial);
+    curMaterial = NULL;
+
+    allocMaterial(&curMaterial);
+    setMaterialName(curMaterial, "SolidRed");
+    setMaterialDiffuseColorRGB(curMaterial, 1.0f, 0.0f, 0.0f);
+    setMaterialShader(curMaterial, curShader);
+    storeMaterial(importer->manager, curMaterial);
+    curMaterial = NULL;
+    curShader = NULL;
 
     if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 
