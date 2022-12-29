@@ -4,6 +4,7 @@
 
 #include "util.h"
 #include "logger.h"
+#include "custom_string.h"
 #include "wfo_parser/vertex_data_list.h"
 #include "wfo_parser/object_list.h"
 #include "wfo_parser/wfo_parser.h"
@@ -299,17 +300,22 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
     struct Material *curMaterial = NULL;
     while (fgets(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS, mtl)) {
         lineNumber++;
+        if (strnlen(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS) < 2) {
+            continue;
+        }
         clearCharBuffer(typeBuffer, TYPE_BUFFER_SIZE_IN_ELEMENTS+1);
         curPos = readStringFromLine(curPos, typeBuffer, TYPE_BUFFER_SIZE_IN_ELEMENTS);
         curPos = advancePastSpaces(curPos);
 
         if (strncmp(typeBuffer, "newmtl", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS+1);
-            curPos = readStringFromLine(curPos, nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS);
+            readStringFromLine(curPos, nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS);
             if (curMaterial != NULL) {
+                trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getMaterialName(curMaterial)));
                 storeMaterial(manager, curMaterial);
                 curMaterial = NULL;
             }
+            trace_log("[WfoParser]: Allocating new material named \"%s\"", nameBuffer);
             allocMaterial(&curMaterial);
             setMaterialName(curMaterial, nameBuffer);
         } else if (strncmp(typeBuffer, "Kd", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
@@ -319,12 +325,23 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
             }
             readFloatsFromLine(curPos, dataBuffer, 3);
             setMaterialDiffuseColor(curMaterial, dataBuffer);
+            trace_log(
+                "[WfoParser]: Writing (%.2f, %.2f, %.2f) as diffuse color to material named \"%s\"",
+                dataBuffer[0],
+                dataBuffer[1],
+                dataBuffer[2],
+                getChars(getMaterialName(curMaterial))
+            );
         } else {
             debug_log("[WfoParser]: Ignoring line #%d, unsupported type %s", lineNumber, typeBuffer);
         }
+
+        clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
+        curPos = lineBuffer;
     }
 
     if (curMaterial != NULL) {
+        trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getMaterialName(curMaterial)));
         storeMaterial(manager, curMaterial);
         curMaterial = NULL;
     }
