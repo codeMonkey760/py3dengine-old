@@ -1,5 +1,8 @@
 #include "util.h"
 #include "custom_string.h"
+#include "model.h"
+#include "shader.h"
+#include "material.h"
 #include "Components/model_renderer_component.h"
 #include "game_object.h"
 #include "Components/transform_component.h"
@@ -18,7 +21,7 @@ static void render(struct BaseComponent *component, struct RenderingContext *ren
 
     struct ModelRendererComponent *mrc = (struct ModelRendererComponent *) component;
 
-    if (mrc->shader == NULL || mrc->model == NULL) return;
+    if (mrc->shader == NULL || mrc->model == NULL || mrc->material == NULL) return;
 
     struct TransformComponent *transform = getGameObjectTransform(getComponentOwner(component));
     if (transform == NULL) return;
@@ -26,7 +29,7 @@ static void render(struct BaseComponent *component, struct RenderingContext *ren
     enableShader(mrc->shader);
     float color[3] = {0.0f};
     Vec3Fill(color, 1.0f);
-    setDiffuseColor(mrc->shader, color);
+    setDiffuseColor(mrc->shader, getMaterialDiffuseColor(mrc->material));
 
     setCameraPosition(mrc->shader, renderingContext->cameraPositionW);
 
@@ -68,6 +71,7 @@ void allocModelRendererComponent(struct ModelRendererComponent **componentPtr) {
 
     newComponent->shader = NULL;
     newComponent->model = NULL;
+    newComponent->material = NULL;
 
     (*componentPtr) = newComponent;
     newComponent = NULL;
@@ -93,4 +97,10 @@ void setModelRendererComponentModel(struct ModelRendererComponent *component, st
     if (component == NULL) return;
 
     component->model = newModel;
+}
+
+void setModelRendererComponentMaterial(struct ModelRendererComponent *component, struct Material *newMaterial) {
+    if (component == NULL) return;
+
+    component->material = newMaterial;
 }

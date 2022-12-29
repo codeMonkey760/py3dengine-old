@@ -182,7 +182,7 @@ void disableShader(struct Shader *shader) {
     glUseProgram(0);
 }
 
-void setDiffuseColor(struct Shader *shader, float newDiffuseColor[3]) {
+void setDiffuseColor(struct Shader *shader, const float newDiffuseColor[3]) {
     if (shader == NULL || shader->_diffuseColorLoc == -1) return;
 
     glUniform3fv(shader->_diffuseColorLoc, 1, newDiffuseColor);

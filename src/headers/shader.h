@@ -22,7 +22,7 @@ extern void initShader(struct Shader *shader, const char *vertexShaderSource, co
 extern void enableShader(struct Shader *shader);
 extern void disableShader(struct Shader *shader);
 
-extern void setDiffuseColor(struct Shader *shader, float newDiffuseColor[3]);
+extern void setDiffuseColor(struct Shader *shader, const float newDiffuseColor[3]);
 extern void setCameraPosition(struct Shader *shader, float newCameraPos[3]);
 extern void setWMtx(struct Shader *shader, float newWMtx[16]);
 extern void setWITMtx(struct Shader *shader, float newWITMtx[16]);
