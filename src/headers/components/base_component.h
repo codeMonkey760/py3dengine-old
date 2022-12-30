@@ -12,6 +12,7 @@ struct BaseComponent {
     struct GameObject *_owner;
     void (*update)(struct BaseComponent *, float);
     void (*render)(struct BaseComponent *, struct RenderingContext *);
+    void (*resize)(struct BaseComponent *, int, int);
     void (*delete)(struct BaseComponent **);
 };
 

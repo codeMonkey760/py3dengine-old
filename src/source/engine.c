@@ -29,8 +29,10 @@ static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
 
-static void resize_window_callback(GLFWwindow *window, int newWidth, int newHeight) {
+static void resizeEngine();
 
+static void resize_window_callback(GLFWwindow *window, int newWidth, int newHeight) {
+    resizeEngine();
 }
 
 static void updateStats(float dt) {
@@ -66,20 +68,28 @@ static void printStats(float dt) {
     }
 }
 
-static void updateEngine(float dt){
+static void updateEngine(float dt) {
     updateStats(dt);
     printStats(dt);
 
     updateGameObject(root, dt);
 }
 
-static void renderEngine(){
+static void renderEngine() {
     struct RenderingContext *renderingContext = NULL;
     allocRenderingContext(&renderingContext);
     initRenderingContext(renderingContext, activeCamera);
 
     renderGameObject(root, renderingContext);
     deleteRenderingContext(&renderingContext);
+}
+
+static void resizeEngine() {
+    int newWidth, newHeight;
+    glfwGetFramebufferSize(glfwWindow, &newWidth, &newHeight);
+    glViewport(0, 0, newWidth, newHeight);
+
+    resizeGameObject(root, newWidth, newHeight);
 }
 
 void initializeEngine(){

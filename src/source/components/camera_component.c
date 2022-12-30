@@ -12,6 +12,16 @@ static bool isComponentValid(struct BaseComponent *component) {
     return component->_type == COMPONENT_TYPE_CAMERA;
 }
 
+static void resize(struct BaseComponent *component, int newWidth, int newHeight) {
+    if (!isComponentValid(component)) return;
+
+    resizeCameraComponentRenderTarget(
+        (struct CameraComponent *) component,
+        newWidth,
+        newHeight
+    );
+}
+
 static void delete(struct BaseComponent **componentPtr) {
     if (componentPtr == NULL) return;
 
@@ -51,6 +61,7 @@ void allocCameraComponent(struct CameraComponent **componentPtr) {
     initializeBaseComponent(base);
     base->_type = COMPONENT_TYPE_CAMERA;
     allocString(&base->_typeName, COMPONENT_TYPE_NAME_CAMERA);
+    base->resize = resize;
     base->delete = delete;
     base = NULL;
 
