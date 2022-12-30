@@ -100,45 +100,6 @@ static void importShader(struct Shader **shaderPtr) {
     newShader = NULL;
 }
 
-static void parseGameObject(json_object *json, struct GameObject *parent, struct GameObject **rootPtr) {
-    if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL) return;
-
-    json_object *json_name = json_object_object_get(json, "name");
-    if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
-        error_log("%s", "[SceneImporter]: Game Object must have a string property called \"name\"");
-        return;
-    }
-
-    json_object *json_transform = json_object_object_get(json, "transform");
-    if (json_transform == NULL || !json_object_is_type(json_transform, json_type_object)) {
-        error_log("%s", "[SceneImporter]: Game Object must have an object property called \"transform\"");
-        return;
-    }
-
-    json_object *json_components_array = json_object_object_get(json, "components");
-    if (json_components_array == NULL || !json_object_is_type(json_components_array, json_type_array)) {
-        error_log("%s", "[SceneImporter]: Game Object must have an array property called \"components\"");
-        return;
-    }
-
-    json_object *json_children_array = json_object_object_get(json, "children");
-    if (json_children_array == NULL || !json_object_is_type(json_children_array, json_type_array)) {
-        error_log("%s", "[SceneImporter]: Game Object must have an array property called \"children\"");
-        return;
-    }
-
-    struct GameObject *newGO = NULL;
-    allocGameObject(&newGO);
-    setGameObjectName(newGO, json_object_get_string(json_name));
-
-    if (parent != NULL) {
-        attachChild(parent, newGO);
-    } else {
-        (*rootPtr) = newGO;
-    }
-    newGO = NULL;
-}
-
 void allocSceneImporter(struct SceneImporter **importerPtr) {
     if (importerPtr == NULL || (*importerPtr) != NULL) return;
 
@@ -347,13 +308,14 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     }
 
     json_object *scene_root = json_object_object_get(json_root, "scene_root");
-    if (scene_root == NULL) {
-        critical_log("%s", "[SceneImporter]: Scene file does not have a \"scene_root\" property. Scene loading will fail.");
+    if (scene_root == NULL || !json_object_is_type(scene_root, json_type_object)) {
+        critical_log("%s", "[SceneImporter]: Scene must have an object property called \"scene_root\"");
         json_object_put(json_root);
         return;
     }
 
-    // TODO: continue parsing default.json
+    struct GameObject *rootGO = NULL;
+    parseGameObject(scene_root, NULL, &rootGO);
 
     json_object_put(json_root);
 }

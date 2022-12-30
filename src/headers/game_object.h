@@ -1,6 +1,8 @@
 #ifndef PY3DENGINE_GAME_OBJECT_H
 #define PY3DENGINE_GAME_OBJECT_H
 
+#include <json-c/json.h>
+
 struct ComponentListNode;
 struct TransformComponent;
 struct ChildListNode;
@@ -31,6 +33,8 @@ extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, co
 
 extern void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent);
 extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
+
+extern void parseGameObject(json_object *json, struct GameObject *parent, struct GameObject **rootPtr);
 
 extern struct String *getGameObjectName(struct GameObject *gameObject);
 extern void setGameObjectName(struct GameObject *gameObject, char *newName);
