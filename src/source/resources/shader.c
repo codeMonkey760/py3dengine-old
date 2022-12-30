@@ -3,7 +3,7 @@
 
 #include "logger.h"
 #include "custom_string.h"
-#include "shader.h"
+#include "resources/shader.h"
 #include "glad/gl.h"
 
 static void compileShader(GLuint shader) {

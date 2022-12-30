@@ -19,24 +19,24 @@ configure_file(config.ini ${CMAKE_CURRENT_BINARY_DIR}/config.ini COPYONLY)
 
 add_executable(
     py3dengine
+    lib/glad/src/gl.c
     src/source/main.c
     src/source/util.c
-    lib/glad/src/gl.c
-    src/source/shader.c
     src/source/logger.c
     src/source/engine.c
     src/source/custom_string.c
     src/source/game_object.c
-    src/source/model.c
-    src/source/wfo_parser/wfo_parser.c
-    src/source/wfo_parser/vertex_data_list.c
-    src/source/wfo_parser/object_list.c
     src/source/python_wrapper.c
-    src/source/material.c
     src/source/resource_manager.c
     src/source/scene_importer.c
     src/source/rendering_context.c
     src/source/config.c
+    src/source/wfo_parser/wfo_parser.c
+    src/source/wfo_parser/vertex_data_list.c
+    src/source/wfo_parser/object_list.c
+    src/source/resources/model.c
+    src/source/resources/shader.c
+    src/source/resources/material.c
     src/source/components/rotation_component.c
     src/source/components/model_renderer_component.c
     src/source/components/base_component.c

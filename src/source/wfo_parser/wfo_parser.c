@@ -9,7 +9,7 @@
 #include "wfo_parser/object_list.h"
 #include "wfo_parser/wfo_parser.h"
 #include "resource_manager.h"
-#include "material.h"
+#include "resources/material.h"
 
 #define LINE_BUFFER_SIZE_IN_ELEMENTS 256
 #define TYPE_BUFFER_SIZE_IN_ELEMENTS 16

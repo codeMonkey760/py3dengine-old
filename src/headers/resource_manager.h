@@ -1,9 +1,9 @@
 #ifndef PY3DENGINE_RESOURCE_MANAGER_H
 #define PY3DENGINE_RESOURCE_MANAGER_H
 
-#include "shader.h"
-#include "model.h"
-#include "material.h"
+#include "resources/shader.h"
+#include "resources/model.h"
+#include "resources/material.h"
 
 struct ResourceManager {
     struct ListNode *_root;

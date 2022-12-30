@@ -2,7 +2,7 @@
 
 #include "glad/gl.h"
 #include "custom_string.h"
-#include "model.h"
+#include "resources/model.h"
 
 // TODO: these should be in a vertex format file / struct
 const GLuint positionShaderIndex = 0;

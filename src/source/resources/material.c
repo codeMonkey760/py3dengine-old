@@ -2,7 +2,7 @@
 
 #include "util.h"
 #include "custom_string.h"
-#include "material.h"
+#include "resources/material.h"
 
 void allocMaterial(struct Material **materialPtr) {
     if (materialPtr == NULL || (*materialPtr) != NULL) return;
