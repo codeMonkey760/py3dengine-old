@@ -130,10 +130,21 @@ void initEngine(struct Engine *engine){
         return;
     }
 
-    GLFWwindow *glfwWindow = glfwCreateWindow(getConfigScreenWidth(), getConfigScreenHeight(), "Py3DEngine", NULL, NULL);
+    GLFWmonitor *primaryMonitor = NULL;
+    bool full_screen = getConfigFullScreen();
+    if (full_screen == true) {
+        primaryMonitor = glfwGetPrimaryMonitor();
+    }
+
+    GLFWwindow *glfwWindow = glfwCreateWindow(getConfigScreenWidth(), getConfigScreenHeight(), "Py3DEngine", primaryMonitor, NULL);
     if (glfwWindow == NULL) {
         return;
     }
+
+    if (full_screen == false) {
+        glfwSetWindowPos(glfwWindow, getConfigScreenLeft(), getConfigScreenTop());
+    }
+
     engine->window = glfwWindow;
     glfwWindow = NULL;
 
@@ -141,7 +152,7 @@ void initEngine(struct Engine *engine){
 
     gladLoadGL(glfwGetProcAddress);
 
-    glfwSwapInterval(1);
+    glfwSwapInterval(getConfigSwapInterval());
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
