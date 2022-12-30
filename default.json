@@ -1,0 +1,63 @@
+{
+  "active_camera": "Camera",
+  "scene_root": {
+    "name": "root",
+    "transform": {
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "orientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      }
+    },
+    "components": [],
+    "children": [
+      {
+        "name": "Cube",
+        "transform": {
+          "position": {
+            "x": -3.0,
+            "y": 0.0,
+            "z": 2.0
+          },
+          "orientation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        "components": [
+          {
+            "name": "Cube.MRC",
+            "type": "ModelRendererComponent",
+            "model": "Cube",
+            "Shader": "SolidColorShader",
+            "Material": "SolidBlue"
+          },
+          {
+            "name": "Cube.RC",
+            "type": "RotationComponent",
+            ""
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+}
