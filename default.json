@@ -53,7 +53,124 @@
           {
             "name": "Cube.RC",
             "type": "RotationComponent",
-            ""
+            "axis": {
+              "x": 1.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "speed": 45.0
+          }
+        ],
+        "children": []
+      },
+      {
+        "name": "Pyramid",
+        "transform": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 2.0
+          },
+          "orientation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        "components": [
+          {
+            "name": "Pyramid.MRC",
+            "type": "ModelRendererComponent",
+            "model": "Pyramid",
+            "Shader": "SolidColorShader",
+            "Material": "SolidYellow"
+          },
+          {
+            "name": "Pyramid.RC",
+            "type": "RotationComponent",
+            "axis": {
+              "x": 0.0,
+              "y": 1.0,
+              "z": 0.0
+            },
+            "speed": 25.0
+          }
+        ],
+        "children": []
+      },
+      {
+        "name": "Quad",
+        "transform": {
+          "position": {
+            "x": 3.0,
+            "y": 0.0,
+            "z": 2.0
+          },
+          "orientation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        "components": [
+          {
+            "name": "Quad.MRC",
+            "type": "ModelRendererComponent",
+            "model": "Quad",
+            "Shader": "SolidColorShader",
+            "Material": "SolidRed"
+          },
+          {
+            "name": "Quad.RC",
+            "type": "RotationComponent",
+            "axis": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "speed": 90.0
+          }
+        ],
+        "children": []
+      },
+      {
+        "name": "Camera",
+        "transform": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -2.0
+          },
+          "orientation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        "components": [
+          {
+            "name": "Camera.CC",
+            "fovx": 100.0,
+            "near": 0.05,
+            "far": 10.0
           }
         ],
         "children": []
