@@ -1,8 +1,8 @@
 #include "logger.h"
+#include "config.h"
 #include "wfo_parser/wfo_parser.h"
 #include "scene_importer.h"
 #include "game_object.h"
-#include "material.h"
 #include "Components/model_renderer_component.h"
 #include "Components/rotation_component.h"
 #include "Components/transform_component.h"
@@ -290,7 +290,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     allocCameraComponent(&curCC);
     setComponentName((struct BaseComponent *) curCC, "Camera.CC");
-    setCameraComponentLens(curCC, 100.0f, 800, 600, 0.05f, 10.0f);
+    setCameraComponentLens(curCC, 100.0f, getConfigScreenWidth(), getConfigScreenHeight(), 0.05f, 10.0f);
     attachComponent(curGO, (struct BaseComponent *) curCC);
     curCC = NULL;
 
