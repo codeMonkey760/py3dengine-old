@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "logger.h"
 #include "util.h"
 #include "custom_string.h"
 #include "components/transform_component.h"
@@ -67,6 +68,23 @@ static void refreshViewMatrixCache(struct TransformComponent *component) {
     component->_viewMtxCacheDirty = false;
 }
 
+static bool parseVec3(json_object *json, const char *name, float dst[3]) {
+    json_object *vec3 = json_object_object_get(json, name);
+    if (vec3 == NULL || !json_object_is_type(vec3, json_type_object)) {
+        error_log("[TransformComponent]: Transform must have an object property called \"%s\"", name);
+        return false;
+    }
+
+    char elements[8] = {'x', 0, 'y', 0, 'z', 0, 'w', 0};
+    for (int i = 0; i < 3; ++i) {
+        char *element_name = elements+(i*2);
+        json_object *element = json_object_object_get(json, element_name);
+        if (element == NULL || !json_object_is_type(json_type_double)) {
+            error_log("[TransformComponent]: ")
+        }
+    }
+}
+
 void allocTransformComponent(struct TransformComponent **componentPtr) {
     if (componentPtr == NULL || (*componentPtr) != NULL) return;
 
@@ -102,6 +120,12 @@ void deleteTransformComponent(struct TransformComponent **componentPtr) {
 
     free( (*componentPtr) );
     (*componentPtr) = NULL;
+}
+
+void parseTransformComponent(json_object *json, struct TransformComponent *component) {
+    if (json == NULL || component == NULL) return;
+
+
 }
 
 void moveTransform(struct TransformComponent *component, float displacement[3]) {
