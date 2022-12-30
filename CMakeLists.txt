@@ -34,6 +34,7 @@ add_executable(
     src/source/wfo_parser/wfo_parser.c
     src/source/wfo_parser/vertex_data_list.c
     src/source/wfo_parser/object_list.c
+    src/source/resources/base_resource.c
     src/source/resources/model.c
     src/source/resources/shader.c
     src/source/resources/material.c
