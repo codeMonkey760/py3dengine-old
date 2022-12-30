@@ -3,6 +3,8 @@ project(py3dengine C)
 
 set(CMAKE_C_STANDARD 17)
 
+find_package(json-c REQUIRED)
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/lib/glad/include)
 find_package(Python COMPONENTS Interpreter Development)
 add_custom_command(
@@ -45,4 +47,4 @@ add_executable(
     src/source/components/camera_component.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python m)
+target_link_libraries(py3dengine glfw Python::Python json-c m)

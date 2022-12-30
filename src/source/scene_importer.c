@@ -1,3 +1,5 @@
+#include <json-c/json.h>
+
 #include "logger.h"
 #include "config.h"
 #include "wfo_parser/wfo_parser.h"
@@ -298,4 +300,21 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     curGO = NULL;
 
     (*importer->sceneRootPtr) = root;
+
+    json_object *json_root = json_object_from_file("default.json");
+    if (json_root == NULL) {
+        critical_log("%s", "[SceneImporter]: Could not parse the contents of \"default.json\" as json. Scene loading will fail.");
+        return;
+    }
+
+    json_object *scene_root = json_object_object_get(json_root, "scene_root");
+    if (scene_root == NULL) {
+        critical_log("%s", "[SceneImporter]: Scene file does not have a \"scene_root\" property. Scene loading will fail.");
+        json_object_put(json_root);
+        return;
+    }
+
+    // TODO: continue parsing default.json
+
+    json_object_put(json_root);
 }
