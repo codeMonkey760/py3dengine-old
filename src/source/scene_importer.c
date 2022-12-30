@@ -3,10 +3,10 @@
 #include "wfo_parser/wfo_parser.h"
 #include "scene_importer.h"
 #include "game_object.h"
-#include "Components/model_renderer_component.h"
-#include "Components/rotation_component.h"
-#include "Components/transform_component.h"
-#include "Components/camera_component.h"
+#include "components/model_renderer_component.h"
+#include "components/rotation_component.h"
+#include "components/transform_component.h"
+#include "components/camera_component.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"

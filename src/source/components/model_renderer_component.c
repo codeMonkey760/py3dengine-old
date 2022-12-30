@@ -3,9 +3,9 @@
 #include "model.h"
 #include "shader.h"
 #include "material.h"
-#include "Components/model_renderer_component.h"
+#include "components/model_renderer_component.h"
 #include "game_object.h"
-#include "Components/transform_component.h"
+#include "components/transform_component.h"
 #include "rendering_context.h"
 
 #define COMPONENT_TYPE_MODEL_RENDERER 2

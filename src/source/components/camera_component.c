@@ -2,7 +2,7 @@
 
 #include "util.h"
 #include "custom_string.h"
-#include "Components/camera_component.h"
+#include "components/camera_component.h"
 
 #define COMPONENT_TYPE_CAMERA 4
 

@@ -4,8 +4,8 @@
 #include "util.h"
 #include "rendering_context.h"
 #include "game_object.h"
-#include "Components/transform_component.h"
-#include "Components/camera_component.h"
+#include "components/transform_component.h"
+#include "components/camera_component.h"
 
 static void extractVPMatrix(struct GameObject *activeCamera, float dst[16]) {
     if (activeCamera == NULL || dst == NULL) return;

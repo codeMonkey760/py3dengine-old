@@ -2,7 +2,7 @@
 
 #include "util.h"
 #include "custom_string.h"
-#include "Components/transform_component.h"
+#include "components/transform_component.h"
 
 #define COMPONENT_TYPE_TRANSFORM 3
 

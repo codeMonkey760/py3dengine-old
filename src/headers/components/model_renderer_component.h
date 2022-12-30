@@ -1,7 +1,7 @@
 #ifndef PY3DENGINE_MODEL_RENDERER_COMPONENT_H
 #define PY3DENGINE_MODEL_RENDERER_COMPONENT_H
 
-#include "Components/base_component.h"
+#include "components/base_component.h"
 
 #define COMPONENT_TYPE_NAME_MODEL_RENDERER "model_renderer"
 

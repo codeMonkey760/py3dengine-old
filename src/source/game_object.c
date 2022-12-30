@@ -3,8 +3,8 @@
 #include "custom_string.h"
 #include "logger.h"
 #include "game_object.h"
-#include "Components/base_component.h"
-#include "Components/transform_component.h"
+#include "components/base_component.h"
+#include "components/transform_component.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;

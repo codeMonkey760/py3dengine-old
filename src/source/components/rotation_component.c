@@ -2,9 +2,9 @@
 
 #include "util.h"
 #include "custom_string.h"
-#include "Components/rotation_component.h"
+#include "components/rotation_component.h"
 #include "game_object.h"
-#include "Components/transform_component.h"
+#include "components/transform_component.h"
 
 #define COMPONENT_TYPE_ROTATION 1
 

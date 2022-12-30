@@ -37,11 +37,11 @@ add_executable(
     src/source/scene_importer.c
     src/source/rendering_context.c
     src/source/config.c
-    src/source/Components/rotation_component.c
-    src/source/Components/model_renderer_component.c
-    src/source/Components/base_component.c
-    src/source/Components/transform_component.c
-    src/source/Components/camera_component.c
+    src/source/components/rotation_component.c
+    src/source/components/model_renderer_component.c
+    src/source/components/base_component.c
+    src/source/components/transform_component.c
+    src/source/components/camera_component.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python m)

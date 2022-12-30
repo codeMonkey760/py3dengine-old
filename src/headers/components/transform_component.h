@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "Components/base_component.h"
+#include "components/base_component.h"
 
 #define COMPONENT_TYPE_NAME_TRANSFORM "transform"
 
