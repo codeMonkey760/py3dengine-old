@@ -18,6 +18,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources)
 configure_file(src/resources/solid_objs.obj ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.obj COPYONLY)
 configure_file(src/resources/solid_objs.mtl ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.mtl COPYONLY)
 configure_file(config.ini ${CMAKE_CURRENT_BINARY_DIR}/config.ini COPYONLY)
+configure_file(default.json ${CMAKE_CURRENT_BINARY_DIR}/default.json COPYONLY)
 
 add_executable(
     py3dengine
