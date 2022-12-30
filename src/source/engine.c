@@ -12,114 +12,77 @@
 #include "game_object.h"
 #include "rendering_context.h"
 
+static float elapsed_time = 0.0f;
+static float fps = 0.0f;
+static float mpf = 0.0f;
+static float time_since_last_report = 0.0f;
+static bool print_report = true;
+
+static GLFWwindow *glfwWindow = NULL;
+
+struct ResourceManager *resourceManager = NULL;
+
+struct GameObject *root = NULL;
+struct GameObject *activeCamera = NULL;
+
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
 
-static void updateStats(struct Engine *engine, float dt) {
-    // TODO: these static variables won't work for multiple engine objects
-    // Not that I foresee that happening ... but the interface implies that as a use case
+static void resize_window_callback(GLFWwindow *window, int newWidth, int newHeight) {
+
+}
+
+static void updateStats(float dt) {
     static float since_last_calc = 0.0f;
     static int frame_count = 0;
 
-    if (engine == NULL) return;
-
-    engine->_elapsed_time += dt;
+    elapsed_time += dt;
     frame_count++;
     since_last_calc += dt;
 
-    if (engine->_print_report == true && since_last_calc >= 1.0f) {
-        float ms = (since_last_calc / (float) frame_count) * 1000.0f;
-        float fps = (float) frame_count;
+    if (print_report == true && since_last_calc >= 1.0f) {
+        float _ms = (since_last_calc / (float) frame_count) * 1000.0f;
+        float _fps = (float) frame_count;
 
         frame_count = 0;
         while (since_last_calc >= 1.0f) {
             since_last_calc -= 1.0f;
         }
 
-        engine->_fps = fps;
-        engine->_mpf = ms;
+        fps = _fps;
+        mpf = _ms;
     }
 }
 
-static void printStats(struct Engine *engine, float dt) {
-    if (engine == NULL) return;
+static void printStats(float dt) {
+    time_since_last_report += dt;
+    if (time_since_last_report >= 1.0f) {
+        time_since_last_report = clampValue(time_since_last_report, 1.0f);
 
-    engine->_time_since_last_report += dt;
-    if (engine->_time_since_last_report >= 1.0f) {
-        engine->_time_since_last_report = clampValue(engine->_time_since_last_report, 1.0f);
-
-        if (engine->_print_report == true) {
-            trace_log("UP_TIME: %.2f FPS %.2f MS %.2f", engine->_elapsed_time, engine->_fps, engine->_mpf);
+        if (print_report == true) {
+            trace_log("UP_TIME: %.2f FPS %.2f MS %.2f", elapsed_time, fps, mpf);
         }
     }
 }
 
-static void updateEngine(struct Engine *engine, float dt){
-    if (engine == NULL) return;
+static void updateEngine(float dt){
+    updateStats(dt);
+    printStats(dt);
 
-    updateStats(engine, dt);
-    printStats(engine, dt);
-
-    updateGameObject(engine->root, dt);
+    updateGameObject(root, dt);
 }
 
-static void renderEngine(struct Engine *engine){
-    if (engine == NULL) return;
-
+static void renderEngine(){
     struct RenderingContext *renderingContext = NULL;
     allocRenderingContext(&renderingContext);
-    initRenderingContext(renderingContext, engine->activeCamera);
+    initRenderingContext(renderingContext, activeCamera);
 
-    renderGameObject(engine->root, renderingContext);
+    renderGameObject(root, renderingContext);
     deleteRenderingContext(&renderingContext);
 }
 
-void allocEngine(struct Engine **enginePtr){
-    if (enginePtr == NULL || (*enginePtr) != NULL) return;
-
-    struct Engine *engine = calloc(1, sizeof(struct Engine));
-    if (engine == NULL) return;
-
-    engine->_fps = 0.0f;
-    engine->_mpf = 0.0f;
-    engine->_elapsed_time = 0.0f;
-    engine->_time_since_last_report = 0.0f;
-    engine->_print_report = true;
-
-    engine->window = NULL;
-
-    engine->resourceManager = NULL;
-
-    engine->root = NULL;
-    engine->activeCamera = NULL;
-
-    (*enginePtr) = engine;
-}
-
-void deleteEngine(struct Engine **enginePtr){
-    if (enginePtr == NULL || (*enginePtr) == NULL) return;
-
-    struct Engine *engine = (*enginePtr);
-    glfwDestroyWindow(engine->window);
-    engine->window = NULL;
-    deleteResourceManager(&engine->resourceManager);
-
-    deleteGameObject(&engine->root);
-    engine->activeCamera = NULL;
-    engine = NULL;
-
-    glfwTerminate();
-
-    finalizePython();
-
-    free((*enginePtr));
-    (*enginePtr) = NULL;
-}
-
-void initEngine(struct Engine *engine){
-    if (engine == NULL) return;
-
+void initializeEngine(){
     parseConfigFile("config.ini");
 
     initializePython();
@@ -136,7 +99,7 @@ void initEngine(struct Engine *engine){
         primaryMonitor = glfwGetPrimaryMonitor();
     }
 
-    GLFWwindow *glfwWindow = glfwCreateWindow(getConfigScreenWidth(), getConfigScreenHeight(), "Py3DEngine", primaryMonitor, NULL);
+    glfwWindow = glfwCreateWindow(getConfigScreenWidth(), getConfigScreenHeight(), "Py3DEngine", primaryMonitor, NULL);
     if (glfwWindow == NULL) {
         return;
     }
@@ -145,10 +108,9 @@ void initEngine(struct Engine *engine){
         glfwSetWindowPos(glfwWindow, getConfigScreenLeft(), getConfigScreenTop());
     }
 
-    engine->window = glfwWindow;
-    glfwWindow = NULL;
+    glfwSetWindowSizeCallback(glfwWindow, resize_window_callback);
 
-    glfwMakeContextCurrent(engine->window);
+    glfwMakeContextCurrent(glfwWindow);
 
     gladLoadGL(glfwGetProcAddress);
 
@@ -156,8 +118,8 @@ void initEngine(struct Engine *engine){
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
-    allocResourceManager(&engine->resourceManager);
-    if (engine->resourceManager == NULL) {
+    allocResourceManager(&resourceManager);
+    if (resourceManager == NULL) {
         critical_log("%s", "[Engine]: Unable to allocate resource manager. Resource importing will fail");
     }
 
@@ -167,10 +129,10 @@ void initEngine(struct Engine *engine){
         critical_log("%s", "[Engine]: Unable to allocate scene importer. Scene parsing will fail");
     }
 
-    initSceneImporter(importer, engine->resourceManager, &engine->root);
+    initSceneImporter(importer, resourceManager, &root);
     importScene(importer, NULL);
-    engine->activeCamera = findGameObjectByName(engine->root, "Camera");
-    if (engine->activeCamera == NULL) {
+    activeCamera = findGameObjectByName(root, "Camera");
+    if (activeCamera == NULL) {
         warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
     }
 
@@ -180,21 +142,31 @@ void initEngine(struct Engine *engine){
     glCullFace(GL_FRONT);
 }
 
-void runEngine(struct Engine *engine) {
-    if (engine == NULL) return;
-
+void runEngine() {
     float prev_ts, cur_ts = 0.0f;
-    while(!glfwWindowShouldClose(engine->window)) {
+    while(!glfwWindowShouldClose(glfwWindow)) {
         prev_ts = cur_ts;
         cur_ts = (float) glfwGetTime();
         float dt = cur_ts - prev_ts;
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        updateEngine(engine, dt);
-        renderEngine(engine);
+        updateEngine(dt);
+        renderEngine();
 
-        glfwSwapBuffers(engine->window);
+        glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
     }
+}
+
+void finalizeEngine() {
+    glfwDestroyWindow(glfwWindow);
+    deleteResourceManager(&resourceManager);
+
+    deleteGameObject(&root);
+    activeCamera = NULL;
+
+    glfwTerminate();
+
+    finalizePython();
 }

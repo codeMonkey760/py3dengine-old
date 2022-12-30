@@ -4,12 +4,9 @@
 int main() {
     initLogger();
 
-    struct Engine *engine = NULL;
-    allocEngine(&engine);
-    initEngine(engine);
-    runEngine(engine);
-    deleteEngine(&engine);
-    engine = NULL;
+    initializeEngine();
+    runEngine();
+    finalizeEngine();
 
     return 0;
 }
