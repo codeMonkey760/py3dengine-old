@@ -1,6 +1,8 @@
 #include <stdlib.h>
 
+#include "config.h"
 #include "util.h"
+#include "logger.h"
 #include "custom_string.h"
 #include "components/camera_component.h"
 
@@ -20,6 +22,48 @@ static void resize(struct BaseComponent *component, int newWidth, int newHeight)
         newWidth,
         newHeight
     );
+}
+
+static bool parse(struct BaseComponent *component, json_object *json) {
+    if (!isComponentValid(component)) return false;
+
+    json_object *json_name = json_object_object_get(json, "name");
+    if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
+        error_log("%s", "[CameraComponent]: Component must have a string property called \"name\"");
+        return false;
+    }
+
+    json_object *json_fovx = json_object_object_get(json, "fovx");
+    if (json_fovx == NULL || !json_object_is_type(json_fovx, json_type_double)) {
+        error_log("%s", "[CameraComponent]: Component must have a double property called \"fovx\"");
+        return false;
+    }
+
+    json_object *json_near = json_object_object_get(json, "near");
+    if (json_near == NULL || !json_object_is_type(json_near, json_type_double)) {
+        error_log("%s", "[CameraComponent]: Component must have a double property called \"near\"");
+        return false;
+    }
+
+    json_object *json_far = json_object_object_get(json, "far");
+    if (json_far == NULL || !json_object_is_type(json_far, json_type_double)) {
+        error_log("%s", "[CameraComponent]: Component must have a double property called \"far\"");
+        return false;
+    }
+
+    setComponentName(component, json_object_get_string(json_name));
+
+    // TODO: get render target dimensions properly, this is wrong
+    setCameraComponentLens(
+        (struct CameraComponent *) component,
+        (float) json_object_get_double(json_fovx),
+        getConfigScreenWidth(),
+        getConfigScreenHeight(),
+        (float) json_object_get_double(json_near),
+        (float) json_object_get_double(json_far)
+    );
+
+    return true;
 }
 
 static void delete(struct BaseComponent **componentPtr) {
@@ -62,6 +106,7 @@ void allocCameraComponent(struct CameraComponent **componentPtr) {
     base->_type = COMPONENT_TYPE_CAMERA;
     allocString(&base->_typeName, COMPONENT_TYPE_NAME_CAMERA);
     base->resize = resize;
+    base->parse = parse;
     base->delete = delete;
     base = NULL;
 
