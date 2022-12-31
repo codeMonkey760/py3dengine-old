@@ -1,14 +1,11 @@
 #include <json-c/json.h>
 
 #include "logger.h"
-#include "config.h"
 #include "wfo_parser/wfo_parser.h"
 #include "scene_importer.h"
 #include "game_object.h"
 #include "components/model_renderer_component.h"
-#include "components/rotation_component.h"
 #include "components/transform_component.h"
-#include "components/camera_component.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -189,118 +186,6 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 
-    struct GameObject *root = NULL, *curGO = NULL;
-    struct ModelRendererComponent *curMRC = NULL;
-    struct RotationComponent *curRC = NULL;
-    struct CameraComponent *curCC = NULL;
-    float posW[3] = {0.0f, 0.0f, 2.0f};
-    float axis[3] = {0.0f};
-
-    // Root Game Object
-    allocGameObject(&root);
-    setGameObjectName(root, "Root");
-
-    // The Cube
-    allocGameObject(&curGO);
-    setGameObjectName(curGO, "Cube");
-
-    posW[0] = -3.0f;
-    setTransformPosition(getGameObjectTransform(curGO), posW);
-    posW[0] = 0.0f;
-
-    allocModelRendererComponent(&curMRC);
-    setComponentName((struct BaseComponent *) curMRC, "Cube.MRC");
-    setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Cube"));
-    setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidBlue"));
-    attachComponent(curGO, (struct BaseComponent *) curMRC);
-    curMRC = NULL;
-
-    allocRotationComponent(&curRC);
-    setComponentName((struct BaseComponent *) curRC, "Cube.RC");
-    axis[0] = 1.0f;
-    setRotationComponentAxis(curRC, axis);
-    axis[0] = 0.0f;
-    setRotationComponentSpeed(curRC, 45.0f);
-    attachComponent(curGO, (struct BaseComponent *) curRC);
-    curRC = NULL;
-
-    attachChild(root, curGO);
-    curGO = NULL;
-
-    // The Pyramid
-    allocGameObject(&curGO);
-    setGameObjectName(curGO, "Pyramid");
-
-    setTransformPosition(getGameObjectTransform(curGO), posW);
-
-    allocModelRendererComponent(&curMRC);
-    setComponentName((struct BaseComponent *) curMRC, "Pyramid.MRC");
-    setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Pyramid"));
-    setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidYellow"));
-    attachComponent(curGO, (struct BaseComponent *) curMRC);
-    curMRC = NULL;
-
-    allocRotationComponent(&curRC);
-    setComponentName((struct BaseComponent *) curRC, "Pyramid.RC");
-    axis[1] = 1.0f;
-    setRotationComponentAxis(curRC, axis);
-    axis[1] = 0.0f;
-    setRotationComponentSpeed(curRC, 25.0f);
-    attachComponent(curGO, (struct BaseComponent *) curRC);
-    curRC = NULL;
-
-    attachChild(root, curGO);
-    curGO = NULL;
-
-    // The Quad
-    allocGameObject(&curGO);
-    setGameObjectName(curGO, "Quad");
-
-    posW[0] = 3.0f;
-    setTransformPosition(getGameObjectTransform(curGO), posW);
-    posW[0] = 0.0f;
-
-    allocModelRendererComponent(&curMRC);
-    setComponentName((struct BaseComponent *) curMRC, "Quad.MRC");
-    setModelRendererComponentModel(curMRC, getModelResource(importer->manager, "Quad"));
-    setModelRendererComponentShader(curMRC, getShaderResource(importer->manager, "SolidColorShader"));
-    setModelRendererComponentMaterial(curMRC, getMaterialResource(importer->manager, "SolidRed"));
-    attachComponent(curGO, (struct BaseComponent *) curMRC);
-    curMRC = NULL;
-
-    allocRotationComponent(&curRC);
-    setComponentName((struct BaseComponent *) curRC, "Quad.RC");
-    axis[2] = 1.0f;
-    setRotationComponentAxis(curRC, axis);
-    axis[2] = 0.0f;
-    setRotationComponentSpeed(curRC, 90.0f);
-    attachComponent(curGO, (struct BaseComponent *) curRC);
-    curRC = NULL;
-
-    attachChild(root, curGO);
-    curGO = NULL;
-
-    // The Camera
-    allocGameObject(&curGO);
-    setGameObjectName(curGO, "Camera");
-
-    posW[2] = -2.0f;
-    setTransformPosition(getGameObjectTransform(curGO), posW);
-    posW[2] = 0.0f;
-
-    allocCameraComponent(&curCC);
-    setComponentName((struct BaseComponent *) curCC, "Camera.CC");
-    setCameraComponentLens(curCC, 100.0f, getConfigScreenWidth(), getConfigScreenHeight(), 0.05f, 10.0f);
-    attachComponent(curGO, (struct BaseComponent *) curCC);
-    curCC = NULL;
-
-    attachChild(root, curGO);
-    curGO = NULL;
-
-    (*importer->sceneRootPtr) = root;
-
     json_object *json_root = json_object_from_file("default.json");
     if (json_root == NULL) {
         critical_log("%s", "[SceneImporter]: Could not parse the contents of \"default.json\" as json. Scene loading will fail.");
@@ -316,6 +201,8 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     struct GameObject *rootGO = NULL;
     parseGameObject(scene_root, NULL, &rootGO, importer->manager);
+
+    (*importer->sceneRootPtr) = rootGO;
 
     json_object_put(json_root);
 }
