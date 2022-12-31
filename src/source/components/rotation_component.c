@@ -69,7 +69,7 @@ static bool parse(struct BaseComponent *component, json_object *json, struct Res
     }
 
     json_object *json_speed = json_object_object_get(json, "speed");
-    if (json_speed == NULL || !json_object_is_type(json_speed, json_type_object)) {
+    if (json_speed == NULL || !json_object_is_type(json_speed, json_type_double)) {
         error_log("%s", "[RotationComponent]: Component must have a double property called \"speed\"");
         return false;
     }
