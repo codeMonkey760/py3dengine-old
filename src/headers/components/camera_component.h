@@ -1,6 +1,8 @@
 #ifndef PY3DENGINE_CAMERA_COMPONENT_H
 #define PY3DENGINE_CAMERA_COMPONENT_H
 
+#include <stdbool.h>
+
 #include "components/base_component.h"
 
 #define COMPONENT_TYPE_NAME_CAMERA "camera"
