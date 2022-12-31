@@ -47,8 +47,8 @@
             "name": "Cube.MRC",
             "type": "ModelRendererComponent",
             "model": "Cube",
-            "Shader": "SolidColorShader",
-            "Material": "SolidBlue"
+            "shader": "SolidColorShader",
+            "material": "SolidBlue"
           },
           {
             "name": "Cube.RC",
@@ -88,8 +88,8 @@
             "name": "Pyramid.MRC",
             "type": "ModelRendererComponent",
             "model": "Pyramid",
-            "Shader": "SolidColorShader",
-            "Material": "SolidYellow"
+            "shader": "SolidColorShader",
+            "material": "SolidYellow"
           },
           {
             "name": "Pyramid.RC",
@@ -129,8 +129,8 @@
             "name": "Quad.MRC",
             "type": "ModelRendererComponent",
             "model": "Quad",
-            "Shader": "SolidColorShader",
-            "Material": "SolidRed"
+            "shader": "SolidColorShader",
+            "material": "SolidRed"
           },
           {
             "name": "Quad.RC",
