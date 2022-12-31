@@ -15,7 +15,7 @@ struct BaseComponent {
     void (*update)(struct BaseComponent *, float);
     void (*render)(struct BaseComponent *, struct RenderingContext *);
     void (*resize)(struct BaseComponent *, int, int);
-    void (*parse)(json_object *json, struct BaseComponent **);
+    void (*parse)(struct BaseComponent *, json_object *json);
     void (*delete)(struct BaseComponent **);
 };
 
