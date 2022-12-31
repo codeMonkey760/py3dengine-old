@@ -298,25 +298,25 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
 
     json_object *json_name = json_object_object_get(json, "name");
     if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
-        error_log("%s", "[SceneImporter]: Game Object must have a string property called \"name\"");
+        error_log("%s", "[GameObject]: Game Object must have a string property called \"name\"");
         return;
     }
 
     json_object *json_transform = json_object_object_get(json, "transform");
     if (json_transform == NULL || !json_object_is_type(json_transform, json_type_object)) {
-        error_log("%s", "[SceneImporter]: Game Object must have an object property called \"transform\"");
+        error_log("%s", "[GameObject]: Game Object must have an object property called \"transform\"");
         return;
     }
 
     json_object *json_components_array = json_object_object_get(json, "components");
     if (json_components_array == NULL || !json_object_is_type(json_components_array, json_type_array)) {
-        error_log("%s", "[SceneImporter]: Game Object must have an array property called \"components\"");
+        error_log("%s", "[GameObject]: Game Object must have an array property called \"components\"");
         return;
     }
 
     json_object *json_children_array = json_object_object_get(json, "children");
     if (json_children_array == NULL || !json_object_is_type(json_children_array, json_type_array)) {
-        error_log("%s", "[SceneImporter]: Game Object must have an array property called \"children\"");
+        error_log("%s", "[GameObject]: Game Object must have an array property called \"children\"");
         return;
     }
 
@@ -324,7 +324,34 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
     allocGameObject(&newGO);
     setGameObjectName(newGO, json_object_get_string(json_name));
 
-    parseTransformComponent(newGO->transform);
+    parseTransformComponent(json_transform, newGO->transform);
+
+    size_t json_components_array_length = json_object_array_length(json_components_array);
+    for (size_t i = 0; i < json_components_array_length; ++i) {
+        json_object *cur_component_json = json_object_array_get_idx(json_components_array, i);
+        if (cur_component_json == NULL || !json_object_is_type(cur_component_json, json_type_object)) {
+            error_log(
+                "[GameObject]: Could not parse component of Game Object with name \"%s\"",
+                getGameObjectName(newGO)
+            );
+        } else {
+            // TODO: finish this once I have a base component interface for a virtual parse function on components
+        }
+    }
+
+    size_t json_children_array_length = json_object_array_length(json_children_array);
+    for (size_t i = 0; i < json_children_array_length; ++i) {
+        json_object *cur_child_json = json_object_array_get_idx(json_children_array, i);
+        if (cur_child_json == NULL || !json_object_is_type(cur_child_json, json_type_object)) {
+            error_log(
+                "[GameObject]: Could not parse child of Game Object with name \"%s\"",
+                getGameObjectName(newGO)
+            );
+        } else {
+            // TODO: finish this once I determine that this function is safe to call recursively
+            // parseGameObject(cur_child_json, newGO, rootPtr);
+        }
+    }
 
     if (parent != NULL) {
         attachChild(parent, newGO);
