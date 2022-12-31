@@ -5,6 +5,7 @@
 #include "game_object.h"
 #include "components/base_component.h"
 #include "components/transform_component.h"
+#include "components/component_factory.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;
@@ -322,6 +323,8 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
 
     struct GameObject *newGO = NULL;
     allocGameObject(&newGO);
+    if (newGO == NULL) return;
+
     setGameObjectName(newGO, json_object_get_string(json_name));
 
     parseTransformComponent(json_transform, newGO->transform);
@@ -334,9 +337,40 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
                 "[GameObject]: Could not parse component of Game Object with name \"%s\"",
                 getGameObjectName(newGO)
             );
-        } else {
-            // TODO: finish this once I have a base component interface for a virtual parse function on components
+
+            continue;
         }
+
+        json_object *type_name_json = json_object_object_get(cur_component_json, "type");
+        if (type_name_json == NULL) {
+            error_log("%s", "[GameObject]: Component must have string property with name \"type\"");
+
+            continue;
+        }
+
+        struct BaseComponent *newComponent = NULL;
+        componentFactoryCreateComponentFromJson(json_object_get_string(type_name_json), &newComponent);
+        if (newComponent == NULL) {
+            error_log("%s", "[GameObject]: Component failed to allocate during json parsing");
+
+            continue;
+        }
+        if (newComponent->parse == NULL) {
+            error_log("%s", "[GameObject]: Json parsing created a component with no virtual parse function");
+            deleteComponent(&newComponent);
+
+            continue;
+        }
+
+        if (!newComponent->parse(newComponent, cur_component_json)) {
+            error_log("%s", "[GameObject]: Component failed to parse. Discarding it.");
+            deleteComponent(&newComponent);
+
+            continue;
+        }
+
+        attachComponent(newGO, newComponent);
+        newComponent = NULL;
     }
 
     size_t json_children_array_length = json_object_array_length(json_children_array);
@@ -347,10 +381,11 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
                 "[GameObject]: Could not parse child of Game Object with name \"%s\"",
                 getGameObjectName(newGO)
             );
-        } else {
-            // TODO: finish this once I determine that this function is safe to call recursively
-            // parseGameObject(cur_child_json, newGO, rootPtr);
+
+            continue;
         }
+
+        parseGameObject(cur_child_json, newGO, rootPtr);
     }
 
     if (parent != NULL) {
