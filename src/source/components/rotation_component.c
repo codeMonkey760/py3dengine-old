@@ -108,6 +108,7 @@ extern void allocRotationComponent(struct RotationComponent **componentPtr){
     base->_type = COMPONENT_TYPE_ROTATION;
     allocString(&base->_typeName, COMPONENT_TYPE_NAME_ROTATION);
     base->update = update;
+    base->parse = parse;
     base->delete = delete;
 
     newComponent->_rotSpeed = 0.0f;
