@@ -294,8 +294,13 @@ struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject
     return NULL;
 }
 
-void parseGameObject(json_object *json, struct GameObject *parent, struct GameObject **rootPtr) {
-    if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL) return;
+void parseGameObject(
+    json_object *json,
+    struct GameObject *parent,
+    struct GameObject **rootPtr,
+    struct ResourceManager *resourceManager
+) {
+    if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return;
 
     json_object *json_name = json_object_object_get(json, "name");
     if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
@@ -362,7 +367,7 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
             continue;
         }
 
-        if (!newComponent->parse(newComponent, cur_component_json)) {
+        if (!newComponent->parse(newComponent, cur_component_json, resourceManager)) {
             error_log("%s", "[GameObject]: Component failed to parse. Discarding it.");
             deleteComponent(&newComponent);
 
@@ -385,7 +390,7 @@ void parseGameObject(json_object *json, struct GameObject *parent, struct GameOb
             continue;
         }
 
-        parseGameObject(cur_child_json, newGO, rootPtr);
+        parseGameObject(cur_child_json, newGO, rootPtr, resourceManager);
     }
 
     if (parent != NULL) {

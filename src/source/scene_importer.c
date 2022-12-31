@@ -315,7 +315,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     }
 
     struct GameObject *rootGO = NULL;
-    parseGameObject(scene_root, NULL, &rootGO);
+    parseGameObject(scene_root, NULL, &rootGO, importer->manager);
 
     json_object_put(json_root);
 }

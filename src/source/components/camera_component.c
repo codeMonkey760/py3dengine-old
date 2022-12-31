@@ -24,8 +24,8 @@ static void resize(struct BaseComponent *component, int newWidth, int newHeight)
     );
 }
 
-static bool parse(struct BaseComponent *component, json_object *json) {
-    if (!isComponentValid(component)) return false;
+static bool parse(struct BaseComponent *component, json_object *json, struct ResourceManager *resourceManager) {
+    if (!isComponentValid(component) || json == NULL || resourceManager == NULL) return false;
 
     json_object *json_name = json_object_object_get(json, "name");
     if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {

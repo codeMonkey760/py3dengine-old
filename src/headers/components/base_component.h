@@ -7,6 +7,7 @@
 struct String;
 struct GameObject;
 struct RenderingContext;
+struct ResourceManager;
 
 struct BaseComponent {
     unsigned int _type;
@@ -16,7 +17,7 @@ struct BaseComponent {
     void (*update)(struct BaseComponent *, float);
     void (*render)(struct BaseComponent *, struct RenderingContext *);
     void (*resize)(struct BaseComponent *, int, int);
-    bool (*parse)(struct BaseComponent *, json_object *json);
+    bool (*parse)(struct BaseComponent *, json_object *, struct ResourceManager *);
     void (*delete)(struct BaseComponent **);
 };
 
