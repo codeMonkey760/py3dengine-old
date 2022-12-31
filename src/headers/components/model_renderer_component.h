@@ -3,7 +3,7 @@
 
 #include "components/base_component.h"
 
-#define COMPONENT_TYPE_NAME_MODEL_RENDERER "model_renderer"
+#define COMPONENT_TYPE_NAME_MODEL_RENDERER "ModelRendererComponent"
 
 struct Model;
 struct Shader;

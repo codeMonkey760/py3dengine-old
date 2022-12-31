@@ -3,7 +3,7 @@
 
 #include "components/base_component.h"
 
-#define COMPONENT_TYPE_NAME_ROTATION "rotation"
+#define COMPONENT_TYPE_NAME_ROTATION "RotationComponent"
 
 struct RotationComponent {
     struct BaseComponent base;

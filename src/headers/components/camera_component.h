@@ -5,7 +5,7 @@
 
 #include "components/base_component.h"
 
-#define COMPONENT_TYPE_NAME_CAMERA "camera"
+#define COMPONENT_TYPE_NAME_CAMERA "CameraComponent"
 
 struct CameraComponent {
     struct BaseComponent base;
