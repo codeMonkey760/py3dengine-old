@@ -1,6 +1,8 @@
 #ifndef PY3DENGINE_BASE_COMPONENT_H
 #define PY3DENGINE_BASE_COMPONENT_H
 
+#include <json-c/json.h>
+
 struct String;
 struct GameObject;
 struct RenderingContext;
@@ -13,6 +15,7 @@ struct BaseComponent {
     void (*update)(struct BaseComponent *, float);
     void (*render)(struct BaseComponent *, struct RenderingContext *);
     void (*resize)(struct BaseComponent *, int, int);
+    void (*parse)(json_object *json, struct BaseComponent **);
     void (*delete)(struct BaseComponent **);
 };
 

@@ -15,6 +15,7 @@ void initializeBaseComponent(struct BaseComponent *component) {
     component->update = NULL;
     component->render = NULL;
     component->resize = NULL;
+    component->parse = NULL;
     component->delete = NULL;
 }
 
