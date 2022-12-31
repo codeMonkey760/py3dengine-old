@@ -1,6 +1,7 @@
 #ifndef PY3DENGINE_BASE_COMPONENT_H
 #define PY3DENGINE_BASE_COMPONENT_H
 
+#include <stdbool.h>
 #include <json-c/json.h>
 
 struct String;
@@ -15,7 +16,7 @@ struct BaseComponent {
     void (*update)(struct BaseComponent *, float);
     void (*render)(struct BaseComponent *, struct RenderingContext *);
     void (*resize)(struct BaseComponent *, int, int);
-    void (*parse)(struct BaseComponent *, json_object *json);
+    bool (*parse)(struct BaseComponent *, json_object *json);
     void (*delete)(struct BaseComponent **);
 };
 
