@@ -6,7 +6,7 @@
 #include "logger.h"
 #include "config.h"
 #include "util.h"
-#include "python_wrapper.h"
+#include "python/python_wrapper.h"
 #include "engine.h"
 #include "scene_importer.h"
 #include "game_object.h"
@@ -95,7 +95,10 @@ static void resizeEngine() {
 void initializeEngine(){
     parseConfigFile("config.ini");
 
-    initializePython();
+    if (!initializePython()) {
+        critical_log("%s", "Could not initialize python. Halting");
+        return;
+    }
 
     glfwSetErrorCallback(error_callback);
 

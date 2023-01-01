@@ -29,7 +29,6 @@ add_executable(
     src/source/engine.c
     src/source/custom_string.c
     src/source/game_object.c
-    src/source/python_wrapper.c
     src/source/resource_manager.c
     src/source/scene_importer.c
     src/source/rendering_context.c
@@ -42,6 +41,9 @@ add_executable(
     src/source/resources/model.c
     src/source/resources/shader.c
     src/source/resources/material.c
+    src/source/python/py3denginemodule.c
+    src/source/python/python_util.c
+    src/source/python/python_wrapper.c
     src/source/components/rotation_component.c
     src/source/components/model_renderer_component.c
     src/source/components/base_component.c
