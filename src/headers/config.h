@@ -6,6 +6,7 @@
 
 extern void parseConfig(FILE *config);
 extern void parseConfigFile(const char *fileName);
+extern void finalizeConfig();
 
 extern int getConfigScreenWidth();
 extern int getConfigScreenHeight();
@@ -13,5 +14,6 @@ extern int getConfigScreenLeft();
 extern int getConfigScreenTop();
 extern bool getConfigFullScreen();
 extern int getConfigSwapInterval();
+extern const char *getConfigStartingScene();
 
 #endif

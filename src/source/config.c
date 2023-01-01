@@ -5,6 +5,7 @@
 
 #include "logger.h"
 #include "config.h"
+#include "custom_string.h"
 
 #define LINE_BUFFER_SIZE_IN_ELEMENTS 64
 #define NAME_BUFFER_SIZE_IN_ELEMENTS 64
@@ -33,6 +34,10 @@ static bool full_screen = FULL_SCREEN_DEFAULT;
 #define SWAP_INTERVAL_DEFAULT 0
 #define SWAP_INTERVAL_CONFIG_NAME "swap_interval"
 static int swap_interval = SWAP_INTERVAL_DEFAULT;
+
+#define STARTING_SCENE_DEFAULT "default.json"
+#define STARTING_SCENE_CONFIG_NAME "starting_scene"
+static struct String *startingScene = NULL;
 
 static void clearCharBuffer(char *buffer, size_t numChars) {
     if (buffer == NULL || numChars == 0) return;
@@ -93,6 +98,12 @@ static void storeValue(char *name, char *value) {
         full_screen = strncmp(value, "true", 4) == 0;
     } else if (strncmp(name, SWAP_INTERVAL_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
         swap_interval = (int) strtol(value, NULL, 10);
+    } else if (strncmp(name, STARTING_SCENE_CONFIG_NAME, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+        if (startingScene == NULL) {
+            allocString(&startingScene, value);
+        } else {
+            setChars(startingScene, value);
+        }
     } else {
         warning_log("[Config]: Unrecognized configuration setting \"%s\"", name);
         return;
@@ -103,6 +114,8 @@ static void storeValue(char *name, char *value) {
 
 void parseConfig(FILE *config) {
     if (config == NULL) return;
+
+    finalizeConfig();
 
     char lineBuffer[LINE_BUFFER_SIZE_IN_ELEMENTS+1];
     clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
@@ -156,6 +169,10 @@ void parseConfigFile(const char *fileName) {
     fclose(config);
 }
 
+void finalizeConfig() {
+    deleteString(&startingScene);
+}
+
 int getConfigScreenWidth() {
     return screen_width;
 }
@@ -178,4 +195,12 @@ bool getConfigFullScreen() {
 
 int getConfigSwapInterval() {
     return swap_interval;
+}
+
+const char *getConfigStartingScene() {
+    if (startingScene == NULL) {
+        return STARTING_SCENE_DEFAULT;
+    } else {
+        return getChars(startingScene);
+    }
 }
