@@ -179,4 +179,6 @@ void finalizeEngine() {
     glfwTerminate();
 
     finalizePython();
+
+    finalizeConfig();
 }
