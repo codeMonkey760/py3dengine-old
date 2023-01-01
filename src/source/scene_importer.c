@@ -129,8 +129,7 @@ void initSceneImporter(struct SceneImporter *importer, struct ResourceManager *n
 }
 
 void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
-    // TODO: add a NULL check for sceneDescriptor when I start using it
-    if (importer == NULL || importer->manager == NULL) return;
+    if (importer == NULL || importer->manager == NULL || sceneDescriptor == NULL) return;
 
     FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
     if (wfoFile == NULL) {
@@ -187,7 +186,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 
-    json_object *json_root = json_object_from_file("default.json");
+    json_object *json_root = json_object_from_fd(fileno(sceneDescriptor));
     if (json_root == NULL) {
         critical_log("%s", "[SceneImporter]: Could not parse the contents of \"default.json\" as json. Scene loading will fail.");
         return;

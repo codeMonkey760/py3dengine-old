@@ -139,8 +139,17 @@ void initializeEngine(){
         critical_log("%s", "[Engine]: Unable to allocate scene importer. Scene parsing will fail");
     }
 
+    FILE *startingScene = fopen(getConfigStartingScene(), "r");
+    if (startingScene == NULL) {
+        critical_log("%s", "[Engine]: Unable to open the starting scene for parsing. Cannot initialize");
+    }
+
     initSceneImporter(importer, resourceManager, &root);
-    importScene(importer, NULL);
+    importScene(importer, startingScene);
+
+    fclose(startingScene);
+    startingScene = NULL;
+
     activeCamera = findGameObjectByName(root, "Camera");
     if (activeCamera == NULL) {
         warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
