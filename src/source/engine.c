@@ -147,8 +147,10 @@ void initializeEngine(){
     initSceneImporter(importer, resourceManager, &root);
     importScene(importer, startingScene);
 
-    fclose(startingScene);
-    startingScene = NULL;
+    if (startingScene != NULL) {
+        fclose(startingScene);
+        startingScene = NULL;
+    }
 
     activeCamera = findGameObjectByName(root, "Camera");
     if (activeCamera == NULL) {
