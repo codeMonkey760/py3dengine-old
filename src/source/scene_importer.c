@@ -6,6 +6,7 @@
 #include "game_object.h"
 #include "components/model_renderer_component.h"
 #include "components/transform_component.h"
+#include "json_parser.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"

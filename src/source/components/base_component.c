@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "logger.h"
 #include "components/base_component.h"
 #include "custom_string.h"
 
@@ -15,7 +16,6 @@ void initializeBaseComponent(struct BaseComponent *component) {
     component->update = NULL;
     component->render = NULL;
     component->resize = NULL;
-    component->parse = NULL;
     component->delete = NULL;
 }
 
@@ -24,6 +24,19 @@ void finalizeBaseComponent(struct BaseComponent *component) {
 
     deleteString(&component->_typeName);
     deleteString(&component->_name);
+}
+
+void deleteComponent(struct BaseComponent **componentPtr) {
+    if (componentPtr == NULL || (*componentPtr) == NULL) return;
+
+    struct BaseComponent *component = (*componentPtr);
+    if (component->delete == NULL) {
+        critical_log("%s", "[BaseComponent]: Tried to delete component with no virtual destructor. Memory leak certain.");
+        return;
+    }
+
+    component->delete(componentPtr);
+    component = NULL;
 }
 
 struct String *getComponentName(struct BaseComponent *component) {

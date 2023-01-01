@@ -34,6 +34,7 @@ add_executable(
     src/source/scene_importer.c
     src/source/rendering_context.c
     src/source/config.c
+    src/source/json_parser.c
     src/source/wfo_parser/wfo_parser.c
     src/source/wfo_parser/vertex_data_list.c
     src/source/wfo_parser/object_list.c

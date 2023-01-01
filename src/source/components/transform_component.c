@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "logger.h"
 #include "util.h"
 #include "custom_string.h"
 #include "components/transform_component.h"
@@ -69,27 +68,6 @@ static void refreshViewMatrixCache(struct TransformComponent *component) {
     component->_viewMtxCacheDirty = false;
 }
 
-static bool parseVec(json_object *json, const char *name, float dst[4], size_t vecSize) {
-    json_object *vec = json_object_object_get(json, name);
-    if (vec == NULL || !json_object_is_type(vec, json_type_object)) {
-        error_log("[TransformComponent]: Transform must have an object property called \"%s\"", name);
-        return false;
-    }
-
-    char elements[8] = {'x', 0, 'y', 0, 'z', 0, 'w', 0};
-    for (int i = 0; i < vecSize; ++i) {
-        char *element_name = elements+(i*2);
-        json_object *element = json_object_object_get(vec, element_name);
-        if (element == NULL || !json_object_is_type(element, json_type_double)) {
-            error_log("[TransformComponent]: Transform must have a double property called \"%s\"", element_name);
-            return false;
-        }
-        dst[i] = (float) json_object_get_double(element);
-    }
-
-    return true;
-}
-
 void allocTransformComponent(struct TransformComponent **componentPtr) {
     if (componentPtr == NULL || (*componentPtr) != NULL) return;
 
@@ -125,22 +103,6 @@ void deleteTransformComponent(struct TransformComponent **componentPtr) {
 
     free( (*componentPtr) );
     (*componentPtr) = NULL;
-}
-
-void parseTransformComponent(json_object *json, struct TransformComponent *component) {
-    if (json == NULL || component == NULL) return;
-
-    float dataBuffer[4];
-    memset(dataBuffer, 0, sizeof(float) * 4);
-
-    if (parseVec(json, "position", dataBuffer, 3) == false) return;
-    Vec3Copy(component->_position, dataBuffer);
-
-    if (parseVec(json, "orientation", dataBuffer, 4) == false) return;
-    QuaternionCopy(component->_orientation, dataBuffer);
-
-    if (parseVec(json, "scale", dataBuffer, 3) == false) return;
-    Vec3Copy(component->_scale, dataBuffer);
 }
 
 void moveTransform(struct TransformComponent *component, float displacement[3]) {

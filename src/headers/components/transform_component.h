@@ -2,7 +2,6 @@
 #define PY3DENGINE_TRANSFORM_COMPONENT_H
 
 #include <stdbool.h>
-#include <json-c/json.h>
 
 #include "components/base_component.h"
 
@@ -26,8 +25,6 @@ struct TransformComponent {
 
 extern void allocTransformComponent(struct TransformComponent **componentPtr);
 extern void deleteTransformComponent(struct TransformComponent **componentPtr);
-
-extern void parseTransformComponent(json_object *json, struct TransformComponent *component);
 
 extern void moveTransform(struct TransformComponent *component, float displacement[3]);
 extern void setTransformPosition(struct TransformComponent *component, float newPosition[3]);

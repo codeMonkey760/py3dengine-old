@@ -5,7 +5,6 @@
 #include "game_object.h"
 #include "components/base_component.h"
 #include "components/transform_component.h"
-#include "components/component_factory.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;
@@ -16,19 +15,6 @@ struct ChildListNode {
     struct GameObject *child;
     struct ChildListNode *next;
 };
-
-static void deleteComponent(struct BaseComponent **componentPtr) {
-    if (componentPtr == NULL || (*componentPtr) == NULL) return;
-
-    struct BaseComponent *component = (*componentPtr);
-    if (component->delete == NULL) {
-        critical_log("%s", "[Game Object]: Tried to delete component with no virtual destructor. Memory leak certain.");
-        return;
-    }
-
-    component->delete(componentPtr);
-    component = NULL;
-}
 
 static void allocComponentListNode(struct ComponentListNode **listNodePtr) {
     if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
@@ -294,120 +280,13 @@ struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject
     return NULL;
 }
 
-void parseGameObject(
-    json_object *json,
-    struct GameObject *parent,
-    struct GameObject **rootPtr,
-    struct ResourceManager *resourceManager
-) {
-    if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return;
-
-    json_object *json_name = json_object_object_get(json, "name");
-    if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
-        error_log("%s", "[GameObject]: Game Object must have a string property called \"name\"");
-        return;
-    }
-
-    json_object *json_transform = json_object_object_get(json, "transform");
-    if (json_transform == NULL || !json_object_is_type(json_transform, json_type_object)) {
-        error_log("%s", "[GameObject]: Game Object must have an object property called \"transform\"");
-        return;
-    }
-
-    json_object *json_components_array = json_object_object_get(json, "components");
-    if (json_components_array == NULL || !json_object_is_type(json_components_array, json_type_array)) {
-        error_log("%s", "[GameObject]: Game Object must have an array property called \"components\"");
-        return;
-    }
-
-    json_object *json_children_array = json_object_object_get(json, "children");
-    if (json_children_array == NULL || !json_object_is_type(json_children_array, json_type_array)) {
-        error_log("%s", "[GameObject]: Game Object must have an array property called \"children\"");
-        return;
-    }
-
-    struct GameObject *newGO = NULL;
-    allocGameObject(&newGO);
-    if (newGO == NULL) return;
-
-    setGameObjectName(newGO, json_object_get_string(json_name));
-
-    parseTransformComponent(json_transform, newGO->transform);
-
-    size_t json_components_array_length = json_object_array_length(json_components_array);
-    for (size_t i = 0; i < json_components_array_length; ++i) {
-        json_object *cur_component_json = json_object_array_get_idx(json_components_array, i);
-        if (cur_component_json == NULL || !json_object_is_type(cur_component_json, json_type_object)) {
-            error_log(
-                "[GameObject]: Could not parse component of Game Object with name \"%s\"",
-                getGameObjectName(newGO)
-            );
-
-            continue;
-        }
-
-        json_object *type_name_json = json_object_object_get(cur_component_json, "type");
-        if (type_name_json == NULL) {
-            error_log("%s", "[GameObject]: Component must have string property with name \"type\"");
-
-            continue;
-        }
-
-        struct BaseComponent *newComponent = NULL;
-        componentFactoryCreateComponentFromJson(json_object_get_string(type_name_json), &newComponent);
-        if (newComponent == NULL) {
-            error_log("%s", "[GameObject]: Component failed to allocate during json parsing");
-
-            continue;
-        }
-        if (newComponent->parse == NULL) {
-            error_log("%s", "[GameObject]: Json parsing created a component with no virtual parse function");
-            deleteComponent(&newComponent);
-
-            continue;
-        }
-
-        if (!newComponent->parse(newComponent, cur_component_json, resourceManager)) {
-            error_log("%s", "[GameObject]: Component failed to parse. Discarding it.");
-            deleteComponent(&newComponent);
-
-            continue;
-        }
-
-        attachComponent(newGO, newComponent);
-        newComponent = NULL;
-    }
-
-    size_t json_children_array_length = json_object_array_length(json_children_array);
-    for (size_t i = 0; i < json_children_array_length; ++i) {
-        json_object *cur_child_json = json_object_array_get_idx(json_children_array, i);
-        if (cur_child_json == NULL || !json_object_is_type(cur_child_json, json_type_object)) {
-            error_log(
-                "[GameObject]: Could not parse child of Game Object with name \"%s\"",
-                getGameObjectName(newGO)
-            );
-
-            continue;
-        }
-
-        parseGameObject(cur_child_json, newGO, rootPtr, resourceManager);
-    }
-
-    if (parent != NULL) {
-        attachChild(parent, newGO);
-    } else {
-        (*rootPtr) = newGO;
-    }
-    newGO = NULL;
-}
-
 struct String *getGameObjectName(struct GameObject *gameObject) {
     if (gameObject == NULL) return NULL;
 
     return gameObject->name;
 }
 
-void setGameObjectName(struct GameObject *gameObject, char *newName) {
+void setGameObjectName(struct GameObject *gameObject, const char *newName) {
     if (gameObject == NULL) return;
 
     if (gameObject->name == NULL) {
