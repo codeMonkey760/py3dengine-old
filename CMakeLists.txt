@@ -41,6 +41,7 @@ add_executable(
     src/source/resources/model.c
     src/source/resources/shader.c
     src/source/resources/material.c
+    src/source/resources/texture.c
     src/source/python/py3denginemodule.c
     src/source/python/python_util.c
     src/source/python/python_wrapper.c
@@ -52,4 +53,4 @@ add_executable(
     src/source/components/component_factory.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python json-c m)
+target_link_libraries(py3dengine glfw Python::Python json-c SOIL m)
