@@ -1,7 +1,13 @@
 #ifndef PY3DENGINE_SHADER_H
 #define PY3DENGINE_SHADER_H
 
+#include "resources/base_resource.h"
+
+#define RESOURCE_TYPE_NAME_SHADER "Shader"
+
 struct Shader {
+    struct BaseResource _base;
+
     unsigned int _vertexShader;
     unsigned int _fragShader;
     unsigned int _program;
@@ -11,9 +17,9 @@ struct Shader {
     int _wMtxLoc;
     int _witMtxLoc;
     int _wvpMtxLoc;
-
-    struct String *_name;
 };
+
+extern bool isResourceTypeShader(struct BaseResource *resource);
 
 extern void allocShader(struct Shader **shaderPtr);
 extern void deleteShader(struct Shader **shaderPtr);
@@ -27,8 +33,5 @@ extern void setCameraPosition(struct Shader *shader, float newCameraPos[3]);
 extern void setWMtx(struct Shader *shader, float newWMtx[16]);
 extern void setWITMtx(struct Shader *shader, float newWITMtx[16]);
 extern void setWVPMtx(struct Shader *shader, float newWVPMtx[16]);
-
-extern struct String * getShaderName(struct Shader *shader);
-extern void setShaderName(struct Shader *shader, const char *newName);
 
 #endif

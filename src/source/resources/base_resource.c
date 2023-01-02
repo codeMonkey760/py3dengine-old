@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "logger.h"
 #include "resources/base_resource.h"
 #include "custom_string.h"
 
@@ -19,6 +20,33 @@ void finalizeBaseResource(struct BaseResource *resource) {
 
     deleteString(&resource->_typeName);
     deleteString(&resource->_name);
+}
+
+void deleteResource(struct BaseResource **resourcePtr) {
+    if (resourcePtr == NULL) return;
+
+    struct BaseResource *resource = (*resourcePtr);
+    if (resource->delete == NULL) {
+        critical_log("%s", "[BaseResource]: Unable to delete resource. Delete virtual function was NULL. Memory leak certain.");
+        return;
+    }
+
+    resource->delete(resourcePtr);
+    resource = NULL;
+}
+
+bool resourceTypesEqual(struct BaseResource *r1, struct BaseResource *r2) {
+    if (r1 == NULL || r2 == NULL) return false;
+
+    if (r1->_type != r2->_type) return false;
+
+    return stringEquals(r1->_typeName, r2->_typeName);
+}
+
+bool resourceNamesEqual(struct BaseResource *r1, struct BaseResource *r2) {
+    if (r1 == NULL || r2 == NULL) return false;
+
+    return stringEquals(r1->_name, r2->_name);
 }
 
 struct String *getResourceName(struct BaseResource *resource) {

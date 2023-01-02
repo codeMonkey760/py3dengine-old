@@ -4,11 +4,34 @@
 #include "custom_string.h"
 #include "resources/material.h"
 
+#define RESOURCE_TYPE_MATERIAL 1
+
+static void delete(struct BaseResource **resourcePtr) {
+    if (resourcePtr == NULL) return;
+
+    if (!isResourceTypeMaterial((*resourcePtr))) return;
+
+    deleteMaterial((struct Material **) resourcePtr);
+}
+
+bool isResourceTypeMaterial(struct BaseResource *resource) {
+    if (resource == NULL) return false;
+
+    return resource->_type = RESOURCE_TYPE_MATERIAL && stringEqualsCStr(resource->_typeName, RESOURCE_TYPE_NAME_MATERIAL);
+}
+
 void allocMaterial(struct Material **materialPtr) {
     if (materialPtr == NULL || (*materialPtr) != NULL) return;
 
     struct Material *newMaterial = calloc(1, sizeof(struct Material));
     if (newMaterial == NULL) return;
+
+    struct BaseResource *base = (struct BaseResource *) newMaterial;
+    initializeBaseResource(base);
+    base->_type = RESOURCE_TYPE_MATERIAL;
+    allocString(&base->_typeName, RESOURCE_TYPE_NAME_MATERIAL);
+    base->delete = delete;
+    base = NULL;
 
     newMaterial->_shader = NULL;
     Vec3Identity(newMaterial->diffuseColor);
@@ -16,7 +39,6 @@ void allocMaterial(struct Material **materialPtr) {
     Vec3Identity(newMaterial->specularColor);
     Vec3Identity(newMaterial->emissiveColor);
     newMaterial->specularPower = 0.0f;
-    newMaterial->_name = NULL;
 
     (*materialPtr) = newMaterial;
     newMaterial = NULL;
@@ -27,32 +49,11 @@ void deleteMaterial(struct Material **materialPtr) {
 
     struct Material *material = (*materialPtr);
 
-    deleteString(&material->_name);
+    finalizeBaseResource((struct BaseResource *) material);
 
     free(material);
     material = NULL;
     (*materialPtr) = NULL;
-}
-
-struct String *getMaterialName(struct Material *material) {
-    if (material == NULL) return NULL;
-
-    return material->_name;
-}
-
-void setMaterialName(struct Material *material, const char *newName) {
-    if (material == NULL) return;
-
-    if (newName == NULL) {
-        deleteString(&material->_name);
-        return;
-    }
-
-    if (material->_name == NULL) {
-        allocString(&material->_name, newName);
-    } else {
-        setChars(material->_name, newName);
-    }
 }
 
 void setMaterialShader(struct Material *material, struct Shader *newShader) {

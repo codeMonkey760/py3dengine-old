@@ -3,9 +3,8 @@
 
 #include <stdio.h>
 
-#include "resource_manager.h"
-
 struct GameObject;
+struct ResourceManager;
 
 struct SceneImporter {
     struct ResourceManager *manager;

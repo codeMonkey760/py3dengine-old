@@ -7,6 +7,10 @@
 #include "components/model_renderer_component.h"
 #include "components/transform_component.h"
 #include "json_parser.h"
+#include "resources/model.h"
+#include "resources/shader.h"
+#include "resources/material.h"
+#include "resource_manager.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -75,7 +79,7 @@ static void importModel(struct Model **modelPtr, struct WfoParser *wfoParser, co
     }
 
     setPNTBuffer(newModel, vbo, cubeVboSize / 8);
-    setModelName(newModel, name);
+    setResourceName((struct BaseResource *) newModel, name);
 
     free(vbo);
     vbo = NULL;
@@ -92,7 +96,7 @@ static void importShader(struct Shader **shaderPtr) {
     if (newShader == NULL) return;
 
     initShader(newShader, vertex_shader_source, fragment_shader_source);
-    setShaderName(newShader, "SolidColorShader");
+    setResourceName((struct BaseResource *) newShader, "SolidColorShader");
 
     (*shaderPtr) = newShader;
     newShader = NULL;
@@ -147,21 +151,21 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     if (curModel == NULL) {
         error_log("%s", "[Scene Importer]: Unable to load \"Cube\" model");
     }
-    storeModel(importer->manager, curModel);
+    storeResource(importer->manager, (struct BaseResource *) curModel);
     curModel = NULL;
 
     importModel(&curModel, wfoParser, "Pyramid");
     if (curModel == NULL) {
         error_log("%s", "[Scene Importer]: Unable to load \"Pyramid\" model");
     }
-    storeModel(importer->manager, curModel);
+    storeResource(importer->manager, (struct BaseResource *) curModel);
     curModel = NULL;
 
     importModel(&curModel, wfoParser, "Quad");
     if (curModel == NULL) {
         error_log("%s", "[Scene Importer]: Unable to load \"Quad\" model");
     }
-    storeModel(importer->manager, curModel);
+    storeResource(importer->manager, (struct BaseResource *) curModel);
     curModel = NULL;
 
     struct Shader *curShader = NULL;
@@ -170,7 +174,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     if (curShader == NULL) {
         error_log("%s", "[Scene Importer]: Unable to load \"SolidColorShader\" shader");
     }
-    storeShader(importer->manager, curShader);
+    storeResource(importer->manager, (struct BaseResource *) curShader);
     curShader = NULL;
 
     FILE *mtlFile = fopen("resources/solid_objs.mtl", "r");

@@ -11,6 +11,7 @@
 #include "scene_importer.h"
 #include "game_object.h"
 #include "rendering_context.h"
+#include "resource_manager.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;

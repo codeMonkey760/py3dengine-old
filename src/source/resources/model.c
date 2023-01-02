@@ -4,6 +4,8 @@
 #include "custom_string.h"
 #include "resources/model.h"
 
+#define RESOURCE_TYPE_MODEL 2
+
 // TODO: these should be in a vertex format file / struct
 const GLuint positionShaderIndex = 0;
 const GLuint normalShaderIndex = 1;
@@ -28,15 +30,37 @@ static void deleteVBO(struct Model *model) {
     model->_sizeInVertices = 0;
 }
 
+static void delete(struct BaseResource **resourcePtr) {
+    if (resourcePtr == NULL) return;
+
+    if (!isResourceTypeModel((*resourcePtr))) return;
+
+    deleteModel((struct Model **) resourcePtr);
+}
+
+bool isResourceTypeModel(struct BaseResource *resource) {
+    if (resource == NULL) return false;
+
+    return resource->_type == RESOURCE_TYPE_MODEL && stringEqualsCStr(resource->_typeName, RESOURCE_TYPE_NAME_MODEL);
+}
+
 void allocModel(struct Model **modelPtr) {
     if (modelPtr == NULL || (*modelPtr) != NULL) return;
 
     struct Model *newModel = calloc(1, sizeof(struct Model));
+    if (newModel == NULL) return;
+
+    struct BaseResource *base = (struct BaseResource *) newModel;
+    initializeBaseResource(base);
+
+    base->_type = RESOURCE_TYPE_MODEL;
+    allocString(&base->_typeName, RESOURCE_TYPE_NAME_MODEL);
+    base->delete = delete;
+    base = NULL;
+
     newModel->_vao = -1;
     newModel->_vbo = -1;
     newModel->_sizeInVertices = 0;
-
-    newModel->_name = NULL;
 
     (*modelPtr) = newModel;
     newModel = NULL;
@@ -49,7 +73,8 @@ void deleteModel(struct Model **modelPtr) {
 
     deleteVBO(model);
     deleteVAO(model);
-    deleteString(&model->_name);
+
+    finalizeBaseResource((struct BaseResource *) model);
 
     free(model);
     model = NULL;
@@ -113,25 +138,4 @@ void renderModel(struct Model *model) {
     if (model == NULL || model->_vao == -1 || model->_sizeInVertices == 0) return;
 
     glDrawArrays(GL_TRIANGLES, 0, (int) model->_sizeInVertices);
-}
-
-struct String *getModelName(struct Model *model) {
-    if (model->_name == NULL) return NULL;
-
-    return model->_name;
-}
-
-void setModelName(struct Model *model, const char *newName) {
-    if (model == NULL) return;
-
-    if (newName == NULL) {
-        deleteString(&model->_name);
-        return;
-    }
-
-    if (model->_name == NULL) {
-        allocString(&model->_name, newName);
-    } else {
-        setChars(model->_name, newName);
-    }
 }

@@ -6,6 +6,8 @@
 #include "resources/shader.h"
 #include "glad/gl.h"
 
+#define RESOURCE_TYPE_SHADER 3
+
 static void compileShader(GLuint shader) {
     GLint result = GL_FALSE;
     GLint log_length = 0;
@@ -93,11 +95,32 @@ static void deleteGLShader(struct Shader *shader, GLuint *glShaderPtr) {
     (*glShaderPtr) = 0;
 }
 
+static void delete(struct BaseResource **resourcePtr) {
+    if (resourcePtr == NULL) return;
+
+    if (!isResourceTypeShader( (*resourcePtr) ))  return;
+
+    deleteShader((struct Shader **) resourcePtr);
+}
+
+bool isResourceTypeShader(struct BaseResource *resource) {
+    if (resource == NULL) return false;
+
+    return resource->_type == RESOURCE_TYPE_SHADER && stringEqualsCStr(resource->_typeName, RESOURCE_TYPE_NAME_SHADER);
+}
+
 void allocShader(struct Shader **shaderPtr) {
     if (shaderPtr == NULL || (*shaderPtr) != NULL) return;
 
     struct Shader *newShader = calloc(1, sizeof(struct Shader));
     if (newShader == NULL) return;
+
+    struct BaseResource *base = (struct BaseResource *) newShader;
+    initializeBaseResource(base);
+    base->_type = RESOURCE_TYPE_SHADER;
+    allocString(&base->_typeName, RESOURCE_TYPE_NAME_SHADER);
+    base->delete = delete;
+    base = NULL;
 
     newShader->_vertexShader = 0;
     newShader->_fragShader = 0;
@@ -108,8 +131,6 @@ void allocShader(struct Shader **shaderPtr) {
     newShader->_wMtxLoc = -1;
     newShader->_witMtxLoc = -1;
     newShader->_wvpMtxLoc = -1;
-
-    newShader->_name = NULL;
 
     (*shaderPtr) = newShader;
     newShader = NULL;
@@ -131,7 +152,8 @@ void deleteShader(struct Shader **shaderPtr) {
     shader->_wMtxLoc = -1;
     shader->_witMtxLoc = -1;
     shader->_wvpMtxLoc = -1;
-    deleteString(&shader->_name);
+
+    finalizeBaseResource((struct BaseResource *) shader);
 
     free(shader);
     shader = NULL;
@@ -210,26 +232,4 @@ void setWVPMtx(struct Shader *shader, float newWVPMtx[16]) {
     if (shader == NULL || shader->_wvpMtxLoc == -1) return;
 
     glUniformMatrix4fv(shader->_wvpMtxLoc, 1, GL_TRUE, newWVPMtx);
-}
-
-struct String *getShaderName(struct Shader *shader) {
-    if (shader == NULL || shader->_name == NULL) return NULL;
-
-    return shader->_name;
-}
-
-void setShaderName(struct Shader *shader, const char *newName) {
-    if (shader == NULL) return;
-
-    if (newName == NULL) {
-        deleteString(&shader->_name);
-
-        return;
-    }
-
-    if (shader->_name == NULL) {
-        allocString(&shader->_name, newName);
-    } else {
-        setChars(shader->_name, newName);
-    }
 }

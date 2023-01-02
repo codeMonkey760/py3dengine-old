@@ -3,14 +3,19 @@
 
 #include <stdlib.h>
 
+#include "resources/base_resource.h"
+
+#define RESOURCE_TYPE_NAME_MODEL "Model"
+
 struct Model {
+    struct BaseResource _base;
+
     unsigned int _vao;
     unsigned int _vbo;
     size_t _sizeInVertices;
-
-    struct String *_name;
 };
 
+extern bool isResourceTypeModel(struct BaseResource *resource);
 extern void allocModel(struct Model **modelPtr);
 extern void deleteModel(struct Model **modelPtr);
 
@@ -19,8 +24,5 @@ extern void setPNTBuffer(struct Model *model, const float *buffer, size_t buffer
 extern void bindModel(struct Model *model);
 extern void unbindModel(struct Model *model);
 extern void renderModel(struct Model *model);
-
-extern struct String *getModelName(struct Model *model);
-extern void setModelName(struct Model *model, const char *newName);
 
 #endif

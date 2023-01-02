@@ -7,6 +7,9 @@
 #include "json_parser.h"
 #include "game_object.h"
 #include "resource_manager.h"
+#include "resources/model.h"
+#include "resources/shader.h"
+#include "resources/material.h"
 #include "components/component_factory.h"
 #include "components/base_component.h"
 #include "components/transform_component.h"
@@ -93,25 +96,25 @@ bool parseModelRendererComponent(struct ModelRendererComponent *component, json_
     setComponentName((struct BaseComponent *) component, json_object_get_string(json_name));
 
     const char *newModelName = json_object_get_string(json_model_name);
-    struct Model *newModel = getModelResource(manager, newModelName);
-    if (newModel != NULL) {
-        setModelRendererComponentModel(component, newModel);
+    struct BaseResource *newModel = getResource(manager, newModelName);
+    if (newModel != NULL || !isResourceTypeModel(newModel)) {
+        setModelRendererComponentModel(component, (struct Model *) newModel);
     } else {
         warning_log("[JsonParser]: Model resource look up failed for \"%s\" while parsing component", newModelName);
     }
 
     const char *newShaderName = json_object_get_string(json_shader_name);
-    struct Shader *newShader = getShaderResource(manager, newShaderName);
-    if (newShader != NULL) {
-        setModelRendererComponentShader(component, newShader);
+    struct BaseResource *newShader = getResource(manager, newShaderName);
+    if (newShader != NULL || !isResourceTypeShader(newShader)) {
+        setModelRendererComponentShader(component, (struct Shader *) newShader);
     } else {
         warning_log("[JsonParser]: Shader resource look up failed for \"%s\" while parsing component", newShaderName);
     }
 
     const char *newMaterialName = json_object_get_string(json_material_name);
-    struct Material *newMaterial = getMaterialResource(manager, newMaterialName);
-    if (newMaterial != NULL) {
-        setModelRendererComponentMaterial(component, newMaterial);
+    struct BaseResource *newMaterial = getResource(manager, newMaterialName);
+    if (newMaterial != NULL || !isResourceTypeMaterial(newMaterial)) {
+        setModelRendererComponentMaterial(component, (struct Material *) newMaterial);
     } else {
         warning_log("[JsonParser]: Material resource look up failed for \"%s\" while parsing component", newMaterialName);
     }

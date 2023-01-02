@@ -297,7 +297,7 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
     clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
     curPos = lineBuffer;
 
-    struct Material *curMaterial = NULL;
+    struct BaseResource *curMaterial = NULL;
     while (fgets(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS, mtl)) {
         lineNumber++;
         if (strnlen(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS) < 2) {
@@ -311,26 +311,26 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
             clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS+1);
             readStringFromLine(curPos, nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS);
             if (curMaterial != NULL) {
-                trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getMaterialName(curMaterial)));
-                storeMaterial(manager, curMaterial);
+                trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getResourceName(curMaterial)));
+                storeResource(manager, curMaterial);
                 curMaterial = NULL;
             }
             trace_log("[WfoParser]: Allocating new material named \"%s\"", nameBuffer);
-            allocMaterial(&curMaterial);
-            setMaterialName(curMaterial, nameBuffer);
+            allocMaterial((struct Material **) &curMaterial);
+            setResourceName(curMaterial, nameBuffer);
         } else if (strncmp(typeBuffer, "Kd", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             if (curMaterial == NULL) {
                 error_log("%s", "[WfoParser]: Trying to write diffuse color into NULL material.");
                 continue;
             }
             readFloatsFromLine(curPos, dataBuffer, 3);
-            setMaterialDiffuseColor(curMaterial, dataBuffer);
+            setMaterialDiffuseColor((struct Material *) curMaterial, dataBuffer);
             trace_log(
                 "[WfoParser]: Writing (%.2f, %.2f, %.2f) as diffuse color to material named \"%s\"",
                 dataBuffer[0],
                 dataBuffer[1],
                 dataBuffer[2],
-                getChars(getMaterialName(curMaterial))
+                getChars(getResourceName(curMaterial))
             );
         } else {
             debug_log("[WfoParser]: Ignoring line #%d, unsupported type %s", lineNumber, typeBuffer);
@@ -341,8 +341,8 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
     }
 
     if (curMaterial != NULL) {
-        trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getMaterialName(curMaterial)));
-        storeMaterial(manager, curMaterial);
+        trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getResourceName(curMaterial)));
+        storeResource(manager, curMaterial);
         curMaterial = NULL;
     }
 }
