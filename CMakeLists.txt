@@ -53,4 +53,4 @@ add_executable(
     src/source/components/component_factory.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python json-c SOIL m)
+target_link_libraries(py3dengine glfw Python::Python json-c SOIL inih m)
