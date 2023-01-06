@@ -83,3 +83,9 @@ void createPythonComponent(struct PythonScript *resource, struct PythonComponent
     (*componentPtr) = newComponent;
     newComponent = NULL;
 }
+
+PyObject *getPythonScriptType(struct PythonScript *resource) {
+    if (resource == NULL) return NULL;
+
+    return resource->_componentType;
+}

@@ -10,12 +10,14 @@
 #include "resources/model.h"
 #include "resources/shader.h"
 #include "resources/material.h"
+#include "resources/python_script.h"
 #include "components/component_factory.h"
 #include "components/base_component.h"
 #include "components/transform_component.h"
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
 #include "components/rotation_component.h"
+#include "components/python_component.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -172,6 +174,25 @@ bool parseTransformComponent(json_object *json, struct TransformComponent *compo
     return true;
 }
 
+bool parsePythonComponent(
+        struct PythonComponent *component,
+        json_object *json,
+        const char *typeName,
+        struct ResourceManager *manager
+) {
+    if (json == NULL || component == NULL) return false;
+
+    struct BaseResource *scriptResource = getResource(manager, typeName);
+    if (scriptResource == NULL || isResourceTypePythonScript(scriptResource) == false) {
+        error_log("[JsonParser]: Unable to resolve typeName \"%s\"", typeName);
+        return false;
+    }
+
+    initPythonComponent(component, getPythonScriptType((struct PythonScript *) scriptResource));
+
+    return true;
+}
+
 bool parseComponentByType(
     struct BaseComponent *component,
     const char *typeName,
@@ -187,7 +208,7 @@ bool parseComponentByType(
     } else if (strncmp(COMPONENT_TYPE_NAME_ROTATION, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         return parseRotationComponent((struct RotationComponent *) component, json);
     } else {
-        error_log("[JsonParser]: Unable to resolve typeName \"%s\"", typeName);
+        return parsePythonComponent((struct PythonComponent *) component, json, typeName, resourceManager);
     }
 
     return false;

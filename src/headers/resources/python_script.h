@@ -22,5 +22,6 @@ extern void deletePythonScript(struct PythonScript **pythonScript);
 
 extern void initPythonScript(struct PythonScript *resource, PyObject *module, const char *newComponentTypeName);
 extern void createPythonComponent(struct PythonScript *resource, struct PythonComponent **componentPtr);
+extern PyObject *getPythonScriptType(struct PythonScript *resource);
 
 #endif

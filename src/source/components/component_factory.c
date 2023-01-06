@@ -6,6 +6,7 @@
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
 #include "components/rotation_component.h"
+#include "components/python_component.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -20,6 +21,8 @@ void componentFactoryCreateComponentFromJson(const char *typeName, struct BaseCo
         allocModelRendererComponent((struct ModelRendererComponent **) &newComponent);
     } else if (strncmp(COMPONENT_TYPE_NAME_ROTATION, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         allocRotationComponent((struct RotationComponent **) &newComponent);
+    } else if (strncmp(COMPONENT_TYPE_NAME_PYTHON, typeName, TYPE_NAME_MAX_SIZE) == 0) {
+        allocPythonComponent((struct PythonComponent **) &newComponent);
     }
 
     (*componentPtr) = newComponent;
