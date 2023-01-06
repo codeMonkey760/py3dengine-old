@@ -10,7 +10,9 @@
 #include "resources/model.h"
 #include "resources/shader.h"
 #include "resources/material.h"
+#include "resources/python_script.h"
 #include "resource_manager.h"
+#include "python/python_util.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -102,6 +104,22 @@ static void importShader(struct Shader **shaderPtr) {
     newShader = NULL;
 }
 
+static void importTestScript(struct PythonScript **scriptPtr) {
+    if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
+
+    PyObject *testComponentModule = PyImport_ImportModule("TestComponent");
+    if (testComponentModule == NULL) {
+        handleException();
+        return;
+    }
+
+    struct PythonScript *newScript = NULL;
+    allocPythonScript(&newScript);
+    if (newScript == NULL) return;
+
+    initPythonScript(newScript, testComponentModule, "TestComponent");
+}
+
 void allocSceneImporter(struct SceneImporter **importerPtr) {
     if (importerPtr == NULL || (*importerPtr) != NULL) return;
 
@@ -187,6 +205,14 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     deleteWfoParser(&wfoParser);
     fclose(wfoFile);
+
+    struct PythonScript *script = NULL;
+    importTestScript(&script);
+    if (script == NULL) {
+        error_log("%s", "[SceneImporter]: Unable to load test python script");
+    }
+    storeResource(importer->manager, (struct BaseResource *) script);
+    script = NULL;
 
     if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 

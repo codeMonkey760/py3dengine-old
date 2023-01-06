@@ -2,6 +2,7 @@
 #include "custom_string.h"
 #include "logger.h"
 #include "components/python_component.h"
+#include "python/python_util.h"
 
 #define RESOURCE_TYPE_PYTHON_SCRIPT 5
 
@@ -56,6 +57,7 @@ void initPythonScript(struct PythonScript *resource, PyObject *module, const cha
     PyObject *componentType = PyObject_GetAttrString(module, newComponentTypeName);
     if (componentType == NULL) {
         error_log("[PythonScript]: Could not find component type \"%s\"", newComponentTypeName);
+        handleException();
 
         return;
     }
