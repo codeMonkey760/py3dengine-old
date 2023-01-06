@@ -42,6 +42,7 @@ add_executable(
     src/source/resources/shader.c
     src/source/resources/material.c
     src/source/resources/texture.c
+    src/source/resources/python_script.c
     src/source/python/py3denginemodule.c
     src/source/python/python_util.c
     src/source/python/python_wrapper.c
@@ -50,6 +51,7 @@ add_executable(
     src/source/components/base_component.c
     src/source/components/transform_component.c
     src/source/components/camera_component.c
+    src/source/components/python_component.c
     src/source/components/component_factory.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
