@@ -47,6 +47,7 @@ add_executable(
     src/source/python/py3denginemodule.c
     src/source/python/python_util.c
     src/source/python/python_wrapper.c
+    src/source/python/pycomponent.c
     src/source/components/rotation_component.c
     src/source/components/model_renderer_component.c
     src/source/components/base_component.c
