@@ -1,4 +1,7 @@
 #include <stdlib.h>
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
 
 #include "custom_string.h"
 #include "logger.h"
@@ -15,6 +18,101 @@ struct ChildListNode {
     struct GameObject *child;
     struct ChildListNode *next;
 };
+
+struct Py3dGameObject {
+    PyObject_HEAD
+    struct GameObject *gameObject;
+};
+
+static PyObject *py3dGameObjectCtor = NULL;
+
+static void py3d_game_object_dealloc(struct Py3dGameObject *self) {
+    Py_TYPE(self)->tp_free((PyObject *) self);
+}
+
+static PyObject *py3d_game_object_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+    struct Py3dGameObject *self = (struct Py3dGameObject *) type->tp_alloc(type, 0);
+    self->gameObject = NULL;
+
+    return (PyObject *) self;
+}
+
+static int py3d_game_object_init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return 0;
+}
+
+static PyObject *py3d_game_object_get_name(struct Py3dGameObject *self, PyObject * Py_UNUSED(ignored)) {
+    if (self == NULL || self->gameObject == NULL) Py_RETURN_NONE;
+
+    return PyUnicode_FromString(getChars(getGameObjectName(self->gameObject)));
+}
+
+PyMemberDef py3d_game_object_members[] = {
+    {NULL}
+};
+
+PyMethodDef py3d_game_object_methods[] = {
+    {"get_name", (PyCFunction) py3d_game_object_get_name, METH_NOARGS, "Get Game Object's name"},
+    {NULL}
+};
+
+PyTypeObject Py3dGameObjectType = {
+    PyObject_HEAD_INIT(NULL)
+    "py3dengine.GameObject",
+    sizeof(struct Py3dGameObject),
+    0,
+    (destructor) py3d_game_object_dealloc,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    "Class for manipulating Game Objects",
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    py3d_game_object_methods,
+    py3d_game_object_members,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    (initproc) py3d_game_object_init,
+    0,
+    py3d_game_object_new,
+};
+
+static PyObject *createPy3dGameObject() {
+    if (py3dGameObjectCtor == NULL) {
+        critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
+
+        return NULL;
+    }
+
+    PyObject *py3dGameObject = PyObject_Call(py3dGameObjectCtor, PyTuple_New(0), NULL);
+    if (py3dGameObject == NULL) {
+        critical_log("%s", "[Python]: Failed to allocate GameObject in python interpreter");
+
+        return NULL;
+    }
+
+    return py3dGameObject;
+}
 
 static void allocComponentListNode(struct ComponentListNode **listNodePtr) {
     if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
@@ -68,6 +166,49 @@ static void deleteChildListNode(struct ChildListNode **listNodePtr) {
     (*listNodePtr) = NULL;
 }
 
+static void initializePyGameObject(struct GameObject *gameObject) {
+    if (gameObject == NULL || gameObject->pyGameObject != NULL) return;
+
+    struct PyGameObject *newPyGameObject = (struct PyGameObject *) createPy3dGameObject();
+    if (newPyGameObject == NULL) {
+        critical_log("%s", "[GameObject]: Could not instantiate new PyGameObject");
+
+        return;
+    }
+    Py_INCREF(newPyGameObject);
+
+    gameObject->pyGameObject = newPyGameObject;
+}
+
+bool PyInit_Py3dGameObject(PyObject *module) {
+    if (PyType_Ready(&Py3dGameObjectType) == -1) return false;
+
+    Py_INCREF(&Py3dGameObjectType);
+    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObjectType) == -1) {
+        Py_DECREF(&Py3dGameObjectType);
+
+        return false;
+    }
+
+    return true;
+}
+
+bool findPyGameObjectCtor(PyObject *module) {
+    if (PyObject_HasAttrString(module, "GameObject") == 0) {
+        critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
+
+        return false;
+    }
+
+    py3dGameObjectCtor = PyObject_GetAttrString(module, "GameObject");
+
+    return true;
+}
+
+void finalizePyGameObjectCtor() {
+    Py_CLEAR(py3dGameObjectCtor);
+}
+
 void allocGameObject(struct GameObject **gameObjectPtr) {
     if (gameObjectPtr == NULL || (*gameObjectPtr) != NULL) return;
 
@@ -81,6 +222,8 @@ void allocGameObject(struct GameObject **gameObjectPtr) {
     gameObject->name = NULL;
     gameObject->transform = NULL;
     allocTransformComponent(&gameObject->transform);
+    gameObject->pyGameObject = NULL;
+    initializePyGameObject(gameObject);
 
     (*gameObjectPtr) = gameObject;
     gameObject = NULL;
@@ -96,6 +239,7 @@ void deleteGameObject(struct GameObject **gameObjectPtr) {
 
     deleteString(&gameObject->name);
     deleteTransformComponent(&gameObject->transform);
+    Py_CLEAR(gameObject->pyGameObject);
 
     free(gameObject);
     gameObject = NULL;

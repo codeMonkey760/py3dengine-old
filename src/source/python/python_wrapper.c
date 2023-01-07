@@ -33,6 +33,8 @@ bool initializePython(int argc, char **argv) {
 
     if (!importPy3dEngineModule()) return false;
 
+    if (!initPy3dEngineObjects()) return false;
+
     trace_log(
         "[Python]: Initialization successful: %s\n"
         "Version: %s\n"
@@ -46,5 +48,7 @@ bool initializePython(int argc, char **argv) {
 }
 
 void finalizePython() {
+    finalizePy3dEngineModule();
+
     Py_Finalize();
 }

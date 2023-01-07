@@ -1,6 +1,11 @@
 #ifndef PY3DENGINE_GAME_OBJECT_H
 #define PY3DENGINE_GAME_OBJECT_H
 
+#include <stdbool.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 struct ComponentListNode;
 struct TransformComponent;
 struct ChildListNode;
@@ -8,6 +13,7 @@ struct BaseComponent;
 struct String;
 struct RenderingContext;
 struct ResourceManager;
+struct PyGameObject;
 
 struct GameObject {
     struct ComponentListNode *components;
@@ -15,7 +21,12 @@ struct GameObject {
     struct GameObject *parent;
     struct String *name;
     struct TransformComponent *transform;
+    struct PyGameObject *pyGameObject;
 };
+
+extern bool PyInit_Py3dGameObject(PyObject *module);
+extern bool findPyGameObjectCtor(PyObject *module);
+extern void finalizePyGameObjectCtor();
 
 extern void allocGameObject(struct GameObject **gameObjectPtr);
 extern void deleteGameObject(struct GameObject **gameObjectPtr);
