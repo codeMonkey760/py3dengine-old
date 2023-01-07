@@ -22,9 +22,10 @@ static void callPythonFunction(PyObject *callable, PyObject *args) {
 
     PyObject *ret = PyObject_Call(callable, args, NULL);
     if (ret == NULL) {
+        error_log("[PythonComponent]: Component function raised exception");
         handleException();
     } else if (Py_IsNone(ret) == 0) {
-        debug_log(
+        warning_log(
             "[PythonComponent]: Component function returned \"%s\" instead of None. Which is weird.",
             Py_TYPE(ret)->tp_name //TODO: make sure this is sound / future proof ... looks ugly
         );
