@@ -37,9 +37,11 @@ static void update(struct BaseComponent *component, float dt) {
     struct PythonComponent *pythonComponent = (struct PythonComponent *) component;
     if (pythonComponent->pyComponent == NULL) return;
 
+    if (PyObject_HasAttrString(pythonComponent->pyComponent, "update") == 0) return;
+
     callPythonFunction(
         PyObject_GetAttrString(pythonComponent->pyComponent, "update"),
-        PyFloat_FromDouble(dt)
+        Py_BuildValue("(f)", dt)
     );
 }
 
@@ -48,6 +50,8 @@ static void render(struct BaseComponent *component, struct RenderingContext *ren
 
     struct PythonComponent *pythonComponent = (struct PythonComponent *) component;
     if (pythonComponent->pyComponent == NULL) return;
+
+    if (PyObject_HasAttrString(pythonComponent->pyComponent, "render") == 0) return;
 
     // TODO: eventually pythonize rendering context and pass that instead of empty tuple
     callPythonFunction(

@@ -93,10 +93,10 @@ static void resizeEngine() {
     resizeGameObject(root, newWidth, newHeight);
 }
 
-void initializeEngine(){
+void initializeEngine(int argc, char **argv){
     parseConfigFile("config.ini");
 
-    if (!initializePython()) {
+    if (!initializePython(argc, argv)) {
         critical_log("%s", "Could not initialize python. Halting");
         return;
     }

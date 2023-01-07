@@ -1,10 +1,10 @@
 #include "logger.h"
 #include "engine.h"
 
-int main() {
+int main(int argc, char **argv) {
     initLogger();
 
-    initializeEngine();
+    initializeEngine(argc, argv);
     runEngine();
     finalizeEngine();
 

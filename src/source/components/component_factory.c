@@ -21,7 +21,7 @@ void componentFactoryCreateComponentFromJson(const char *typeName, struct BaseCo
         allocModelRendererComponent((struct ModelRendererComponent **) &newComponent);
     } else if (strncmp(COMPONENT_TYPE_NAME_ROTATION, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         allocRotationComponent((struct RotationComponent **) &newComponent);
-    } else if (strncmp(COMPONENT_TYPE_NAME_PYTHON, typeName, TYPE_NAME_MAX_SIZE) == 0) {
+    } else {
         allocPythonComponent((struct PythonComponent **) &newComponent);
     }
 

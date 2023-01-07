@@ -182,12 +182,16 @@ bool parsePythonComponent(
 ) {
     if (json == NULL || component == NULL) return false;
 
+    json_object *json_name = fetchProperty(json, "name", json_type_string);
+    if (json_name == NULL) return false;
+
     struct BaseResource *scriptResource = getResource(manager, typeName);
     if (scriptResource == NULL || isResourceTypePythonScript(scriptResource) == false) {
         error_log("[JsonParser]: Unable to resolve typeName \"%s\"", typeName);
         return false;
     }
 
+    setComponentName((struct BaseComponent *) component, json_object_get_string(json_name));
     initPythonComponent(component, getPythonScriptType((struct PythonScript *) scriptResource));
 
     return true;

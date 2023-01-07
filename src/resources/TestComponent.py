@@ -1,2 +1,10 @@
-def update(self, dt):
-    print("TestComponent::update ... dt was", str(dt))
+class TestComponent:
+    def __init__(self):
+        self.__theta = 0
+
+    def update(self, dt):
+        self.__theta = self.__theta + dt
+        if self.__theta > 1.0:
+            self.__theta = self.__theta - 1.0
+
+            print("TestComponent::update ... dt was", str(dt))

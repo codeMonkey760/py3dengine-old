@@ -8,13 +8,20 @@
 #include "python/py3denginemodule.h"
 #include "python/python_util.h"
 
-bool initializePython() {
+bool initializePython(int argc, char **argv) {
     if (!appendPy3dEngineModule()) return false;
 
     PyConfig config;
-    PyConfig_InitIsolatedConfig(&config);
+    PyConfig_InitPythonConfig(&config);
 
-    PyStatus status = Py_InitializeFromConfig(&config);
+    PyStatus status = PyConfig_SetBytesArgv(&config, argc, argv);
+    if (PyStatus_Exception(status)) {
+        handleException();
+
+        return false;
+    }
+
+    status = Py_InitializeFromConfig(&config);
     if (PyStatus_Exception(status)) {
         PyConfig_Clear(&config);
         handleException();

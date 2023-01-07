@@ -118,6 +118,9 @@ static void importTestScript(struct PythonScript **scriptPtr) {
     if (newScript == NULL) return;
 
     initPythonScript(newScript, testComponentModule, "TestComponent");
+    setResourceName((struct BaseResource *) newScript, "TestComponent");
+
+    (*scriptPtr) = newScript;
 }
 
 void allocSceneImporter(struct SceneImporter **importerPtr) {
