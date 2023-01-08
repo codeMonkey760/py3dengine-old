@@ -8,6 +8,7 @@
 #include "game_object.h"
 #include "components/base_component.h"
 #include "components/transform_component.h"
+#include "python/python_util.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;
@@ -107,6 +108,7 @@ static PyObject *createPy3dGameObject() {
     PyObject *py3dGameObject = PyObject_Call(py3dGameObjectCtor, PyTuple_New(0), NULL);
     if (py3dGameObject == NULL) {
         critical_log("%s", "[Python]: Failed to allocate GameObject in python interpreter");
+        handleException();
 
         return NULL;
     }
@@ -183,12 +185,9 @@ static void initializePyGameObject(struct GameObject *gameObject) {
 bool PyInit_Py3dGameObject(PyObject *module) {
     if (PyType_Ready(&Py3dGameObjectType) == -1) return false;
 
-    Py_INCREF(&Py3dGameObjectType);
-    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObjectType) == -1) {
-        Py_DECREF(&Py3dGameObjectType);
+    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObjectType) == -1) return false;
 
-        return false;
-    }
+    Py_INCREF(&Py3dGameObjectType);
 
     return true;
 }
