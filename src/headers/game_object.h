@@ -42,6 +42,7 @@ extern void removeChildByName(struct GameObject *gameObject, const char* name);
 extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name);
 
 extern void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent);
+extern void attachPyComponent(struct GameObject *gameObject, PyObject *newPyComponent);
 extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
 
 extern struct String *getGameObjectName(struct GameObject *gameObject);

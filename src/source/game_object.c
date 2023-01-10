@@ -12,6 +12,7 @@
 
 struct ComponentListNode {
     struct BaseComponent *component;
+    PyObject *pyComponent;
     struct ComponentListNode *next;
 };
 
@@ -59,43 +60,15 @@ PyMethodDef py3d_game_object_methods[] = {
 
 PyTypeObject Py3dGameObjectType = {
     PyObject_HEAD_INIT(NULL)
-    "py3dengine.GameObject",
-    sizeof(struct Py3dGameObject),
-    0,
-    (destructor) py3d_game_object_dealloc,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    "Class for manipulating Game Objects",
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    py3d_game_object_methods,
-    py3d_game_object_members,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    (initproc) py3d_game_object_init,
-    0,
-    py3d_game_object_new,
+    .tp_name = "py3dengine.GameObject",
+    .tp_basicsize = sizeof(struct Py3dGameObject),
+    .tp_dealloc = (destructor) py3d_game_object_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = "Class for manipulating Game Objects",
+    .tp_methods = py3d_game_object_methods,
+    .tp_members = py3d_game_object_members,
+    .tp_init = (initproc) py3d_game_object_init,
+    .tp_new = py3d_game_object_new
 };
 
 static PyObject *createPy3dGameObject() {
@@ -123,6 +96,7 @@ static void allocComponentListNode(struct ComponentListNode **listNodePtr) {
     if (newNode == NULL) return;
 
     newNode->component = NULL;
+    newNode->pyComponent = NULL;
     newNode->next = NULL;
 
     (*listNodePtr) = newNode;
@@ -134,6 +108,7 @@ static void deleteComponentListNode(struct ComponentListNode **listNodePtr) {
 
     struct ComponentListNode *node = (*listNodePtr);
     deleteComponent(&node->component);
+    Py_CLEAR(node->pyComponent);
 
     deleteComponentListNode(&node->next);
 
@@ -406,6 +381,24 @@ void attachComponent(struct GameObject *gameObject, struct BaseComponent *newCom
         prevNode->next = newNode;
     }
     newComponent->_owner = gameObject;
+}
+
+void attachPyComponent(struct GameObject *gameObject, PyObject *newPyComponent) {
+    if (gameObject == NULL || newPyComponent == NULL) return;
+
+    if (PyObject_HasAttrString(newPyComponent, "get_name") < 0) {
+        error_log("%s", "Cannot attach component to game object unless it has a get_name property");
+        return;
+    }
+
+    PyObject *get_name = PyObject_GetAttrString(newPyComponent, "get_name");
+    if (PyCallable_Check(get_name) < 0) {
+        error_log("%s", "Cannot attach component to game object unless its get_name property is callable");
+        return;
+    }
+
+    PyObject *pyComponentName = PyObject_CallNoArgs(get_name);
+
 }
 
 struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName) {
