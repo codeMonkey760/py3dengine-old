@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
+#include "python/pycomponent.h"
 #include "game_object.h"
 
 static struct PyModuleDef py3dengineModuleDef = {
@@ -27,6 +28,12 @@ PyInit_py3dEngine(void) {
 
     if (!PyInit_Py3dGameObject(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Game Object to py3dengine module");
+
+        Py_CLEAR(newModule);
+    }
+
+    if (!PyInit_Py3dComponent(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach Component to py3dengine module");
 
         Py_CLEAR(newModule);
     }
@@ -57,7 +64,11 @@ bool importPy3dEngineModule() {
 }
 
 bool initPy3dEngineObjects() {
-    return findPyGameObjectCtor(module);
+    if (!findPyGameObjectCtor(module)) {
+        return false;
+    }
+
+    return true;
 }
 
 void finalizePy3dEngineModule() {
