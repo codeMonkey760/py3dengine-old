@@ -2,10 +2,6 @@
 
 #include "custom_string.h"
 #include "game_object.h"
-#include "logger.h"
-#include "python/python_util.h"
-
-static PyObject *py3dComponentCtor = NULL;
 
 static void py3d_component_dealloc(struct Py3dComponent *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
@@ -95,38 +91,4 @@ bool PyInit_Py3dComponent(PyObject *module) {
     Py_INCREF(&Py3dComponentType);
 
     return true;
-}
-
-bool findPyComponentCtor(PyObject *module) {
-    if (PyObject_HasAttrString(module, "Component") == 0) {
-        critical_log("%s", "[Python]: Py3dComponent has not been initialized properly");
-
-        return false;
-    }
-
-    py3dComponentCtor = PyObject_GetAttrString(module, "Component");
-
-    return true;
-}
-
-PyObject *createPyComponent() {
-    if (py3dComponentCtor == NULL) {
-        critical_log("%s", "[Python]: Py3dComponent has not been initialized properly");
-
-        return NULL;
-    }
-
-    PyObject *py3dComponent = PyObject_Call(py3dComponentCtor, PyTuple_New(0), NULL);
-    if (py3dComponent == NULL) {
-        critical_log("%s", "[Python]: Failed to allocate Component in python interpreter");
-        handleException();
-
-        return NULL;
-    }
-
-    return py3dComponent;
-}
-
-void finalizePyComponentCtor() {
-    Py_CLEAR(py3dComponentCtor);
 }
