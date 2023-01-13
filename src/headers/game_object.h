@@ -14,6 +14,7 @@ struct String;
 struct RenderingContext;
 struct ResourceManager;
 struct PyGameObject;
+struct Py3dComponent;
 
 struct GameObject {
     struct ComponentListNode *components;
@@ -42,7 +43,7 @@ extern void removeChildByName(struct GameObject *gameObject, const char* name);
 extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name);
 
 extern void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent);
-extern void attachPyComponent(struct GameObject *gameObject, PyObject *newPyComponent);
+extern void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent);
 extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
 
 extern struct String *getGameObjectName(struct GameObject *gameObject);

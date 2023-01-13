@@ -9,10 +9,11 @@
 #include "components/base_component.h"
 #include "components/transform_component.h"
 #include "python/python_util.h"
+#include "python/pycomponent.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;
-    PyObject *pyComponent;
+    struct Py3dComponent *pyComponent;
     struct ComponentListNode *next;
 };
 
@@ -117,8 +118,39 @@ static void deleteComponentListNode(struct ComponentListNode **listNodePtr) {
     (*listNodePtr) = NULL;
 }
 
+static PyObject *getNameFromPythonComponent(PyObject *pyComponent) {
+    if (pyComponent == NULL) return NULL;
+
+    if (PyObject_HasAttrString(pyComponent, "get_name") == 0) {
+        error_log("%s", "[GameObject]: Component must have a \"get_name\" property");
+        return NULL;
+    }
+
+    PyObject *get_name = PyObject_GetAttrString(pyComponent, "get_name");
+    if (PyCallable_Check(get_name) == 0) {
+        error_log("%s", "[GameObject]: Component's \"get_name\" property must be callable");
+        return NULL;
+    }
+
+    PyObject *name = PyObject_CallNoArgs(get_name);
+    if (name == NULL) {
+        error_log("%s", "[GameObject]: Python raised exception while querying for component name");
+        handleException();
+        return NULL;
+    }
+    if (Py_IsNone(name)) {
+        error_log("%s", "[GameObject]: Component must have a name");
+        return NULL;
+    }
+
+    return name;
+}
+
 static bool componentNamesAreEqual(struct ComponentListNode *listNode, const char *componentName) {
     if (listNode == NULL || componentName == NULL) return false;
+
+    unsigned int componentNameLen = strlen(componentName);
+    if (componentNameLen == 0) return false;
 
     if (
         (listNode->component == NULL && listNode->pyComponent == NULL) ||
@@ -132,13 +164,18 @@ static bool componentNamesAreEqual(struct ComponentListNode *listNode, const cha
         return stringEqualsCStr(getComponentName(listNode->component), componentName);
     }
 
-    // TODO: this is wrong ... even though the component was checked when it was attached there's no
-    // certainty that these fields weren't deleted afterwards
-    // always check before trying to use python objects ... they're very flexible
-    PyObject *get_name = PyObject_GetAttrString(listNode->pyComponent, "get_name");
-    PyObject *name = PyObject_CallNoArgs(get_name);
+    PyObject *nodeName = getNameFromPythonComponent((PyObject *) listNode->pyComponent);
+    if (nodeName == NULL) {
+        critical_log("%s", "Could not query name for already attached component");
+        return false;
+    }
+    const char *nodeNameCStr = PyUnicode_AsUTF8(nodeName);
+    unsigned int nodeNameLen = strlen(nodeNameCStr);
+    if (nodeNameLen == 0) return false;
 
-    return strcmp(PyUnicode_AsUTF8(name), componentName) == 0;
+    unsigned int longestLen = (nodeNameLen > componentNameLen) ? nodeNameLen : componentNameLen;
+
+    return strncmp(nodeNameCStr, componentName, longestLen) == 0;
 }
 
 static void allocChildListNode(struct ChildListNode **listNodePtr) {
@@ -407,30 +444,15 @@ void attachComponent(struct GameObject *gameObject, struct BaseComponent *newCom
     newComponent->_owner = gameObject;
 }
 
-void attachPyComponent(struct GameObject *gameObject, PyObject *newPyComponent) {
+void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent) {
     if (gameObject == NULL || newPyComponent == NULL) return;
 
-    if (PyObject_HasAttrString(newPyComponent, "get_name") < 0) {
-        error_log("%s", "[GameObject]: Cannot attach component to game object unless it has a get_name property");
-        return;
-    }
-    PyObject *get_name = PyObject_GetAttrString(newPyComponent, "get_name");
-    if (PyCallable_Check(get_name) < 0) {
-        error_log("%s", "[GameObject]: Cannot attach component to game object unless its get_name property is callable");
-        return;
-    }
-
-    PyObject *pyComponentName = PyObject_CallNoArgs(get_name);
+    PyObject *pyComponentName = getNameFromPythonComponent((PyObject *) newPyComponent);
     if (pyComponentName == NULL) {
-        error_log("%s", "[GameObject]: An error occurred trying to get the name of a python component");
-        handleException();
+        error_log("%s", "[GameObject]: Cannot attach component unless its name can be queried");
         return;
     }
-    if (Py_IsNone(pyComponentName)) {
-        error_log("%s", "[GameObject]: Cannot attach component to game object unless it has a name");
-        return;
-    }
-    char *pyComponentNameAsCStr = PyUnicode_AsUTF8(pyComponentName);
+    const char *pyComponentNameAsCStr = PyUnicode_AsUTF8(pyComponentName);
 
     struct ComponentListNode *prevNode = NULL, *curNode = gameObject->components;
     while (curNode != NULL) {
@@ -439,11 +461,21 @@ void attachPyComponent(struct GameObject *gameObject, PyObject *newPyComponent) 
             return;
         }
 
-        // TODO: finish attaching component
-
         prevNode = curNode;
         curNode = curNode->next;
     }
+
+    struct ComponentListNode *newNode = NULL;
+    allocComponentListNode(&newNode);
+    if (newNode == NULL) return;
+
+    newNode->pyComponent = newPyComponent;
+    if (prevNode == NULL) {
+        gameObject->components = newNode;
+    } else {
+        prevNode->next = newNode;
+    }
+    newPyComponent->owner = gameObject;
 }
 
 struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName) {

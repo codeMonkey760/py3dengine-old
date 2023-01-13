@@ -1,15 +1,9 @@
 #include "python/pycomponent.h"
 
-#include "components/base_component.h"
 #include "custom_string.h"
 #include "game_object.h"
 #include "logger.h"
 #include "python/python_util.h"
-
-struct Py3dComponent {
-    PyObject_HEAD
-    struct BaseComponent *component;
-};
 
 static PyObject *py3dComponentCtor = NULL;
 
@@ -19,7 +13,15 @@ static void py3d_component_dealloc(struct Py3dComponent *self) {
 
 static PyObject *py3d_component_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
     struct Py3dComponent *self = (struct Py3dComponent *) type->tp_alloc(type, 0);
-    self->component = NULL;
+    if (self == NULL) return NULL;
+
+    self->name = PyUnicode_FromString("");
+    if (self->name == NULL) {
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    self->owner = NULL;
 
     return (PyObject *) self;
 }
@@ -41,20 +43,23 @@ static PyObject *py3d_component_render(struct Py3dComponent *self, PyObject *Py_
 }
 
 static PyObject *py3d_component_get_name(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
-    if (self->component == NULL) Py_RETURN_NONE;
+    if (self->name == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "name");
+        return NULL;
+    }
 
-    return PyUnicode_FromString(getChars(getComponentName(self->component)));
+    return self->name;
 }
 
 static PyObject *py3d_component_get_owner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
-    if (self->component == NULL) Py_RETURN_NONE;
+    if (self->owner == NULL) Py_RETURN_NONE;
 
-    struct GameObject *owner = getComponentOwner(self->component);
-    if (owner == NULL) Py_RETURN_NONE;
+    if (self->owner->pyGameObject == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Sanity check failed. Owner GameObject is detached from its python object");
+        return NULL;
+    }
 
-    if (owner->pyGameObject == NULL) Py_RETURN_NONE;
-
-    return (PyObject *) owner->pyGameObject;
+    return (PyObject *) self->owner->pyGameObject;
 }
 
 static PyMemberDef py3d_component_members[] = {
