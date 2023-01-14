@@ -207,7 +207,7 @@ static void deleteChildListNode(struct ChildListNode **listNodePtr) {
 static void initializePyGameObject(struct GameObject *gameObject) {
     if (gameObject == NULL || gameObject->pyGameObject != NULL) return;
 
-    struct PyGameObject *newPyGameObject = (struct PyGameObject *) createPy3dGameObject();
+    struct Py3dGameObject *newPyGameObject = (struct Py3dGameObject *) createPy3dGameObject();
     if (newPyGameObject == NULL) {
         critical_log("%s", "[GameObject]: Could not instantiate new PyGameObject");
 
@@ -216,6 +216,7 @@ static void initializePyGameObject(struct GameObject *gameObject) {
     Py_INCREF(newPyGameObject);
 
     gameObject->pyGameObject = newPyGameObject;
+    newPyGameObject->gameObject = gameObject;
 }
 
 bool PyInit_Py3dGameObject(PyObject *module) {

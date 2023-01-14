@@ -13,7 +13,7 @@ struct BaseComponent;
 struct String;
 struct RenderingContext;
 struct ResourceManager;
-struct PyGameObject;
+struct Py3dGameObject;
 struct Py3dComponent;
 
 struct GameObject {
@@ -22,7 +22,7 @@ struct GameObject {
     struct GameObject *parent;
     struct String *name;
     struct TransformComponent *transform;
-    struct PyGameObject *pyGameObject;
+    struct Py3dGameObject *pyGameObject;
 };
 
 extern bool PyInit_Py3dGameObject(PyObject *module);
