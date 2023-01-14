@@ -46,6 +46,7 @@ static PyObject *py3d_component_get_name(struct Py3dComponent *self, PyObject *P
         return NULL;
     }
 
+    Py_INCREF(self->name);
     return self->name;
 }
 
@@ -57,6 +58,7 @@ static PyObject *py3d_component_get_owner(struct Py3dComponent *self, PyObject *
         return NULL;
     }
 
+    Py_INCREF(self->owner->pyGameObject);
     return (PyObject *) self->owner->pyGameObject;
 }
 
