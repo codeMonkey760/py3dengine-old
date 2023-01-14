@@ -17,7 +17,7 @@
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
 #include "components/rotation_component.h"
-#include "python/python_util.h"
+#include "python/pycomponent.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -186,13 +186,7 @@ static bool parsePythonComponent(
     PyObject *pyName = PyUnicode_FromString(json_object_get_string(json_name));
     if (pyName == NULL) return false;
 
-    if (PyObject_SetAttrString((PyObject *) pyComponent, "name", pyName) == -1) {
-        Py_CLEAR(pyName);
-        critical_log("%s", "[JsonParser]: Could not set name attribute on python component");
-        handleException();
-
-        return false;
-    }
+    ((struct Py3dComponent *) pyComponent)->name = pyName;
 
     // TODO: finish this by iterating through the rest of the json object attributes
 
