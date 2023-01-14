@@ -17,7 +17,7 @@
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
 #include "components/rotation_component.h"
-#include "components/python_component.h"
+#include "python/python_util.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -174,25 +174,27 @@ bool parseTransformComponent(json_object *json, struct TransformComponent *compo
     return true;
 }
 
-bool parsePythonComponent(
-        struct PythonComponent *component,
-        json_object *json,
-        const char *typeName,
-        struct ResourceManager *manager
+static bool parsePythonComponent(
+    struct Py3dComponent *pyComponent,
+    json_object *json
 ) {
-    if (json == NULL || component == NULL) return false;
+    if (json == NULL || pyComponent == NULL) return false;
 
     json_object *json_name = fetchProperty(json, "name", json_type_string);
     if (json_name == NULL) return false;
 
-    struct BaseResource *scriptResource = getResource(manager, typeName);
-    if (scriptResource == NULL || isResourceTypePythonScript(scriptResource) == false) {
-        error_log("[JsonParser]: Unable to resolve typeName \"%s\"", typeName);
+    PyObject *pyName = PyUnicode_FromString(json_object_get_string(json_name));
+    if (pyName == NULL) return false;
+
+    if (PyObject_SetAttrString((PyObject *) pyComponent, "name", pyName) == -1) {
+        Py_CLEAR(pyName);
+        critical_log("%s", "[JsonParser]: Could not set name attribute on python component");
+        handleException();
+
         return false;
     }
 
-    setComponentName((struct BaseComponent *) component, json_object_get_string(json_name));
-    initPythonComponent(component, getPythonScriptType((struct PythonScript *) scriptResource));
+    // TODO: finish this by iterating through the rest of the json object attributes
 
     return true;
 }
@@ -211,8 +213,6 @@ bool parseComponentByType(
         return parseModelRendererComponent((struct ModelRendererComponent *) component, json, resourceManager);
     } else if (strncmp(COMPONENT_TYPE_NAME_ROTATION, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         return parseRotationComponent((struct RotationComponent *) component, json);
-    } else {
-        return parsePythonComponent((struct PythonComponent *) component, json, typeName, resourceManager);
     }
 
     return false;
@@ -262,18 +262,33 @@ bool parseGameObject(
         const char *typeName = json_object_get_string(type_name_json);
 
         struct BaseComponent *newComponent = NULL;
-        componentFactoryCreateComponentFromJson(typeName, &newComponent);
-        if (newComponent == NULL) continue;
+        struct Py3dComponent *pyComponent = NULL;
+        componentFactoryCreateComponentFromTypeName(typeName, &newComponent);
+        if (newComponent == NULL) {
+            struct BaseResource *pyScript = getResource(resourceManager,typeName);
+            if (!isResourceTypePythonScript(pyScript)) continue;
 
-        if (!parseComponentByType(newComponent, typeName, cur_component_json, resourceManager)) {
-            error_log("%s", "[JsonParser]: Component failed to parse. Discarding it.");
-            deleteComponent(&newComponent);
+            createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
+            if (!parsePythonComponent(pyComponent, cur_component_json)) {
+                error_log("%s", "[JsonParser]: Python component failed to parse. Discarding it.");
+                Py_CLEAR(pyComponent);
 
-            continue;
+                continue;
+            }
+
+            attachPyComponent(newGO, pyComponent);
+            pyComponent = NULL;
+        } else {
+            if (!parseComponentByType(newComponent, typeName, cur_component_json, resourceManager)) {
+                error_log("%s", "[JsonParser]: Component failed to parse. Discarding it.");
+                deleteComponent(&newComponent);
+
+                continue;
+            }
+
+            attachComponent(newGO, newComponent);
+            newComponent = NULL;
         }
-
-        attachComponent(newGO, newComponent);
-        newComponent = NULL;
     }
 
     size_t json_children_array_length = json_object_array_length(json_children_array);

@@ -3,6 +3,8 @@
 #include "custom_string.h"
 #include "game_object.h"
 
+#include "python/python_util.h"
+
 static void py3d_component_dealloc(struct Py3dComponent *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
@@ -91,4 +93,16 @@ bool PyInit_Py3dComponent(PyObject *module) {
     Py_INCREF(&Py3dComponentType);
 
     return true;
+}
+
+bool Py3dComponent_IsComponent(PyObject *pyObj) {
+    if (pyObj == NULL) return false;
+
+    int res = PyObject_IsInstance(pyObj, (PyObject *) &Py3dComponentType);
+    if (res == -1) {
+        handleException();
+        return false;
+    }
+
+    return res == 1;
 }

@@ -13,5 +13,6 @@ struct Py3dComponent {
 };
 
 extern bool PyInit_Py3dComponent(PyObject *module);
+extern bool Py3dComponent_IsComponent(PyObject *pyObj);
 
 #endif

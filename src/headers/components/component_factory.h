@@ -5,6 +5,6 @@
 
 struct BaseComponent;
 
-extern void componentFactoryCreateComponentFromJson(const char *typeName, struct BaseComponent **componentPtr);
+extern void componentFactoryCreateComponentFromTypeName(const char *typeName, struct BaseComponent **componentPtr);
 
 #endif

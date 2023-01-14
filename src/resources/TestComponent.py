@@ -1,4 +1,6 @@
-class TestComponent:
+import py3dengine
+
+class TestComponent(py3dengine.Component):
     def __init__(self):
         self.__theta = 0
 

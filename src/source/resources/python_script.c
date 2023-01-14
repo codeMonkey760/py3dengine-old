@@ -1,8 +1,8 @@
 #include "resources/python_script.h"
 #include "custom_string.h"
 #include "logger.h"
-#include "components/python_component.h"
 #include "python/python_util.h"
+#include "python/pycomponent.h"
 
 #define RESOURCE_TYPE_PYTHON_SCRIPT 5
 
@@ -73,16 +73,27 @@ void initPythonScript(struct PythonScript *resource, PyObject *module, const cha
     resource->_componentType = componentType;
 }
 
-void createPythonComponent(struct PythonScript *resource, struct PythonComponent **componentPtr) {
+void createPythonComponent(struct PythonScript *resource, struct Py3dComponent **componentPtr) {
     if (resource == NULL || resource->_componentType == NULL || componentPtr == NULL || (*componentPtr) != NULL) return;
 
-    struct PythonComponent *newComponent = NULL;
-    allocPythonComponent(&newComponent);
-    if (newComponent == NULL) return;
+    PyObject *newComponent = PyObject_CallNoArgs(resource->_componentType);
+    if (newComponent == NULL) {
+        error_log("[PythonScript]: Failed to instantiate custom python component");
+        handleException();
 
-    initPythonComponent(newComponent, resource->_componentType);
+        return;
+    }
 
-    (*componentPtr) = newComponent;
+    if (!Py3dComponent_IsComponent(newComponent)) {
+        error_log("[PythonScript]: Custom python components must be sub class of \"py3dengine.Component\"");
+        Py_CLEAR(newComponent);
+
+        return;
+    }
+
+    // TODO: figure out if this type cast is completely safe ...
+    // with multiple inheritance, I'm not 100% sure it is
+    (*componentPtr) = (struct Py3dComponent *) newComponent;
     newComponent = NULL;
 }
 

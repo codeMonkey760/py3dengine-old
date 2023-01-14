@@ -53,7 +53,6 @@ add_executable(
     src/source/components/base_component.c
     src/source/components/transform_component.c
     src/source/components/camera_component.c
-    src/source/components/python_component.c
     src/source/components/component_factory.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
