@@ -287,8 +287,22 @@ void updateGameObject(struct GameObject *gameObject, float dt) {
     struct ComponentListNode *curNode = gameObject->components;
     while (curNode != NULL) {
         struct BaseComponent *curComponent = curNode->component;
+        PyObject *curPyComponent = (PyObject *) curNode->pyComponent;
         if (curComponent != NULL && curComponent->update != NULL) {
             curComponent->update(curComponent, dt);
+        } else if (curPyComponent != NULL) {
+            if (PyObject_HasAttrString((PyObject *) curPyComponent, "update") == 1) {
+                PyObject *pyUpdate = PyObject_GetAttrString(curPyComponent, "update");
+                if (PyCallable_Check(pyUpdate) == 1) {
+                    PyObject *pyUpdateRet = PyObject_CallOneArg(pyUpdate, PyFloat_FromDouble(dt));
+                    if (pyUpdateRet == NULL) {
+                        error_log("%s", "[GameObject]: Python component threw exception while updating");
+                        handleException();
+                    } else if (!Py_IsNone(pyUpdateRet)) {
+                        warning_log("%s", "[GameObject]: Python component returned something while updating, which is weird");
+                    }
+                }
+            }
         }
 
         curNode = curNode->next;
