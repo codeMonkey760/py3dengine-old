@@ -8,9 +8,9 @@
 
 struct Py3dTransform {
     struct Py3dComponent base;
-    PyObject *__position;
-    PyObject *__orientation;
-    PyObject *__scale;
+    float __position[3];
+    float __orientation[4];
+    float __scale[3];
     bool __matrixCacheDirty;
     float __wMatrixCache[16];
     float __witMatrixCache[16];

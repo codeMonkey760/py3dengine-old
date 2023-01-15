@@ -5,34 +5,6 @@
 
 static PyObject *py3dTransformCtor = NULL;
 
-static PyObject *createVecDict(float x, float y, float z, float w, int length) {
-    PyObject *ret = PyDict_New();
-    if (ret == NULL) return NULL;
-
-    char elementNames[8] = {'x', 0, 'y', 0, 'z', 0, 'w', 0};
-    float elementValues[4] = {x, y, z, w};
-
-    for (int i = 0; i < length; ++i) {
-        PyObject *curFloat = PyFloat_FromDouble(elementValues[i]);
-        if (curFloat == NULL) {
-            Py_CLEAR(ret);
-            return NULL;
-        }
-
-        if (PyDict_SetItemString(ret, &(elementNames[i*2]), curFloat) == -1) {
-            Py_CLEAR(ret);
-            Py_CLEAR(curFloat);
-            return NULL;
-        }
-
-        // PyDict_SetItemX is weird ... it doesn't steal references from caller, so we have to clean up
-        Py_CLEAR(curFloat);
-        curFloat = NULL;
-    }
-
-    return ret;
-}
-
 static PyMethodDef Py3dTransform_Methods[] = {
     {NULL},
 };
@@ -40,9 +12,9 @@ static PyMethodDef Py3dTransform_Methods[] = {
 static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
     if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
 
-    self->__position = createVecDict(0.0f, 0.0f, 0.0f, 0.0f, 3);
-    self->__orientation = createVecDict(0.0f, 0.0f, 0.0f, 1.0f, 4);
-    self->__scale = createVecDict(1.0f, 1.0f, 1.0f, 0.0f, 3);
+    Vec3Fill(self->__position, 0.0f);
+    QuaternionIdentity(self->__orientation);
+    Vec3Fill(self->__scale, 1.0f);
     self->__matrixCacheDirty = true;
     Mat4Identity(self->__wMatrixCache);
     Mat4Identity(self->__witMatrixCache);
