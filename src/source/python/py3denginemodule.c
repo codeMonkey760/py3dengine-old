@@ -6,6 +6,7 @@
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
 #include "python/pycomponent.h"
+#include "python/py3dtransform.h"
 #include "game_object.h"
 
 static struct PyModuleDef py3dengineModuleDef = {
@@ -34,6 +35,12 @@ PyInit_py3dEngine(void) {
 
     if (!PyInit_Py3dComponent(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Component to py3dengine module");
+
+        Py_CLEAR(newModule);
+    }
+
+    if (!PyInit_Py3dTransform(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach Transform to py3dengine module");
 
         Py_CLEAR(newModule);
     }
@@ -68,9 +75,14 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dTransform_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
 void finalizePy3dEngineModule() {
+    Py3dTransform_FinalizeCtor();
     finalizePyGameObjectCtor();
 }

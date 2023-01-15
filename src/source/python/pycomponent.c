@@ -5,26 +5,15 @@
 
 #include "python/python_util.h"
 
-static void py3d_component_dealloc(struct Py3dComponent *self) {
+static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
-static PyObject *py3d_component_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-    struct Py3dComponent *self = (struct Py3dComponent *) type->tp_alloc(type, 0);
-    if (self == NULL) return NULL;
-
-    self->name = PyUnicode_FromString("");
-    if (self->name == NULL) {
-        Py_DECREF(self);
-        return NULL;
-    }
-
+static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_INCREF(Py_None);
+    self->name = Py_None;
     self->owner = NULL;
 
-    return (PyObject *) self;
-}
-
-static int py3d_component_init(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     return 0;
 }
 
@@ -32,15 +21,15 @@ static int py3d_component_init(struct Py3dComponent *self, PyObject *args, PyObj
 // Maybe one day there will need to be code in these, although that should be avoided because it'll require
 // subclasses to call "super" when overriding these methods
 // for now lets just have these so I can hang a doc string on them describing how to override them
-static PyObject *py3d_component_update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     Py_RETURN_NONE;
 }
 
-static PyObject *py3d_component_render(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     Py_RETURN_NONE;
 }
 
-static PyObject *py3d_component_get_name(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     if (self->name == NULL) {
         PyErr_SetString(PyExc_AttributeError, "name");
         return NULL;
@@ -50,7 +39,7 @@ static PyObject *py3d_component_get_name(struct Py3dComponent *self, PyObject *P
     return self->name;
 }
 
-static PyObject *py3d_component_get_owner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     if (self->owner == NULL) Py_RETURN_NONE;
 
     if (self->owner->pyGameObject == NULL) {
@@ -67,32 +56,32 @@ static PyMemberDef py3d_component_members[] = {
 };
 
 static PyMethodDef py3d_component_methods[] = {
-    {"update", (PyCFunction) py3d_component_update, METH_VARARGS, "Update event handler"},
-    {"render", (PyCFunction) py3d_component_render, METH_VARARGS, "Render event handler"},
-    {"get_name", (PyCFunction) py3d_component_get_name, METH_NOARGS, "Get component name"},
-    {"get_owner", (PyCFunction) py3d_component_get_owner, METH_NOARGS, "Get component owner"},
+    {"update", (PyCFunction) Py3dComponent_Update, METH_VARARGS, "Update event handler"},
+    {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
+    {"get_name", (PyCFunction) Py3dComponent_GetName, METH_NOARGS, "Get component name"},
+    {"get_owner", (PyCFunction) Py3dComponent_GetOwner, METH_NOARGS, "Get component owner"},
     {NULL}
 };
 
-static PyTypeObject Py3dComponentType = {
+PyTypeObject Py3dComponent_Type = {
     PyObject_HEAD_INIT(NULL)
     .tp_name = "py3dengine.Component",
     .tp_basicsize = sizeof(struct Py3dComponent),
-    .tp_dealloc = (destructor) py3d_component_dealloc,
+    .tp_dealloc = (destructor) Py3dComponent_Dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_doc = "Base class for writing components",
     .tp_methods = py3d_component_methods,
     .tp_members = py3d_component_members,
-    .tp_init = (initproc) py3d_component_init,
-    .tp_new = py3d_component_new
+    .tp_init = (initproc) Py3dComponent_Init,
+    .tp_new = PyType_GenericNew
 };
 
 bool PyInit_Py3dComponent(PyObject *module) {
-    if (PyType_Ready(&Py3dComponentType) < 0) return false;
+    if (PyType_Ready(&Py3dComponent_Type) < 0) return false;
 
-    if (PyModule_AddObject(module, "Component", (PyObject *) &Py3dComponentType) < 0) return false;
+    if (PyModule_AddObject(module, "Component", (PyObject *) &Py3dComponent_Type) < 0) return false;
 
-    Py_INCREF(&Py3dComponentType);
+    Py_INCREF(&Py3dComponent_Type);
 
     return true;
 }
@@ -100,7 +89,7 @@ bool PyInit_Py3dComponent(PyObject *module) {
 bool Py3dComponent_IsComponent(PyObject *pyObj) {
     if (pyObj == NULL) return false;
 
-    int res = PyObject_IsInstance(pyObj, (PyObject *) &Py3dComponentType);
+    int res = PyObject_IsInstance(pyObj, (PyObject *) &Py3dComponent_Type);
     if (res == -1) {
         handleException();
         return false;

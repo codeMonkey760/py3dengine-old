@@ -12,6 +12,8 @@ struct Py3dComponent {
     struct GameObject *owner;
 };
 
+extern PyTypeObject Py3dComponent_Type;
+
 extern bool PyInit_Py3dComponent(PyObject *module);
 extern bool Py3dComponent_IsComponent(PyObject *pyObj);
 
