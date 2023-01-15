@@ -269,7 +269,7 @@ void Py3dTransform_FinalizeCtor() {
     Py_CLEAR(py3dTransformCtor);
 }
 
-PyObject *Py3dTransform_New() {
+struct Py3dTransform *Py3dTransform_New() {
     if (py3dTransformCtor == NULL) {
         critical_log("%s", "[Python]: Py3dTransform has not been initialized properly");
 
@@ -284,7 +284,7 @@ PyObject *Py3dTransform_New() {
         return NULL;
     }
 
-    return py3dtransform;
+    return (struct Py3dTransform *) py3dtransform;
 }
 
 float *getTransformWorldMtx(struct Py3dTransform *component) {

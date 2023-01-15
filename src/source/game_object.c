@@ -7,9 +7,9 @@
 #include "logger.h"
 #include "game_object.h"
 #include "components/base_component.h"
-#include "components/transform_component.h"
 #include "python/python_util.h"
 #include "python/pycomponent.h"
+#include "python/py3dtransform.h"
 
 struct ComponentListNode {
     struct BaseComponent *component;
@@ -29,33 +29,43 @@ struct Py3dGameObject {
 
 static PyObject *py3dGameObjectCtor = NULL;
 
-static void py3d_game_object_dealloc(struct Py3dGameObject *self) {
+static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
-static PyObject *py3d_game_object_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-    struct Py3dGameObject *self = (struct Py3dGameObject *) type->tp_alloc(type, 0);
+static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     self->gameObject = NULL;
 
-    return (PyObject *) self;
-}
-
-static int py3d_game_object_init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     return 0;
 }
 
-static PyObject *py3d_game_object_get_name(struct Py3dGameObject *self, PyObject * Py_UNUSED(ignored)) {
-    if (self == NULL || self->gameObject == NULL) Py_RETURN_NONE;
+static PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    if (self == NULL || self->gameObject == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
+        return NULL;
+    }
 
     return PyUnicode_FromString(getChars(getGameObjectName(self->gameObject)));
 }
 
-PyMemberDef py3d_game_object_members[] = {
-    {NULL}
-};
+static PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    if (self == NULL || self->gameObject == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
+        return NULL;
+    }
 
-PyMethodDef py3d_game_object_methods[] = {
-    {"get_name", (PyCFunction) py3d_game_object_get_name, METH_NOARGS, "Get Game Object's name"},
+    if (self->gameObject->transform == NULL) {
+        // Should I set an exception here instead?
+        Py_RETURN_NONE;
+    }
+
+    Py_INCREF(self->gameObject->transform);
+    return (PyObject *) self->gameObject->transform;
+}
+
+PyMethodDef Py3dGameObject_Methods[] = {
+    {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
+    {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
     {NULL}
 };
 
@@ -63,16 +73,15 @@ PyTypeObject Py3dGameObjectType = {
     PyObject_HEAD_INIT(NULL)
     .tp_name = "py3dengine.GameObject",
     .tp_basicsize = sizeof(struct Py3dGameObject),
-    .tp_dealloc = (destructor) py3d_game_object_dealloc,
+    .tp_dealloc = (destructor) Py3dGameObject_Dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_doc = "Class for manipulating Game Objects",
-    .tp_methods = py3d_game_object_methods,
-    .tp_members = py3d_game_object_members,
-    .tp_init = (initproc) py3d_game_object_init,
-    .tp_new = py3d_game_object_new
+    .tp_methods = Py3dGameObject_Methods,
+    .tp_init = (initproc) Py3dGameObject_Init,
+    .tp_new = PyType_GenericNew
 };
 
-static PyObject *createPy3dGameObject() {
+static PyObject *Py3dGameObject_New() {
     if (py3dGameObjectCtor == NULL) {
         critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
 
@@ -207,7 +216,7 @@ static void deleteChildListNode(struct ChildListNode **listNodePtr) {
 static void initializePyGameObject(struct GameObject *gameObject) {
     if (gameObject == NULL || gameObject->pyGameObject != NULL) return;
 
-    struct Py3dGameObject *newPyGameObject = (struct Py3dGameObject *) createPy3dGameObject();
+    struct Py3dGameObject *newPyGameObject = (struct Py3dGameObject *) Py3dGameObject_New();
     if (newPyGameObject == NULL) {
         critical_log("%s", "[GameObject]: Could not instantiate new PyGameObject");
 
@@ -256,8 +265,7 @@ void allocGameObject(struct GameObject **gameObjectPtr) {
     gameObject->children = NULL;
     gameObject->parent = NULL;
     gameObject->name = NULL;
-    gameObject->transform = NULL;
-    allocTransformComponent(&gameObject->transform);
+    gameObject->transform = Py3dTransform_New();
     gameObject->pyGameObject = NULL;
     initializePyGameObject(gameObject);
 
@@ -274,7 +282,7 @@ void deleteGameObject(struct GameObject **gameObjectPtr) {
     gameObject->parent = NULL;
 
     deleteString(&gameObject->name);
-    deleteTransformComponent(&gameObject->transform);
+    Py_CLEAR(gameObject->transform);
     Py_CLEAR(gameObject->pyGameObject);
 
     free(gameObject);
@@ -524,7 +532,7 @@ void setGameObjectName(struct GameObject *gameObject, const char *newName) {
     }
 }
 
-struct TransformComponent *getGameObjectTransform(struct GameObject *gameObject) {
+struct Py3dTransform *getGameObjectTransform(struct GameObject *gameObject) {
     if (gameObject == NULL) return NULL;
 
     return gameObject->transform;

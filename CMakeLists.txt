@@ -49,10 +49,8 @@ add_executable(
     src/source/python/python_wrapper.c
     src/source/python/pycomponent.c
     src/source/python/py3dtransform.c
-    src/source/components/rotation_component.c
     src/source/components/model_renderer_component.c
     src/source/components/base_component.c
-    src/source/components/transform_component.c
     src/source/components/camera_component.c
     src/source/components/component_factory.c
 )

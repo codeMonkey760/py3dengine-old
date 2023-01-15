@@ -7,7 +7,7 @@
 #include <Python.h>
 
 struct ComponentListNode;
-struct TransformComponent;
+struct Py3dTransform;
 struct ChildListNode;
 struct BaseComponent;
 struct String;
@@ -21,7 +21,7 @@ struct GameObject {
     struct ChildListNode *children;
     struct GameObject *parent;
     struct String *name;
-    struct TransformComponent *transform;
+    struct Py3dTransform *transform;
     struct Py3dGameObject *pyGameObject;
 };
 
@@ -49,6 +49,6 @@ extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gam
 extern struct String *getGameObjectName(struct GameObject *gameObject);
 extern void setGameObjectName(struct GameObject *gameObject, const char *newName);
 
-extern struct TransformComponent *getGameObjectTransform(struct GameObject *gameObject);
+extern struct Py3dTransform *getGameObjectTransform(struct GameObject *gameObject);
 
 #endif
