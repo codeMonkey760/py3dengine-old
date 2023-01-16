@@ -68,7 +68,6 @@ void initPythonScript(struct PythonScript *resource, PyObject *module, const cha
         return;
     }
 
-    Py_INCREF(componentType);
     Py_CLEAR(resource->_componentType);
     resource->_componentType = componentType;
 }
