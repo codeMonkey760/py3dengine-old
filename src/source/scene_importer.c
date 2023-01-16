@@ -4,12 +4,9 @@
 #include "wfo_parser/wfo_parser.h"
 #include "scene_importer.h"
 #include "game_object.h"
-#include "components/model_renderer_component.h"
-#include "components/transform_component.h"
 #include "json_parser.h"
 #include "resources/model.h"
 #include "resources/shader.h"
-#include "resources/material.h"
 #include "resources/python_script.h"
 #include "resource_manager.h"
 #include "python/python_util.h"
@@ -104,11 +101,11 @@ static void importShader(struct Shader **shaderPtr) {
     newShader = NULL;
 }
 
-static void importTestScript(struct PythonScript **scriptPtr) {
+static void importTestScript(struct PythonScript **scriptPtr, const char *name) {
     if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
 
-    PyObject *testComponentModule = PyImport_ImportModule("TestComponent");
-    if (testComponentModule == NULL) {
+    PyObject *componentModule = PyImport_ImportModule(name);
+    if (componentModule == NULL) {
         handleException();
         return;
     }
@@ -117,8 +114,8 @@ static void importTestScript(struct PythonScript **scriptPtr) {
     allocPythonScript(&newScript);
     if (newScript == NULL) return;
 
-    initPythonScript(newScript, testComponentModule, "TestComponent");
-    setResourceName((struct BaseResource *) newScript, "TestComponent");
+    initPythonScript(newScript, componentModule, name);
+    setResourceName((struct BaseResource *) newScript, name);
 
     (*scriptPtr) = newScript;
 }
@@ -210,9 +207,9 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     fclose(wfoFile);
 
     struct PythonScript *script = NULL;
-    importTestScript(&script);
+    importTestScript(&script, "RotationComponent");
     if (script == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load test python script");
+        error_log("%s", "[SceneImporter]: Unable to load RotationComponent python script");
     }
     storeResource(importer->manager, (struct BaseResource *) script);
     script = NULL;
