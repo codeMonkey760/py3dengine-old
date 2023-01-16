@@ -222,7 +222,6 @@ static void initializePyGameObject(struct GameObject *gameObject) {
 
         return;
     }
-    Py_INCREF(newPyGameObject);
 
     gameObject->pyGameObject = newPyGameObject;
     newPyGameObject->gameObject = gameObject;
@@ -303,14 +302,18 @@ void updateGameObject(struct GameObject *gameObject, float dt) {
             if (PyObject_HasAttrString((PyObject *) curPyComponent, "update") == 1) {
                 PyObject *pyUpdate = PyObject_GetAttrString(curPyComponent, "update");
                 if (PyCallable_Check(pyUpdate) == 1) {
-                    PyObject *pyUpdateRet = PyObject_CallOneArg(pyUpdate, PyFloat_FromDouble(dt));
+                    PyObject *dtArg = PyFloat_FromDouble(dt);
+                    PyObject *pyUpdateRet = PyObject_CallOneArg(pyUpdate, dtArg);
                     if (pyUpdateRet == NULL) {
                         error_log("%s", "[GameObject]: Python component threw exception while updating");
                         handleException();
                     } else if (!Py_IsNone(pyUpdateRet)) {
                         warning_log("%s", "[GameObject]: Python component returned something while updating, which is weird");
                     }
+                    Py_CLEAR(dtArg);
+                    Py_CLEAR(pyUpdateRet);
                 }
+                Py_CLEAR(pyUpdate);
             }
         }
 
