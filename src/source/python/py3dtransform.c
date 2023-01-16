@@ -40,31 +40,31 @@ static bool unpackNumberTupleIntoFloatArray(PyObject *tuple, unsigned int requir
 }
 
 static void refreshMatrixCaches(struct Py3dTransform *component) {
-    if (component == NULL || component->__matrixCacheDirty == false) return;
+    if (component == NULL || component->matrixCacheDirty == false) return;
 
     float sMtx[16] = {0.0f};
-    Mat4ScalingFA(sMtx, component->__scale);
+    Mat4ScalingFA(sMtx, component->scale);
 
     float rMtx[16] = {0.0f};
-    Mat4RotationQuaternionFA(rMtx, component->__orientation);
+    Mat4RotationQuaternionFA(rMtx, component->orientation);
 
     float tMtx[16] = {0.0f};
-    Mat4TranslationFA(tMtx, component->__position);
+    Mat4TranslationFA(tMtx, component->position);
 
     float wMtx[16] = {0.0f};
     Mat4Mult(wMtx, sMtx, rMtx);
     Mat4Mult(wMtx, wMtx, tMtx);
 
-    Mat4Copy(component->__wMatrixCache, wMtx);
+    Mat4Copy(component->wMatrixCache, wMtx);
 
-    Mat4Inverse(component->__witMatrixCache, wMtx);
-    Mat4Transpose(component->__witMatrixCache, component->__witMatrixCache);
+    Mat4Inverse(component->witMatrixCache, wMtx);
+    Mat4Transpose(component->witMatrixCache, component->witMatrixCache);
 
-    component->__matrixCacheDirty = false;
+    component->matrixCacheDirty = false;
 }
 
 static void refreshViewMatrixCache(struct Py3dTransform *component) {
-    if (component == NULL || component->__viewMatrixCacheDirty == false) return;
+    if (component == NULL || component->viewMatrixCacheDirty == false) return;
 
     float yaw = 0.0f;
     float pitch = 0.0f;
@@ -80,14 +80,14 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
     QuaternionFromAxisAngle(1.0f,0.0f,0.0f,pitch,qX);
     QuaternionMult(qY,qX,qTot);
 
-    QuaternionVec3Rotation(component->__position, qTot, component->__position);
+    QuaternionVec3Rotation(component->position, qTot, component->position);
 
-    Mat4LookAtLH(component->__viewMatrixCache, component->__position, camTargetW, camUpW);
-    component->__viewMatrixCacheDirty = false;
+    Mat4LookAtLH(component->viewMatrixCache, component->position, camTargetW, camUpW);
+    component->viewMatrixCacheDirty = false;
 }
 
 static PyObject *Py3dTransform_GetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *ret = makeTupleFromFloatArray(self->__position, 3);
+    PyObject *ret = makeTupleFromFloatArray(self->position, 3);
     if (ret == NULL) {
         ret = Py_None;
     }
@@ -103,9 +103,9 @@ static PyObject *Py3dTransform_Move(struct Py3dTransform *self, PyObject *args, 
         return NULL;
     }
 
-    Vec3Add(self->__position, self->__position, temp);
-    self->__matrixCacheDirty = true;
-    self->__viewMatrixCacheDirty = true;
+    Vec3Add(self->position, self->position, temp);
+    self->matrixCacheDirty = true;
+    self->viewMatrixCacheDirty = true;
 
     Py_RETURN_NONE;
 }
@@ -117,15 +117,15 @@ static PyObject *Py3dTransform_SetPosition(struct Py3dTransform *self, PyObject 
         return NULL;
     }
 
-    Vec3Copy(self->__position, temp);
-    self->__matrixCacheDirty = true;
-    self->__viewMatrixCacheDirty = true;
+    Vec3Copy(self->position, temp);
+    self->matrixCacheDirty = true;
+    self->viewMatrixCacheDirty = true;
 
     Py_RETURN_NONE;
 }
 
 static PyObject *Py3dTransform_GetOrientation(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *ret = makeTupleFromFloatArray(self->__orientation, 4);
+    PyObject *ret = makeTupleFromFloatArray(self->orientation, 4);
     if (ret == NULL) {
         ret = Py_None;
     }
@@ -141,9 +141,9 @@ static PyObject *Py3dTransform_Rotate(struct Py3dTransform *self, PyObject *args
         return NULL;
     }
 
-    QuaternionMult(self->__orientation, temp, self->__orientation);
-    self->__matrixCacheDirty = true;
-    self->__viewMatrixCacheDirty = true;
+    QuaternionMult(self->orientation, temp, self->orientation);
+    self->matrixCacheDirty = true;
+    self->viewMatrixCacheDirty = true;
 
     Py_RETURN_NONE;
 }
@@ -155,15 +155,15 @@ static PyObject *Py3dTransform_SetOrientation(struct Py3dTransform *self, PyObje
         return NULL;
     }
 
-    QuaternionCopy(self->__orientation, temp);
-    self->__matrixCacheDirty = true;
-    self->__viewMatrixCacheDirty = true;
+    QuaternionCopy(self->orientation, temp);
+    self->matrixCacheDirty = true;
+    self->viewMatrixCacheDirty = true;
 
     Py_RETURN_NONE;
 }
 
 static PyObject *Py3dTransform_GetScale(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *ret = makeTupleFromFloatArray(self->__scale, 3);
+    PyObject *ret = makeTupleFromFloatArray(self->scale, 3);
     if (ret == NULL) {
         ret = Py_None;
     }
@@ -179,11 +179,11 @@ static PyObject *Py3dTransform_Stretch(struct Py3dTransform *self, PyObject *arg
         return NULL;
     }
 
-    self->__scale[0] *= temp[0];
-    self->__scale[1] *= temp[1];
-    self->__scale[2] *= temp[2];
-    self->__matrixCacheDirty = true;
-    self->__viewMatrixCacheDirty = true;
+    self->scale[0] *= temp[0];
+    self->scale[1] *= temp[1];
+    self->scale[2] *= temp[2];
+    self->matrixCacheDirty = true;
+    self->viewMatrixCacheDirty = true;
 
     Py_RETURN_NONE;
 }
@@ -195,9 +195,9 @@ static PyObject *Py3dTransform_SetScale(struct Py3dTransform *self, PyObject *ar
         return NULL;
     }
 
-    Vec3Copy(self->__scale, temp);
-    self->__matrixCacheDirty = true;
-    self->__viewMatrixCacheDirty = true;
+    Vec3Copy(self->scale, temp);
+    self->matrixCacheDirty = true;
+    self->viewMatrixCacheDirty = true;
 
     Py_RETURN_NONE;
 }
@@ -218,13 +218,13 @@ static PyMethodDef Py3dTransform_Methods[] = {
 static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
     if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
 
-    Vec3Fill(self->__position, 0.0f);
-    QuaternionIdentity(self->__orientation);
-    Vec3Fill(self->__scale, 1.0f);
-    self->__matrixCacheDirty = true;
-    Mat4Identity(self->__wMatrixCache);
-    Mat4Identity(self->__witMatrixCache);
-    Mat4Identity(self->__viewMatrixCache);
+    Vec3Fill(self->position, 0.0f);
+    QuaternionIdentity(self->orientation);
+    Vec3Fill(self->scale, 1.0f);
+    self->matrixCacheDirty = true;
+    Mat4Identity(self->wMatrixCache);
+    Mat4Identity(self->witMatrixCache);
+    Mat4Identity(self->viewMatrixCache);
 
     return 0;
 }
@@ -237,8 +237,7 @@ static PyTypeObject Py3dTransform_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dTransform_Init,
-    .tp_methods = Py3dTransform_Methods,
-    .tp_new = PyType_GenericNew
+    .tp_methods = Py3dTransform_Methods
 };
 
 bool PyInit_Py3dTransform(PyObject *module) {
@@ -259,7 +258,7 @@ bool Py3dTransform_FindCtor(PyObject *module) {
         return false;
     }
 
-    py3dTransformCtor = PyObject_GetAttrString(module, "GameObject");
+    py3dTransformCtor = PyObject_GetAttrString(module, "Transform");
     Py_INCREF(py3dTransformCtor);
 
     return true;
@@ -292,7 +291,7 @@ float *getTransformWorldMtx(struct Py3dTransform *component) {
 
     refreshMatrixCaches(component);
 
-    return component->__wMatrixCache;
+    return component->wMatrixCache;
 }
 
 float *getTransformWITMtx(struct Py3dTransform *component) {
@@ -300,7 +299,7 @@ float *getTransformWITMtx(struct Py3dTransform *component) {
 
     refreshMatrixCaches(component);
 
-    return component->__witMatrixCache;
+    return component->witMatrixCache;
 }
 
 float *getTransformViewMtx(struct Py3dTransform *component) {
@@ -308,5 +307,5 @@ float *getTransformViewMtx(struct Py3dTransform *component) {
 
     refreshViewMatrixCache(component);
 
-    return component->__viewMatrixCache;
+    return component->viewMatrixCache;
 }

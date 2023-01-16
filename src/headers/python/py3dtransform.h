@@ -12,14 +12,14 @@ struct Py3dTransform {
     struct Py3dComponent base;
     // TODO: these will be defined in world space until matrix chaining has been implemented
     // Then they will be defined relative to the parent game object's space
-    float __position[3];
-    float __orientation[4];
-    float __scale[3];
-    bool __matrixCacheDirty;
-    bool __viewMatrixCacheDirty;
-    float __wMatrixCache[16];
-    float __witMatrixCache[16];
-    float __viewMatrixCache[16];
+    float position[3];
+    float orientation[4];
+    float scale[3];
+    bool matrixCacheDirty;
+    bool viewMatrixCacheDirty;
+    float wMatrixCache[16];
+    float witMatrixCache[16];
+    float viewMatrixCache[16];
 };
 
 extern bool PyInit_Py3dTransform(PyObject *module);
