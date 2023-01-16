@@ -61,7 +61,46 @@ static bool parseVec(json_object *json, const char *name, float dst[4], size_t v
 }
 
 static PyObject *createPyDictFromJsonObject(json_object *root) {
-    Py_RETURN_NONE;
+    if (root == NULL || json_object_is_type(root, json_type_object) == 0) Py_RETURN_NONE;
+
+    PyObject *ret = PyDict_New();
+    if (ret == NULL) Py_RETURN_NONE;
+
+    json_object_object_foreach(root, key, val) {
+        PyObject *value = NULL;
+        switch (json_object_get_type(val)) {
+            case json_type_int:
+                value = PyLong_FromLong(json_object_get_int(val));
+                break;
+            case json_type_double:
+                value = PyFloat_FromDouble(json_object_get_double(val));
+                break;
+            case json_type_string:
+                value = PyUnicode_FromString(json_object_get_string(val));
+                break;
+            case json_type_boolean:
+                // TODO: double check this
+                value = PyBool_FromLong(json_object_get_boolean(val));
+                break;
+            case json_type_null:
+                Py_INCREF(Py_None);
+                value = Py_None;
+                break;
+            case json_type_array:
+                // TODO: implement this
+                Py_INCREF(Py_None);
+                value = Py_None;
+                break;
+            case json_type_object:
+                value = createPyDictFromJsonObject(val);
+                break;
+        }
+
+        PyDict_SetItemString(ret, key, value);
+        Py_CLEAR(value);
+    }
+
+    return ret;
 }
 
 bool parseModelRendererComponent(struct ModelRendererComponent *component, json_object *json, struct ResourceManager *manager) {
