@@ -5,7 +5,6 @@
 
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
-#include "components/rotation_component.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -18,8 +17,6 @@ void componentFactoryCreateComponentFromTypeName(const char *typeName, struct Ba
         allocCameraComponent((struct CameraComponent **) &newComponent);
     } else if (strncmp(COMPONENT_TYPE_NAME_MODEL_RENDERER, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         allocModelRendererComponent((struct ModelRendererComponent **) &newComponent);
-    } else if (strncmp(COMPONENT_TYPE_NAME_ROTATION, typeName, TYPE_NAME_MAX_SIZE) == 0) {
-        allocRotationComponent((struct RotationComponent **) &newComponent);
     }
 
     (*componentPtr) = newComponent;

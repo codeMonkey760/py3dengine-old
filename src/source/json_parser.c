@@ -13,11 +13,10 @@
 #include "resources/python_script.h"
 #include "components/component_factory.h"
 #include "components/base_component.h"
-#include "components/transform_component.h"
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
-#include "components/rotation_component.h"
 #include "python/pycomponent.h"
+#include "python/py3dtransform.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -56,26 +55,6 @@ static bool parseVec(json_object *json, const char *name, float dst[4], size_t v
 
         dst[i] = (float) json_object_get_double(element);
     }
-
-    return true;
-}
-
-bool parseRotationComponent(struct RotationComponent *component, json_object *json) {
-    if (component == NULL || json == NULL) return false;
-
-    json_object *json_name = fetchProperty(json, "name", json_type_string);
-    if (json_name == NULL) return false;
-
-    float newAxis[3];
-    Vec3Fill(newAxis, 0.0f);
-    if (!parseVec(json, "axis", newAxis, 3)) return false;
-
-    json_object *json_speed = fetchProperty(json, "speed", json_type_double);
-    if (json_speed == NULL) return false;
-
-    setComponentName((struct BaseComponent *) component, json_object_get_string(json_name));
-    setRotationComponentAxis(component, newAxis);
-    setRotationComponentSpeed(component, (float) json_object_get_double(json_speed));
 
     return true;
 }
@@ -156,20 +135,23 @@ bool parseCameraComponent(struct CameraComponent *component, json_object *json) 
     return true;
 }
 
-bool parseTransformComponent(json_object *json, struct TransformComponent *component) {
+bool parseTransformComponent(json_object *json, struct Py3dTransform *component) {
     if (json == NULL || component == NULL) return false;
 
     float dataBuffer[4];
     memset(dataBuffer, 0, sizeof(float) * 4);
 
     if (parseVec(json, "position", dataBuffer, 3) == false) return false;
-    Vec3Copy(component->_position, dataBuffer);
+    Vec3Copy(component->position, dataBuffer);
 
     if (parseVec(json, "orientation", dataBuffer, 4) == false) return false;
-    QuaternionCopy(component->_orientation, dataBuffer);
+    QuaternionCopy(component->orientation, dataBuffer);
 
     if (parseVec(json, "scale", dataBuffer, 3) == false) return false;
-    Vec3Copy(component->_scale, dataBuffer);
+    Vec3Copy(component->scale, dataBuffer);
+
+    component->matrixCacheDirty = true;
+    component->viewMatrixCacheDirty = true;
 
     return true;
 }
@@ -205,8 +187,6 @@ bool parseComponentByType(
         return parseCameraComponent((struct CameraComponent *) component, json);
     } else if (strncmp(COMPONENT_TYPE_NAME_MODEL_RENDERER, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         return parseModelRendererComponent((struct ModelRendererComponent *) component, json, resourceManager);
-    } else if (strncmp(COMPONENT_TYPE_NAME_ROTATION, typeName, TYPE_NAME_MAX_SIZE) == 0) {
-        return parseRotationComponent((struct RotationComponent *) component, json);
     }
 
     return false;
@@ -237,7 +217,7 @@ bool parseGameObject(
     if (newGO == NULL) return false;
 
     setGameObjectName(newGO, json_object_get_string(json_name));
-    parseTransformComponent(json_transform, newGO->transform);
+    parseTransformComponent(json_transform, getGameObjectTransform(newGO));
 
     size_t json_components_array_length = json_object_array_length(json_components_array);
     for (size_t i = 0; i < json_components_array_length; ++i) {
