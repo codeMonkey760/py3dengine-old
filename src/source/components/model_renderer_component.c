@@ -5,8 +5,8 @@
 #include "resources/material.h"
 #include "components/model_renderer_component.h"
 #include "game_object.h"
-#include "components/transform_component.h"
 #include "rendering_context.h"
+#include "python/py3dtransform.h"
 
 #define COMPONENT_TYPE_MODEL_RENDERER 2
 
@@ -23,7 +23,7 @@ static void render(struct BaseComponent *component, struct RenderingContext *ren
 
     if (mrc->shader == NULL || mrc->model == NULL || mrc->material == NULL) return;
 
-    struct TransformComponent *transform = getGameObjectTransform(getComponentOwner(component));
+    struct Py3dTransform *transform = getGameObjectTransform(getComponentOwner(component));
     if (transform == NULL) return;
 
     enableShader(mrc->shader);
