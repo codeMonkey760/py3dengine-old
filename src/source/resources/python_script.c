@@ -2,7 +2,7 @@
 #include "custom_string.h"
 #include "logger.h"
 #include "python/python_util.h"
-#include "python/pycomponent.h"
+#include "python/py3dcomponent.h"
 
 #define RESOURCE_TYPE_PYTHON_SCRIPT 5
 

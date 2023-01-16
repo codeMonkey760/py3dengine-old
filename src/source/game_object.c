@@ -8,7 +8,7 @@
 #include "game_object.h"
 #include "components/base_component.h"
 #include "python/python_util.h"
-#include "python/pycomponent.h"
+#include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 
 struct ComponentListNode {

@@ -1,4 +1,4 @@
-#include "python/pycomponent.h"
+#include "python/py3dcomponent.h"
 
 #include "custom_string.h"
 #include "game_object.h"

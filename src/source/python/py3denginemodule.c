@@ -5,7 +5,7 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
-#include "python/pycomponent.h"
+#include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 #include "game_object.h"
 

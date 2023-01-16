@@ -15,7 +15,7 @@
 #include "components/base_component.h"
 #include "components/camera_component.h"
 #include "components/model_renderer_component.h"
-#include "python/pycomponent.h"
+#include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 
 #define TYPE_NAME_MAX_SIZE 64

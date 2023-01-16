@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 
-#include "pycomponent.h"
+#include "py3dcomponent.h"
 
 struct Py3dTransform {
     struct Py3dComponent base;
