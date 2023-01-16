@@ -172,10 +172,6 @@
             "fovx": 100.0,
             "near": 0.05,
             "far": 10.0
-          },
-          {
-            "name": "Camera.TC",
-            "type": "TestComponent"
           }
         ],
         "children": []
