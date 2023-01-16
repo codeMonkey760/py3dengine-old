@@ -4,8 +4,8 @@
 #include "util.h"
 #include "rendering_context.h"
 #include "game_object.h"
-#include "components/transform_component.h"
 #include "components/camera_component.h"
+#include "python/py3dtransform.h"
 
 static void extractVPMatrix(struct GameObject *activeCamera, float dst[16]) {
     if (activeCamera == NULL || dst == NULL) return;
@@ -36,8 +36,8 @@ void deleteRenderingContext(struct RenderingContext **contextPtr) {
 void initRenderingContext(struct RenderingContext *context, struct GameObject *activeCamera) {
     if (context == NULL || activeCamera == NULL) return;
 
-    struct TransformComponent *transformComponent = getGameObjectTransform(activeCamera);
-    if (transformComponent == NULL) {
+    struct Py3dTransform *transform = getGameObjectTransform(activeCamera);
+    if (transform == NULL) {
         critical_log("%s", "[RenderingContext]: Could not query Transform Component from the active camera game object. It's probably malformed.");
         return;
     }
@@ -50,10 +50,10 @@ void initRenderingContext(struct RenderingContext *context, struct GameObject *a
     }
 
     Mat4Mult(
-            context->vpMtx,
-            getTransformViewMtx(getGameObjectTransform(activeCamera)),
-            getCameraComponentProjMatrix(cameraComponent)
+        context->vpMtx,
+        getTransformViewMtx(getGameObjectTransform(activeCamera)),
+        getCameraComponentProjMatrix(cameraComponent)
     );
 
-    Vec3Copy(context->cameraPositionW, transformComponent->_position);
+    Vec3Copy(context->cameraPositionW, transform->position);
 }
