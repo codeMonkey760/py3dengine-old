@@ -6,6 +6,7 @@
 #include "python/python_util.h"
 
 static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
+    // TODO: is self->name leaked here?
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -64,7 +65,7 @@ static PyMethodDef py3d_component_methods[] = {
     {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
     {"get_name", (PyCFunction) Py3dComponent_GetName, METH_NOARGS, "Get component name"},
     {"get_owner", (PyCFunction) Py3dComponent_GetOwner, METH_NOARGS, "Get component owner"},
-    {"parse", (PyCFunction) Py3dComponent_Parse, METH_NOARGS, "Parse json contents"},
+    {"parse", (PyCFunction) Py3dComponent_Parse, METH_VARARGS, "Parse json contents"},
     {NULL}
 };
 

@@ -17,6 +17,7 @@
 #include "components/model_renderer_component.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
+#include "python/python_util.h"
 
 #define TYPE_NAME_MAX_SIZE 64
 
@@ -57,6 +58,10 @@ static bool parseVec(json_object *json, const char *name, float dst[4], size_t v
     }
 
     return true;
+}
+
+static PyObject *createPyDictFromJsonObject(json_object *root) {
+    Py_RETURN_NONE;
 }
 
 bool parseModelRendererComponent(struct ModelRendererComponent *component, json_object *json, struct ResourceManager *manager) {
@@ -168,9 +173,68 @@ static bool parsePythonComponent(
     PyObject *pyName = PyUnicode_FromString(json_object_get_string(json_name));
     if (pyName == NULL) return false;
 
+    // TODO: the previous value of pyComponent->name is probably leaked here
+    // AVOID direct parameter assignments like this!!!!
     ((struct Py3dComponent *) pyComponent)->name = pyName;
 
-    // TODO: finish this by iterating through the rest of the json object attributes
+    if (PyObject_HasAttrString((PyObject *) pyComponent, "parse") != 1) {
+        error_log(
+            "[JsonParser]: Component named \"%s\" did not have a parse attribute",
+            json_object_get_string(json_name)
+        );
+        return false;
+    }
+    PyObject *pyParse = PyObject_GetAttrString((PyObject *) pyComponent, "parse");
+    if (pyParse == NULL) {
+        critical_log(
+            "[JsonParser]: Failed to retrieve \"parse\" attribute from \"%s\"",
+            json_object_get_string(json_name)
+        );
+        handleException();
+        return false;
+    }
+    if (PyCallable_Check(pyParse) != 1) {
+        error_log(
+            "[JsonParser]: \"parse\" attribute for component \"%s\" must be callable",
+            json_object_get_string(json_name)
+        );
+        Py_CLEAR(pyParse);
+        return false;
+    }
+
+    PyObject *parsedData = createPyDictFromJsonObject(json);
+    if (parsedData == NULL) {
+        critical_log(
+            "[JsonParser]: Failed to parse attributes for Component named \"%s\"",
+            json_object_get_string(json_name)
+        );
+        handleException();
+        Py_CLEAR(pyParse);
+        return false;
+    }
+
+    PyObject *parseRet = PyObject_CallOneArg(pyParse, parsedData);
+    if (parseRet == NULL) {
+        error_log(
+            "[JsonParser]: \"parse\" raised exception for Component named \"%s\"",
+            json_object_get_string(json_name)
+        );
+        handleException();
+        Py_CLEAR(parsedData);
+        Py_CLEAR(pyParse);
+        return false;
+    }
+
+    if (!Py_IsNone(parseRet)) {
+        warning_log(
+            "[JsonParser]: \"parse\" returned a value for Component named \"%s\", which is weird",
+            json_object_get_string(json_name)
+        );
+    }
+
+    Py_CLEAR(parseRet);
+    Py_CLEAR(parsedData);
+    Py_CLEAR(pyParse);
 
     return true;
 }
