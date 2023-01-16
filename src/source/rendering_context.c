@@ -13,6 +13,8 @@ static void extractVPMatrix(struct GameObject *activeCamera, float dst[16]) {
 
 }
 
+static bool componentIsCamera
+
 void allocRenderingContext(struct RenderingContext **contextPtr) {
     if (contextPtr == NULL || (*contextPtr) != NULL) return;
 
@@ -41,6 +43,24 @@ void initRenderingContext(struct RenderingContext *context, struct GameObject *a
         critical_log("%s", "[RenderingContext]: Could not query Transform Component from the active camera game object. It's probably malformed.");
         return;
     }
+
+    struct Py3dComponent *cameraComponent = NULL;
+    size_t numComponents = 0;
+    numComponents = getGameObjectComponentsLength(activeCamera);
+    for (size_t i = 0; i < numComponents; ++i) {
+        struct Py3dComponent *curComponent = getGameObjectComponentByIndex(activeCamera, i);
+        if (componentIsCamera(curComponent)) {
+            cameraComponent = curComponent;
+            break;
+        }
+    }
+
+    if (cameraComponent == NULL) {
+        error_log("%s", "[RenderingContext]: Could not query Camera Component from the active camera game object. It's probably malformed.");
+        return;
+    }
+
+    // TODO: finish this
 
     struct CameraComponent *cameraComponent = NULL;
     cameraComponent = (struct CameraComponent *) getGameObjectComponentByType(activeCamera, COMPONENT_TYPE_NAME_CAMERA);
