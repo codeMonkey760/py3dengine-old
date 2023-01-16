@@ -29,6 +29,10 @@ static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *Py_U
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+    Py_RETURN_NONE;
+}
+
 static PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     if (self->name == NULL) {
         PyErr_SetString(PyExc_AttributeError, "name");
@@ -60,6 +64,7 @@ static PyMethodDef py3d_component_methods[] = {
     {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
     {"get_name", (PyCFunction) Py3dComponent_GetName, METH_NOARGS, "Get component name"},
     {"get_owner", (PyCFunction) Py3dComponent_GetOwner, METH_NOARGS, "Get component owner"},
+    {"parse", (PyCFunction) Py3dComponent_Parse, METH_NOARGS, "Parse json contents"},
     {NULL}
 };
 
