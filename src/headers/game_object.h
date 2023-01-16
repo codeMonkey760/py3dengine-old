@@ -45,6 +45,8 @@ extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, co
 extern void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent);
 extern void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent);
 extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
+extern size_t getGameObjectComponentsLength(struct GameObject *gameObject);
+extern struct Py3dComponent *getGameObjectComponentByIndex(struct GameObject *gameObject, size_t index);
 
 extern struct String *getGameObjectName(struct GameObject *gameObject);
 extern void setGameObjectName(struct GameObject *gameObject, const char *newName);

@@ -519,6 +519,37 @@ struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject
     return NULL;
 }
 
+size_t getGameObjectComponentsLength(struct GameObject *gameObject) {
+    if (gameObject == NULL) return -1;
+
+    size_t count = 0;
+    struct ComponentListNode *curNode = gameObject->components;
+    while (curNode != NULL) {
+        count++;
+        curNode = curNode->next;
+    }
+
+    return count;
+}
+
+struct Py3dComponent *getGameObjectComponentByIndex(struct GameObject *gameObject, size_t index) {
+    if (gameObject == NULL) return NULL;
+
+    size_t count = 0;
+    struct ComponentListNode *curNode = gameObject->components;
+    while (curNode != NULL) {
+        if (count == index) break;
+
+        curNode = curNode->next;
+    }
+
+    if (curNode == NULL) return NULL;
+
+    if (curNode->pyComponent == NULL) return NULL;
+
+    return curNode->pyComponent;
+}
+
 struct String *getGameObjectName(struct GameObject *gameObject) {
     if (gameObject == NULL) return NULL;
 
