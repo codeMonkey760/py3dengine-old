@@ -66,23 +66,15 @@ static void refreshMatrixCaches(struct Py3dTransform *component) {
 static void refreshViewMatrixCache(struct Py3dTransform *component) {
     if (component == NULL || component->viewMatrixCacheDirty == false) return;
 
-    float yaw = 0.0f;
-    float pitch = 0.0f;
+    float camTarget[3] = {0.0f, 0.0f, 1.0f};
+    float camUp[3] = {0.0f, 1.0f, 0.0f};
 
-    float camTargetW[3] = {0.0f,0.0f,0.0f};
-    float camUpW[3] = {0.0f,1.0f,0.0f};
+    QuaternionVec3Rotation(camTarget, component->orientation, camTarget);
+    Vec3Add(camTarget, component->position, camTarget);
 
-    float qY[4] = {0.0f};
-    float qX[4] = {0.0f};
-    float qTot[4] = {0.0f};
+    QuaternionVec3Rotation(camUp, component->orientation, camUp);
 
-    QuaternionFromAxisAngle(0.0f,1.0f,0.0f,yaw,qY);
-    QuaternionFromAxisAngle(1.0f,0.0f,0.0f,pitch,qX);
-    QuaternionMult(qY,qX,qTot);
-
-    QuaternionVec3Rotation(component->position, qTot, component->position);
-
-    Mat4LookAtLH(component->viewMatrixCache, component->position, camTargetW, camUpW);
+    Mat4LookAtLH(component->viewMatrixCache, component->position, camTarget, camUp);
     component->viewMatrixCacheDirty = false;
 }
 
