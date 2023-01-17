@@ -169,9 +169,9 @@
           {
             "name": "Camera.CC",
             "type": "CameraComponent",
-            "fovx": 100.0,
-            "near": 0.05,
-            "far": 10.0
+            "fov_x_in_degrees": 100.0,
+            "near_z": 0.05,
+            "far_z": 10.0
           }
         ],
         "children": []

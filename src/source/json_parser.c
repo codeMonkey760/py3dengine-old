@@ -13,7 +13,6 @@
 #include "resources/python_script.h"
 #include "components/component_factory.h"
 #include "components/base_component.h"
-#include "components/camera_component.h"
 #include "components/model_renderer_component.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
@@ -147,38 +146,6 @@ bool parseModelRendererComponent(struct ModelRendererComponent *component, json_
     return true;
 }
 
-bool parseCameraComponent(struct CameraComponent *component, json_object *json) {
-    if (component == NULL || json == NULL) return false;
-
-    json_object *json_name = fetchProperty(json, "name", json_type_string);
-    if (json_name == NULL) return false;
-
-    json_object *json_fovx = fetchProperty(json, "fovx", json_type_double);
-    if (json_fovx == NULL) return false;
-
-    json_object *json_near = fetchProperty(json, "near", json_type_double);
-    if (json_near == NULL) return false;
-
-    json_object *json_far = fetchProperty(json, "far", json_type_double);
-    if (json_far == NULL) return false;
-
-    setComponentName((struct BaseComponent *) component, json_object_get_string(json_name));
-    // TODO: get render target dimensions properly, this is wrong
-    // maybe render target dimensions shouldn't come from the camera?
-    // maybe they should come from the ... render target?
-    // remember this when I refactor and expand the rendering pipeline
-    setCameraComponentLens(
-            component,
-            (float) json_object_get_double(json_fovx),
-            getConfigScreenWidth(),
-            getConfigScreenHeight(),
-            (float) json_object_get_double(json_near),
-            (float) json_object_get_double(json_far)
-    );
-
-    return true;
-}
-
 bool parseTransformComponent(json_object *json, struct Py3dTransform *component) {
     if (json == NULL || component == NULL) return false;
 
@@ -286,9 +253,7 @@ bool parseComponentByType(
 ) {
     if (component == NULL || typeName == NULL || json == NULL || resourceManager == NULL) return false;
 
-    if (strncmp(COMPONENT_TYPE_NAME_CAMERA, typeName, TYPE_NAME_MAX_SIZE) == 0) {
-        return parseCameraComponent((struct CameraComponent *) component, json);
-    } else if (strncmp(COMPONENT_TYPE_NAME_MODEL_RENDERER, typeName, TYPE_NAME_MAX_SIZE) == 0) {
+    if (strncmp(COMPONENT_TYPE_NAME_MODEL_RENDERER, typeName, TYPE_NAME_MAX_SIZE) == 0) {
         return parseModelRendererComponent((struct ModelRendererComponent *) component, json, resourceManager);
     }
 

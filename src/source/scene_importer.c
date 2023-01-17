@@ -214,6 +214,13 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     storeResource(importer->manager, (struct BaseResource *) script);
     script = NULL;
 
+    importTestScript(&script, "CameraComponent");
+    if (script == NULL) {
+        error_log("%s", "[SceneImporter]: Unable to load CameraComponent python script");
+    }
+    storeResource(importer->manager, (struct BaseResource *) script);
+    script = NULL;
+
     if (importer->sceneRootPtr == NULL || (*importer->sceneRootPtr) != NULL) return;
 
     json_object *json_root = json_object_from_fd(fileno(sceneDescriptor));
