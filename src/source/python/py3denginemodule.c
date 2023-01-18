@@ -1,7 +1,3 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <stdbool.h>
-
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
@@ -64,8 +60,6 @@ bool importPy3dEngineModule() {
         handleException();
         return false;
     }
-
-    Py_INCREF(module);
 
     return true;
 }

@@ -6,10 +6,12 @@
 #include "logger.h"
 #include "python/python_wrapper.h"
 #include "python/py3denginemodule.h"
+#include "python/py3dmathmodule.h"
 #include "python/python_util.h"
 
 bool initializePython(int argc, char **argv) {
     if (!appendPy3dEngineModule()) return false;
+    if (!appendPy3dMathModule()) return false;
 
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
@@ -32,8 +34,10 @@ bool initializePython(int argc, char **argv) {
     PyConfig_Clear(&config);
 
     if (!importPy3dEngineModule()) return false;
+    if (!importPy3dMathModule()) return false;
 
     if (!initPy3dEngineObjects()) return false;
+    if (!initPy3dMathObjects()) return false;
 
     trace_log(
         "[Python]: Initialization successful: %s\n"
@@ -48,6 +52,7 @@ bool initializePython(int argc, char **argv) {
 }
 
 void finalizePython() {
+    finalizePy3dMathModule();
     finalizePy3dEngineModule();
 
     Py_Finalize();

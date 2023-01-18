@@ -46,6 +46,7 @@ add_executable(
     src/source/resources/texture.c
     src/source/resources/python_script.c
     src/source/python/py3denginemodule.c
+    src/source/python/py3dmathmodule.c
     src/source/python/python_util.c
     src/source/python/python_wrapper.c
     src/source/python/py3dcomponent.c
