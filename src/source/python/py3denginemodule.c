@@ -27,18 +27,21 @@ PyInit_py3dEngine(void) {
         critical_log("%s", "[Python]: Failed to attach Game Object to py3dengine module");
 
         Py_CLEAR(newModule);
+        return NULL;
     }
 
     if (!PyInit_Py3dComponent(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Component to py3dengine module");
 
         Py_CLEAR(newModule);
+        return NULL;
     }
 
     if (!PyInit_Py3dTransform(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Transform to py3dengine module");
 
         Py_CLEAR(newModule);
+        return NULL;
     }
 
     return newModule;

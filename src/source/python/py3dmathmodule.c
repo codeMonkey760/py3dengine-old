@@ -1,6 +1,7 @@
 #include "python/py3dmathmodule.h"
 #include "logger.h"
 #include "python/python_util.h"
+#include "math/vector3.h"
 
 static struct PyModuleDef py3dmathModuleDef = {
         PyModuleDef_HEAD_INIT,
@@ -17,6 +18,13 @@ PyInit_py3dMath(void) {
     if (newModule == NULL) {
         critical_log("%s", "[Python]: Failed to create \"py3dmath\" module");
 
+        return NULL;
+    }
+
+    if (!PyInit_Py3dVector3(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach Vector3 to py3dmath module");
+
+        Py_CLEAR(newModule);
         return NULL;
     }
 
@@ -44,9 +52,11 @@ bool importPy3dMathModule() {
 }
 
 bool initPy3dMathObjects() {
+    if (!Py3dPy3dVector3_FindCtor(module)) return false;
+
     return true;
 }
 
 void finalizePy3dMathModule() {
-
+    Py3dVector3_FinalizeCtor();
 }
