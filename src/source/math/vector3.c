@@ -10,29 +10,6 @@ struct Py3dVector3 {
 static PyObject *py3dVector3Ctor = NULL;
 PyTypeObject Py3dVector3_Type;
 
-static int setComponent(struct Py3dVector3 *self, PyObject *value, int index) {
-    char names[6] = {'x',0,'y',0,'z',0};
-
-    if (value == NULL) {
-        PyErr_Format(PyExc_TypeError, "Cannot delete the \"%s\" attribute", &names[index * 2]);
-        return -1;
-    }
-
-    Py_INCREF(value);
-    PyObject *flt = PyNumber_Float(value);
-    if (flt == NULL) {
-        PyErr_Format(PyExc_TypeError, "The \"%s\" attribute must be convertible to float", &names[index * 2]);
-        Py_DECREF(value);
-        return -1;
-    }
-
-    self->elements[index] = (float) PyFloat_AsDouble(flt);
-    Py_DECREF(flt);
-    Py_DECREF(value);
-
-    return 0;
-}
-
 static void Py3dVector3_Dealloc(struct Py3dVector3 *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
@@ -65,24 +42,12 @@ static PyObject *Py3dVector3_GetX(struct Py3dVector3 *self, void *closure) {
     return PyFloat_FromDouble(self->elements[0]);
 }
 
-static int Py3dVector3_SetX(struct Py3dVector3 *self, PyObject *value, void *closure) {
-    return setComponent(self, value, 0);
-}
-
 static PyObject *Py3dVector3_GetY(struct Py3dVector3 *self, void *closure) {
     return PyFloat_FromDouble(self->elements[1]);
 }
 
-static int Py3dVector3_SetY(struct Py3dVector3 *self, PyObject *value, void *closure) {
-    return setComponent(self, value, 1);
-}
-
 static PyObject *Py3dVector3_GetZ(struct Py3dVector3 *self, void *closure) {
     return PyFloat_FromDouble(self->elements[2]);
-}
-
-static int Py3dVector3_SetZ(struct Py3dVector3 *self, PyObject *value, void *closure) {
-    return setComponent(self, value, 2);
 }
 
 static PyObject *Py3dVector3_Repr(struct Py3dVector3 *self) {
@@ -193,9 +158,9 @@ static PyObject *Py3dVector3_Div(struct Py3dVector3 *self, PyObject *other) {
 }
 
 PyGetSetDef Py3dVector3_GettersSetters[] = {
-    {"x", (getter) Py3dVector3_GetX, (setter) Py3dVector3_SetX, "X Component of Vector3", NULL},
-    {"y", (getter) Py3dVector3_GetY, (setter) Py3dVector3_SetY, "Y Component of Vector3", NULL},
-    {"z", (getter) Py3dVector3_GetZ, (setter) Py3dVector3_SetZ, "Z Component of Vector3", NULL},
+    {"x", (getter) Py3dVector3_GetX, (setter) NULL, "X Component of Vector3", NULL},
+    {"y", (getter) Py3dVector3_GetY, (setter) NULL, "Y Component of Vector3", NULL},
+    {"z", (getter) Py3dVector3_GetZ, (setter) NULL, "Z Component of Vector3", NULL},
     {NULL}
 };
 
