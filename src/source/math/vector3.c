@@ -205,6 +205,19 @@ static PyObject *Py3dVector3_Fill(struct Py3dVector3 *self, PyObject *args, PyOb
     return (PyObject *) result;
 }
 
+// TODO: is this even needed for immutable objects?
+static PyObject *Py3dVector3_Copy(struct Py3dVector3 *self, PyObject *args, PyObject *kwds) {
+    struct Py3dVector3 *other = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &other) == 0) return NULL;
+
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = other->elements[0];
+    result->elements[1] = other->elements[1];
+    result->elements[2] = other->elements[2];
+
+    return (PyObject *) result;
+}
+
 PyGetSetDef Py3dVector3_GettersSetters[] = {
     {"x", (getter) Py3dVector3_GetX, (setter) NULL, "X Component of Vector3", NULL},
     {"y", (getter) Py3dVector3_GetY, (setter) NULL, "Y Component of Vector3", NULL},
@@ -217,6 +230,7 @@ PyMethodDef Py3dVector3_Methods[] = {
     {"length", (PyCFunction) Py3dVector3_Length, METH_NOARGS, "Return the length of a Vector3 instance"},
     {"normalize", (PyCFunction) Py3dVector3_Normalize, METH_NOARGS, "Return the normalized version of a Vector3 instance"},
     {"Fill", (PyCFunction) Py3dVector3_Fill, METH_VARARGS| METH_STATIC, "Create a Vector3 filled with the provided number"},
+    {"Copy", (PyCFunction) Py3dVector3_Copy, METH_VARARGS| METH_STATIC, "Create a copy of the provided Vector3 instance"},
     {NULL}
 };
 
