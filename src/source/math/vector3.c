@@ -38,9 +38,25 @@ static void Py3dVector3_Dealloc(struct Py3dVector3 *self) {
 }
 
 static int Py3dVector3_Init(struct Py3dVector3 *self, PyObject *args, PyObject *kwds) {
-    self->elements[0] = 0.0f;
-    self->elements[1] = 0.0f;
-    self->elements[2] = 0.0f;
+    if (PyTuple_Size(args) == 0) {
+        self->elements[0] = 0.0f;
+        self->elements[1] = 0.0f;
+        self->elements[2] = 0.0f;
+
+        return 0;
+    }
+
+    float t1 = 0.0f;
+    float t2 = 0.0f;
+    float t3 = 0.0f;
+
+    if (PyArg_ParseTuple(args, "fff", &t1, &t2, &t3) == 0) {
+        return -1;
+    }
+
+    self->elements[0] = t1;
+    self->elements[1] = t2;
+    self->elements[2] = t3;
 
     return 0;
 }
