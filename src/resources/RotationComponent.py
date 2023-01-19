@@ -1,11 +1,11 @@
-import math
 import py3dengine
+from py3dmath import Vector3, Quaternion
 
 
 class RotationComponent(py3dengine.Component):
     def __init__(self):
         self.speed = 0.0
-        self.axis = [0.0, 0.0, 1.0]
+        self.axis = Vector3(0, 0, 1)
 
     def update(self, dt):
         owner = self.get_owner()
@@ -18,30 +18,24 @@ class RotationComponent(py3dengine.Component):
             print('My owner doesn\'t have a transform!')
             return
 
-        displacement = self.speed * dt
-        fac = math.sin(displacement / 2.0)
-        x = self.axis[0] * fac
-        y = self.axis[1] * fac
-        z = self.axis[2] * fac
-        w = math.cos(displacement / 2.0)
-
-        length = math.sqrt((x * x) + (y * y) + (z * z) + (w * w))
-        x = x / length
-        y = y / length
-        z = z / length
-        w = w / length
-
-        transform.rotate(x, y, z, w)
+        displacement = Quaternion.FromAxisAndDegrees(self.axis, self.speed * dt)
+        transform.rotate(displacement)
 
     def parse(self, values):
         if 'speed' in values.keys():
-            self.speed = math.radians(float(values['speed']))
+            self.speed = float(values['speed'])
+
+        x = 0
+        y = 0
+        z = 0
 
         if 'axis' in values.keys():
             axis = values['axis']
             if 'x' in axis.keys():
-                self.axis[0] = float(axis['x'])
+                x = float(axis['x'])
             if 'y' in axis.keys():
-                self.axis[1] = float(axis['y'])
+                y = float(axis['y'])
             if 'z' in axis.keys():
-                self.axis[2] = float(axis['z'])
+                z = float(axis['z'])
+
+        self.axis = Vector3(x, y, z)

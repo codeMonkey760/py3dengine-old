@@ -1,44 +1,11 @@
 #include "python/py3dtransform.h"
 #include "math/vector3.h"
+#include "math/quaternion.h"
 #include "python/python_util.h"
 #include "util.h"
 #include "logger.h"
 
 static PyObject *py3dTransformCtor = NULL;
-
-static PyObject *makeTupleFromFloatArray(const float *src, int length) {
-    PyObject *ret = PyTuple_New(length);
-    if (ret == NULL) return NULL;
-
-    for (int i = 0; i < length; ++i) {
-        if (PyTuple_SetItem(ret, i, PyFloat_FromDouble(src[i])) == -1) {
-            Py_CLEAR(ret);
-            return NULL;
-        }
-    }
-
-    return ret;
-}
-
-static bool unpackNumberTupleIntoFloatArray(PyObject *tuple, unsigned int required_elements, float *dst) {
-    if (tuple == NULL || required_elements == 0 || dst == NULL) return false;
-
-    if (PyTuple_Check(tuple) != 1) return false;
-
-    Py_ssize_t tuple_len = PyTuple_Size(tuple);
-    if (tuple_len < required_elements) return false;
-
-    for (unsigned int i = 0; i < required_elements; ++i) {
-        PyObject *curElement = PyTuple_GetItem(tuple, i);
-        curElement = PyNumber_Float(curElement);
-        if (curElement == NULL) return false;
-
-        dst[i] = (float) PyFloat_AsDouble(curElement);
-        Py_CLEAR(curElement);
-    }
-
-    return true;
-}
 
 static void refreshMatrixCaches(struct Py3dTransform *component) {
     if (component == NULL || component->matrixCacheDirty == false) return;
@@ -115,23 +82,43 @@ static PyObject *Py3dTransform_SetPosition(struct Py3dTransform *self, PyObject 
 }
 
 static PyObject *Py3dTransform_GetOrientation(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *ret = makeTupleFromFloatArray(self->orientation, 4);
-    if (ret == NULL) {
-        ret = Py_None;
-    }
+    struct Py3dQuaternion *result = Py3dQuaternion_New();
+    result->elements[0] = self->orientation[0];
+    result->elements[1] = self->orientation[1];
+    result->elements[2] = self->orientation[2];
+    result->elements[3] = self->orientation[3];
 
-    Py_INCREF(ret);
-    return ret;
+    return (PyObject *) result;
 }
 
 static PyObject *Py3dTransform_Rotate(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    float temp[4] = {0.0f};
-    if (!unpackNumberTupleIntoFloatArray(args, 4, temp)) {
-        PyErr_SetString(PyExc_ValueError, "Transform.rotate requires 4 floats as arguments");
-        return NULL;
-    }
+    struct Py3dQuaternion *displacement = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dQuaternion_Type, &displacement) != 1) return NULL;
 
-    QuaternionMult(self->orientation, temp, self->orientation);
+    self->orientation[0] =
+        (self->orientation[3] * displacement->elements[0]) +
+        (self->orientation[0] * displacement->elements[3]) +
+        (self->orientation[1] * displacement->elements[2]) -
+        (self->orientation[2] * displacement->elements[1]);
+
+    self->orientation[1] =
+        (self->orientation[3] * displacement->elements[1]) -
+        (self->orientation[0] * displacement->elements[2]) +
+        (self->orientation[1] * displacement->elements[3]) +
+        (self->orientation[2] * displacement->elements[0]);
+
+    self->orientation[2] =
+        (self->orientation[3] * displacement->elements[2]) +
+        (self->orientation[0] * displacement->elements[1]) -
+        (self->orientation[1] * displacement->elements[0]) +
+        (self->orientation[2] * displacement->elements[3]);
+
+    self->orientation[3] =
+        (self->orientation[3] * displacement->elements[3]) -
+        (self->orientation[0] * displacement->elements[0]) -
+        (self->orientation[1] * displacement->elements[1]) -
+        (self->orientation[2] * displacement->elements[2]);
+
     self->matrixCacheDirty = true;
     self->viewMatrixCacheDirty = true;
 
@@ -139,13 +126,13 @@ static PyObject *Py3dTransform_Rotate(struct Py3dTransform *self, PyObject *args
 }
 
 static PyObject *Py3dTransform_SetOrientation(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    float temp[4] = {0.0f};
-    if (!unpackNumberTupleIntoFloatArray(args, 4, temp)) {
-        PyErr_SetString(PyExc_ValueError, "Transform.set_orientation requires 4 floats as arguments");
-        return NULL;
-    }
+    struct Py3dQuaternion *newOrientation = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dQuaternion_Type, &newOrientation) != 1) return NULL;
 
-    QuaternionCopy(self->orientation, temp);
+    self->orientation[0] = newOrientation->elements[0];
+    self->orientation[1] = newOrientation->elements[1];
+    self->orientation[2] = newOrientation->elements[2];
+    self->orientation[3] = newOrientation->elements[3];
     self->matrixCacheDirty = true;
     self->viewMatrixCacheDirty = true;
 

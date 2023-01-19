@@ -2,6 +2,7 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "math/vector3.h"
+#include "math/quaternion.h"
 
 static struct PyModuleDef py3dmathModuleDef = {
         PyModuleDef_HEAD_INIT,
@@ -23,6 +24,13 @@ PyInit_py3dMath(void) {
 
     if (!PyInit_Py3dVector3(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Vector3 to py3dmath module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (!PyInit_Py3dQuaternion(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach Quaternion to py3dmath module");
 
         Py_CLEAR(newModule);
         return NULL;
@@ -52,11 +60,13 @@ bool importPy3dMathModule() {
 }
 
 bool initPy3dMathObjects() {
-    if (!Py3dPy3dVector3_FindCtor(module)) return false;
+    if (!Py3dVector3_FindCtor(module)) return false;
+    if (!Py3dQuaternion_FindCtor(module)) return false;
 
     return true;
 }
 
 void finalizePy3dMathModule() {
     Py3dVector3_FinalizeCtor();
+    Py3dQuaternion_FinalizeCtor();
 }

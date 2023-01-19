@@ -55,6 +55,7 @@ add_executable(
     src/source/components/base_component.c
     src/source/components/component_factory.c
     src/source/math/vector3.c
+    src/source/math/quaternion.c
 )
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python json-c SOIL inih m)

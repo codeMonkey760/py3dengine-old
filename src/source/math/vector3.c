@@ -261,7 +261,7 @@ bool PyInit_Py3dVector3(PyObject *module) {
     return true;
 }
 
-bool Py3dPy3dVector3_FindCtor(PyObject *module) {
+bool Py3dVector3_FindCtor(PyObject *module) {
     if (PyObject_HasAttrString(module, "Vector3") == 0) {
         critical_log("%s", "[Python]: Py3dVector3 has not been initialized properly");
 
