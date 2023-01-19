@@ -1,4 +1,5 @@
 #include "python/py3dtransform.h"
+#include "math/vector3.h"
 #include "python/python_util.h"
 #include "util.h"
 #include "logger.h"
@@ -79,23 +80,21 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
 }
 
 static PyObject *Py3dTransform_GetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *ret = makeTupleFromFloatArray(self->position, 3);
-    if (ret == NULL) {
-        ret = Py_None;
-    }
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = self->position[0];
+    result->elements[1] = self->position[1];
+    result->elements[2] = self->position[2];
 
-    Py_INCREF(ret);
-    return ret;
+    return (PyObject *) result;
 }
 
 static PyObject *Py3dTransform_Move(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    float temp[3] = {0.0f};
-    if (!unpackNumberTupleIntoFloatArray(args, 3, temp)) {
-        PyErr_SetString(PyExc_ValueError, "Transform.move requires 3 floats as arguments");
-        return NULL;
-    }
+    struct Py3dVector3 *displacement = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &displacement) != 1) return NULL;
 
-    Vec3Add(self->position, self->position, temp);
+    self->position[0] += displacement->elements[0];
+    self->position[1] += displacement->elements[1];
+    self->position[2] += displacement->elements[2];
     self->matrixCacheDirty = true;
     self->viewMatrixCacheDirty = true;
 
@@ -103,13 +102,12 @@ static PyObject *Py3dTransform_Move(struct Py3dTransform *self, PyObject *args, 
 }
 
 static PyObject *Py3dTransform_SetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    float temp[3] = {0.0f};
-    if (!unpackNumberTupleIntoFloatArray(args, 3, temp)) {
-        PyErr_SetString(PyExc_ValueError, "Transform.set_position requires 3 floats as arguments");
-        return NULL;
-    }
+    struct Py3dVector3 *newPosition = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &newPosition) != 1) return NULL;
 
-    Vec3Copy(self->position, temp);
+    self->position[0] = newPosition->elements[0];
+    self->position[1] = newPosition->elements[1];
+    self->position[2] = newPosition->elements[2];
     self->matrixCacheDirty = true;
     self->viewMatrixCacheDirty = true;
 
@@ -155,25 +153,21 @@ static PyObject *Py3dTransform_SetOrientation(struct Py3dTransform *self, PyObje
 }
 
 static PyObject *Py3dTransform_GetScale(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *ret = makeTupleFromFloatArray(self->scale, 3);
-    if (ret == NULL) {
-        ret = Py_None;
-    }
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = self->scale[0];
+    result->elements[1] = self->scale[1];
+    result->elements[2] = self->scale[2];
 
-    Py_INCREF(ret);
-    return ret;
+    return (PyObject *) result;
 }
 
 static PyObject *Py3dTransform_Stretch(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    float temp[3] = {0.0f};
-    if (!unpackNumberTupleIntoFloatArray(args, 3, temp)) {
-        PyErr_SetString(PyExc_ValueError, "Transform.stretch requires 3 floats as arguments");
-        return NULL;
-    }
+    struct Py3dVector3 *factor = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &factor) != 1) return NULL;
 
-    self->scale[0] *= temp[0];
-    self->scale[1] *= temp[1];
-    self->scale[2] *= temp[2];
+    self->scale[0] *= factor->elements[0];
+    self->scale[1] *= factor->elements[1];
+    self->scale[2] *= factor->elements[2];
     self->matrixCacheDirty = true;
     self->viewMatrixCacheDirty = true;
 
@@ -181,13 +175,12 @@ static PyObject *Py3dTransform_Stretch(struct Py3dTransform *self, PyObject *arg
 }
 
 static PyObject *Py3dTransform_SetScale(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    float temp[3] = {0.0f};
-    if (!unpackNumberTupleIntoFloatArray(args, 3, temp)) {
-        PyErr_SetString(PyExc_ValueError, "Transform.set_scale requires 3 floats as arguments");
-        return NULL;
-    }
+    struct Py3dVector3 *newScale = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &newScale) != 1) return NULL;
 
-    Vec3Copy(self->scale, temp);
+    self->scale[0] = newScale->elements[0];
+    self->scale[1] = newScale->elements[1];
+    self->scale[2] = newScale->elements[2];
     self->matrixCacheDirty = true;
     self->viewMatrixCacheDirty = true;
 

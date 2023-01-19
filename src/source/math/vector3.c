@@ -2,13 +2,7 @@
 #include "logger.h"
 #include "python/python_util.h"
 
-struct Py3dVector3 {
-    PyObject_HEAD
-    float elements[3];
-};
-
 static PyObject *py3dVector3Ctor = NULL;
-PyTypeObject Py3dVector3_Type;
 
 static void Py3dVector3_Dealloc(struct Py3dVector3 *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);

@@ -7,6 +7,13 @@
 
 #include <stdbool.h>
 
+struct Py3dVector3 {
+    PyObject_HEAD
+    float elements[3];
+};
+
+extern PyTypeObject Py3dVector3_Type;
+
 extern bool PyInit_Py3dVector3(PyObject *module);
 extern bool Py3dPy3dVector3_FindCtor(PyObject *module);
 extern void Py3dVector3_FinalizeCtor();
