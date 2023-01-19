@@ -8,6 +8,7 @@ struct Py3dVector3 {
 };
 
 static PyObject *py3dVector3Ctor = NULL;
+PyTypeObject Py3dVector3_Type;
 
 static int setComponent(struct Py3dVector3 *self, PyObject *value, int index) {
     char names[6] = {'x',0,'y',0,'z',0};
@@ -77,6 +78,104 @@ static PyObject *Py3dVector3_Repr(struct Py3dVector3 *self) {
     PyUnicode_FromString(buffer);
 }
 
+static struct Py3dVector3 *checkTypeOfOther(PyObject *other) {
+    int isInstanceCheck = PyObject_IsInstance(other, (PyObject *) &Py3dVector3_Type);
+    if (isInstanceCheck == -1) {
+        return NULL;
+    } else if (isInstanceCheck == 0) {
+        PyErr_SetString(PyExc_TypeError, "Vector3 can only be added to other Vector3 instances");
+        return NULL;
+    }
+
+    return (struct Py3dVector3 *) other;
+}
+
+static PyObject *Py3dVector3_Add(struct Py3dVector3 *self, PyObject *other) {
+    struct Py3dVector3 *otherAsVec3 = checkTypeOfOther(other);
+    if (otherAsVec3 == NULL) return NULL;
+
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = self->elements[0] + otherAsVec3->elements[0];
+    result->elements[1] = self->elements[1] + otherAsVec3->elements[1];
+    result->elements[2] = self->elements[2] + otherAsVec3->elements[2];
+
+    return (PyObject *) result;
+}
+
+static PyObject *Py3dVector3_Sub(struct Py3dVector3 *self, PyObject *other) {
+    struct Py3dVector3 *otherAsVec3 = checkTypeOfOther(other);
+    if (otherAsVec3 == NULL) return NULL;
+
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = self->elements[0] - otherAsVec3->elements[0];
+    result->elements[1] = self->elements[1] - otherAsVec3->elements[1];
+    result->elements[2] = self->elements[2] - otherAsVec3->elements[2];
+
+    return (PyObject *) result;
+}
+
+static struct Py3dVector3 *do_PyVector3_Cross_Mult(struct Py3dVector3 *self, struct Py3dVector3 *other) {
+    struct Py3dVector3 *result = Py3dVector3_New();
+
+    result->elements[0] = (self->elements[1] * other->elements[2]) - (self->elements[2] * other->elements[1]);
+    result->elements[1] = (self->elements[2] * other->elements[0]) - (self->elements[0] * other->elements[2]);
+    result->elements[2] = (self->elements[0] * other->elements[1]) - (self->elements[1] * other->elements[0]);
+
+    return result;
+}
+
+static struct Py3dVector3 *do_PyVector3_Scalar_Mult(struct Py3dVector3 *self, float scalar) {
+    struct Py3dVector3 *result = Py3dVector3_New();
+
+    result->elements[0] = self->elements[0] * scalar;
+    result->elements[1] = self->elements[1] * scalar;
+    result->elements[2] = self->elements[2] * scalar;
+
+    return result;
+}
+
+static PyObject *Py3dVector3_Mult(struct Py3dVector3 *self, PyObject *other) {
+    int isPy3dVector3 = PyObject_IsInstance(other, (PyObject *) &Py3dVector3_Type);
+    if (isPy3dVector3 == -1) {
+        return NULL;
+    } else if (isPy3dVector3 == 1) {
+        return  (PyObject *) do_PyVector3_Cross_Mult(self, (struct Py3dVector3 *) other);
+    }
+
+    PyObject *otherAsFlt = PyNumber_Float(other);
+    if (otherAsFlt == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Vector3 can only be cross multiplied by Vector3 instances or scaled by numbers");
+        return NULL;
+    }
+
+    PyObject *result = (PyObject *) do_PyVector3_Scalar_Mult(self, (float) PyFloat_AsDouble(otherAsFlt));
+    Py_CLEAR(otherAsFlt);
+    return result;
+}
+
+static PyObject *Py3dVector3_Div(struct Py3dVector3 *self, PyObject *other) {
+    PyObject *otherAsFlt = PyNumber_Float(other);
+    if (otherAsFlt == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Vector3 can only be divided by numbers");
+        return NULL;
+    }
+
+    float scalar = (float) PyFloat_AsDouble(otherAsFlt);
+    Py_CLEAR(otherAsFlt);
+
+    if (scalar == 0.0f) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "Vector3 cannot be divided by zero");
+        return NULL;
+    }
+
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = self->elements[0] / scalar;
+    result->elements[1] = self->elements[1] / scalar;
+    result->elements[2] = self->elements[2] / scalar;
+
+    return (PyObject *) result;
+}
+
 PyGetSetDef Py3dVector3_GettersSetters[] = {
     {"x", (getter) Py3dVector3_GetX, (setter) Py3dVector3_SetX, "X Component of Vector3", NULL},
     {"y", (getter) Py3dVector3_GetY, (setter) Py3dVector3_SetY, "Y Component of Vector3", NULL},
@@ -86,6 +185,13 @@ PyGetSetDef Py3dVector3_GettersSetters[] = {
 
 PyMethodDef Py3dVector3_Methods[] = {
     {NULL}
+};
+
+PyNumberMethods Py3dVector3_NumberMethods = {
+    .nb_add = (binaryfunc) Py3dVector3_Add,
+    .nb_subtract = (binaryfunc) Py3dVector3_Sub,
+    .nb_multiply = (binaryfunc) Py3dVector3_Mult,
+    .nb_true_divide = (binaryfunc) Py3dVector3_Div
 };
 
 PyTypeObject Py3dVector3_Type = {
@@ -105,6 +211,7 @@ PyTypeObject Py3dVector3_Type = {
 };
 
 bool PyInit_Py3dVector3(PyObject *module) {
+    Py3dVector3_Type.tp_as_number = &Py3dVector3_NumberMethods;
     if (PyType_Ready(&Py3dVector3_Type) < 0) return false;
 
     if (PyModule_AddObject(module, "Vector3", (PyObject *) &Py3dVector3_Type) < 0) return false;
