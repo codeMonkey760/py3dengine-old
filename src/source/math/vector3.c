@@ -27,27 +27,13 @@ static int Py3dVector3_Init(struct Py3dVector3 *self, PyObject *args, PyObject *
     float t2 = 0.0f;
     float t3 = 0.0f;
 
-    if (PyArg_ParseTuple(args, "fff", &t1, &t2, &t3) == 1) {
-        self->elements[0] = t1;
-        self->elements[1] = t2;
-        self->elements[2] = t3;
+    if (PyArg_ParseTuple(args, "fff", &t1, &t2, &t3) != 1) return -1;
 
-        return 0;
-    }
+    self->elements[0] = t1;
+    self->elements[1] = t2;
+    self->elements[2] = t3;
 
-    PyErr_Clear();
-    if (PyArg_ParseTuple(args, "f", &t1) == 1) {
-        self->elements[0] = t1;
-        self->elements[1] = t1;
-        self->elements[2] = t1;
-
-        return 0;
-    }
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_ValueError, "Vector3 constructor expected zero floats, one float, or three floats");
-
-    return -1;
+    return 0;
 }
 
 static PyObject *Py3dVector3_GetX(struct Py3dVector3 *self, void *closure) {
@@ -207,6 +193,18 @@ static PyObject *Py3dVector3_Normalize(struct Py3dVector3 *self, PyObject *args,
     return (PyObject *) result;
 }
 
+static PyObject *Py3dVector3_Fill(struct Py3dVector3 *self, PyObject *args, PyObject *kwds) {
+    float t1 = 0.0f;
+    if (PyArg_ParseTuple(args, "f", &t1) != 1) return NULL;
+
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = t1;
+    result->elements[1] = t1;
+    result->elements[2] = t1;
+
+    return (PyObject *) result;
+}
+
 PyGetSetDef Py3dVector3_GettersSetters[] = {
     {"x", (getter) Py3dVector3_GetX, (setter) NULL, "X Component of Vector3", NULL},
     {"y", (getter) Py3dVector3_GetY, (setter) NULL, "Y Component of Vector3", NULL},
@@ -218,6 +216,7 @@ PyMethodDef Py3dVector3_Methods[] = {
     {"dot", (PyCFunction) Py3dVector3_Dot, METH_VARARGS, "Return the dot product of two Vector3 instances"},
     {"length", (PyCFunction) Py3dVector3_Length, METH_NOARGS, "Return the length of a Vector3 instance"},
     {"normalize", (PyCFunction) Py3dVector3_Normalize, METH_NOARGS, "Return the normalized version of a Vector3 instance"},
+    {"Fill", (PyCFunction) Py3dVector3_Fill, METH_VARARGS| METH_STATIC, "Create a Vector3 filled with the provided number"},
     {NULL}
 };
 
