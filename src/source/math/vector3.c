@@ -27,15 +27,27 @@ static int Py3dVector3_Init(struct Py3dVector3 *self, PyObject *args, PyObject *
     float t2 = 0.0f;
     float t3 = 0.0f;
 
-    if (PyArg_ParseTuple(args, "fff", &t1, &t2, &t3) == 0) {
-        return -1;
+    if (PyArg_ParseTuple(args, "fff", &t1, &t2, &t3) == 1) {
+        self->elements[0] = t1;
+        self->elements[1] = t2;
+        self->elements[2] = t3;
+
+        return 0;
     }
 
-    self->elements[0] = t1;
-    self->elements[1] = t2;
-    self->elements[2] = t3;
+    PyErr_Clear();
+    if (PyArg_ParseTuple(args, "f", &t1) == 1) {
+        self->elements[0] = t1;
+        self->elements[1] = t1;
+        self->elements[2] = t1;
 
-    return 0;
+        return 0;
+    }
+
+    PyErr_Clear();
+    PyErr_SetString(PyExc_ValueError, "Vector3 constructor expected zero floats, one float, or three floats");
+
+    return -1;
 }
 
 static PyObject *Py3dVector3_GetX(struct Py3dVector3 *self, void *closure) {
@@ -157,6 +169,44 @@ static PyObject *Py3dVector3_Div(struct Py3dVector3 *self, PyObject *other) {
     return (PyObject *) result;
 }
 
+static PyObject *Py3dVector3_Dot(struct Py3dVector3 *self, PyObject *args, PyObject *kwds) {
+    struct Py3dVector3 *other = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &other) == 0) return NULL;
+
+    return PyFloat_FromDouble(
+        (self->elements[0] * other->elements[0]) +
+        (self->elements[1] * other->elements[1]) +
+        (self->elements[2] * other->elements[2])
+    );
+}
+
+static float do_length(struct Py3dVector3 *self) {
+    return sqrtf(
+            (self->elements[0] * self->elements[0]) +
+            (self->elements[1] * self->elements[1]) +
+            (self->elements[2] * self->elements[2])
+    );
+}
+
+static PyObject *Py3dVector3_Length(struct Py3dVector3 *self, PyObject *args, PyObject *kwds) {
+    return PyFloat_FromDouble(do_length(self));
+}
+
+static PyObject *Py3dVector3_Normalize(struct Py3dVector3 *self, PyObject *args, PyObject *kwds) {
+    float length = do_length(self);
+    if (length == 0.0f) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "Cannot normalize Vector3 of length zero.");
+        return NULL;
+    }
+
+    struct Py3dVector3 *result = Py3dVector3_New();
+    result->elements[0] = self->elements[0] / length;
+    result->elements[1] = self->elements[1] / length;
+    result->elements[2] = self->elements[2] / length;
+
+    return (PyObject *) result;
+}
+
 PyGetSetDef Py3dVector3_GettersSetters[] = {
     {"x", (getter) Py3dVector3_GetX, (setter) NULL, "X Component of Vector3", NULL},
     {"y", (getter) Py3dVector3_GetY, (setter) NULL, "Y Component of Vector3", NULL},
@@ -165,6 +215,9 @@ PyGetSetDef Py3dVector3_GettersSetters[] = {
 };
 
 PyMethodDef Py3dVector3_Methods[] = {
+    {"dot", (PyCFunction) Py3dVector3_Dot, METH_VARARGS, "Return the dot product of two Vector3 instances"},
+    {"length", (PyCFunction) Py3dVector3_Length, METH_NOARGS, "Return the length of a Vector3 instance"},
+    {"normalize", (PyCFunction) Py3dVector3_Normalize, METH_NOARGS, "Return the normalized version of a Vector3 instance"},
     {NULL}
 };
 
@@ -177,7 +230,7 @@ PyNumberMethods Py3dVector3_NumberMethods = {
 
 PyTypeObject Py3dVector3_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "py3dengine.math.Vector3",
+    .tp_name = "py3dmath.Vector3",
     .tp_doc = "A 3 dimensional vector",
     .tp_basicsize = sizeof(struct Py3dVector3),
     .tp_itemsize = 0,
