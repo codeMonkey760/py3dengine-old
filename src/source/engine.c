@@ -195,3 +195,16 @@ void finalizeEngine() {
 
     finalizeConfig();
 }
+
+void getRenderingTargetDimensions(int *width, int *height) {
+    int w = 0, h = 0;
+
+    glfwGetFramebufferSize(glfwWindow, &w, &h);
+
+    if (width != NULL) {
+        (*width) = w;
+    }
+    if (height != NULL) {
+        (*height) = h;
+    }
+}

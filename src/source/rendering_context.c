@@ -7,6 +7,7 @@
 #include "config.h"
 #include "python/py3dtransform.h"
 #include "python/python_util.h"
+#include "engine.h"
 
 struct PerspectiveCamera {
     float fovXInDegrees;
@@ -156,8 +157,11 @@ void initRenderingContext(struct RenderingContext *context, struct GameObject *a
     }
 
     float pMtx[16] = {0.0f};
-    // TODO: QUERYING THE CONFIG IS **NOT** THE CORRECT WAY TO GET RENDER TARGET DIMENSIONS
-    buildPerspectiveMatrix(pMtx, camera, getConfigScreenWidth(), getConfigScreenHeight());
+    // TODO: when rendering targets are invented get the dimensions from it
+    // right now, the engine is the rendering target
+    int width = 0, height = 0;
+    getRenderingTargetDimensions(&width, &height);
+    buildPerspectiveMatrix(pMtx, camera, width, height);
 
     Mat4Mult(
         context->vpMtx,
