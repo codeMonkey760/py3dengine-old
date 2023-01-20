@@ -6,7 +6,7 @@
 #include "python/python_util.h"
 
 static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
-    // TODO: is self->name leaked here?
+    Py_CLEAR(self->name);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
