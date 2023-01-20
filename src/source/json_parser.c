@@ -228,6 +228,7 @@ static bool parsePythonComponent(
         );
         handleException();
         Py_CLEAR(parsedData);
+        Py_CLEAR(parseArgs);
         Py_CLEAR(pyParse);
         return false;
     }
