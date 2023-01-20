@@ -7,11 +7,13 @@
 #include "python/python_wrapper.h"
 #include "python/py3denginemodule.h"
 #include "python/py3dmathmodule.h"
+#include "python/py3dloggermodule.h"
 #include "python/python_util.h"
 
 bool initializePython(int argc, char **argv) {
     if (!appendPy3dEngineModule()) return false;
     if (!appendPy3dMathModule()) return false;
+    if (!appendPy3dLoggerModule()) return false;
 
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
@@ -35,6 +37,7 @@ bool initializePython(int argc, char **argv) {
 
     if (!importPy3dEngineModule()) return false;
     if (!importPy3dMathModule()) return false;
+    if (!importPy3dLoggerModule()) return false;
 
     if (!initPy3dEngineObjects()) return false;
     if (!initPy3dMathObjects()) return false;
