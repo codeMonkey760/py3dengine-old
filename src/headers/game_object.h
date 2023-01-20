@@ -34,7 +34,6 @@ extern void deleteGameObject(struct GameObject **gameObjectPtr);
 
 extern void updateGameObject(struct GameObject *gameObject, float dt);
 extern void renderGameObject(struct GameObject *gameObject, struct RenderingContext *renderingContext);
-extern void resizeGameObject(struct GameObject *gameObject, int newWidth, int newHeight);
 
 extern void attachChild(struct GameObject *parent, struct GameObject *newChild);
 extern void removeChild(struct GameObject *gameObject, struct GameObject *target);

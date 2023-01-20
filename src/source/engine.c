@@ -89,8 +89,6 @@ static void resizeEngine() {
     int newWidth, newHeight;
     glfwGetFramebufferSize(glfwWindow, &newWidth, &newHeight);
     glViewport(0, 0, newWidth, newHeight);
-
-    resizeGameObject(root, newWidth, newHeight);
 }
 
 void initializeEngine(int argc, char **argv){

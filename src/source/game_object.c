@@ -349,27 +349,6 @@ void renderGameObject(struct GameObject *gameObject, struct RenderingContext *re
     }
 }
 
-void resizeGameObject(struct GameObject *gameObject, int newWidth, int newHeight) {
-    if (gameObject == NULL) return;
-
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        struct BaseComponent *curComponent = curNode->component;
-        if (curComponent != NULL && curComponent->resize != NULL) {
-            curComponent->resize(curComponent, newWidth, newHeight);
-        }
-
-        curNode = curNode->next;
-    }
-
-    struct ChildListNode *curChild = gameObject->children;
-    while (curChild != NULL) {
-        resizeGameObject(curChild->child, newWidth, newHeight);
-
-        curChild = curChild->next;
-    }
-}
-
 void attachChild(struct GameObject *parent, struct GameObject *newChild) {
     if (parent == NULL || newChild == NULL) return;
 
