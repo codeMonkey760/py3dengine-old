@@ -15,6 +15,78 @@ struct PerspectiveCamera {
     float farPlaceDistance;
 };
 
+static PyObject *Py3dRenderingContext_Ctor = NULL;
+
+static PyMethodDef Py3dRenderingContext_Methods[] = {
+    {NULL}
+};
+
+static void Py3dRenderingContext_Dealloc(struct RenderingContext *self) {
+    Py_TYPE(self)->tp_free((PyObject *) self);
+}
+
+static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject *args, PyObject *kwds) {
+    return 0;
+}
+
+static PyTypeObject Py3dRenderingContext_Type = {
+    PyObject_HEAD_INIT(NULL)
+    .tp_name = "py3dengine.RenderingContext",
+    .tp_doc = "Represents the current rendering pass",
+    .tp_basicsize = sizeof(struct Py3dRenderingContext),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_init = (initproc) Py3dRenderingContext_Init,
+    .tp_methods = Py3dRenderingContext_Methods,
+    .tp_dealloc = (destructor) Py3dRenderingContext_Dealloc,
+    .tp_new = PyType_GenericNew
+};
+
+bool PyInit_Py3dRenderingContext(PyObject *module) {
+    if (PyType_Ready(&Py3dRenderingContext_Type) < 0) return false;
+
+    if (PyModule_AddObject(module, "RenderingContext", (PyObject *) &Py3dRenderingContext_Type) < 0) return false;
+
+    Py_INCREF(&Py3dRenderingContext_Type);
+
+    return true;
+}
+
+bool Py3dRenderingContext_FindCtor(PyObject *module) {
+    if (PyObject_HasAttrString(module, "RenderingContext") == 0) {
+        critical_log("%s", "[Python]: Py3dRenderingContext has not been initialized properly");
+
+        return false;
+    }
+
+    Py3dRenderingContext_Ctor = PyObject_GetAttrString(module, "RenderingContext");
+    Py_INCREF(Py3dRenderingContext_Ctor);
+
+    return true;
+}
+
+void Py3dRenderingContext_FinalizeCtor() {
+    Py_CLEAR(Py3dRenderingContext_Ctor);
+}
+
+struct Py3dRenderingContext *Py3dRenderingContext_New() {
+    if (Py3dRenderingContext_Ctor == NULL) {
+        critical_log("%s", "[Python]: Py3dRenderingContext has not been initialized properly");
+
+        return NULL;
+    }
+
+    PyObject *py3dRenderingContext = PyObject_CallNoArgs(Py3dRenderingContext_Ctor);
+    if (py3dRenderingContext == NULL) {
+        critical_log("%s", "[Python]: Failed to allocate RenderingContext in python interpreter");
+        handleException();
+
+        return NULL;
+    }
+
+    return (struct Py3dRenderingContext *) py3dRenderingContext;
+}
+
 static void allocPerspectiveCamera(struct PerspectiveCamera **cameraPtr) {
     if (cameraPtr == NULL || (*cameraPtr) != NULL) return;
 
@@ -119,6 +191,8 @@ void allocRenderingContext(struct RenderingContext **contextPtr) {
 
     Mat4Identity(context->vpMtx);
     Vec3Identity(context->cameraPositionW);
+    context->py3dRenderingContext = NULL;
+    context->py3dRenderingContext = Py3dRenderingContext_New();
 
     (*contextPtr) = context;
     context = NULL;
@@ -126,6 +200,9 @@ void allocRenderingContext(struct RenderingContext **contextPtr) {
 
 void deleteRenderingContext(struct RenderingContext **contextPtr) {
     if (contextPtr == NULL || (*contextPtr) == NULL) return;
+
+    struct RenderingContext *context = (*contextPtr);
+    Py_CLEAR(context->py3dRenderingContext);
 
     free( (*contextPtr) );
     (*contextPtr) = NULL;
