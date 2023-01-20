@@ -7,9 +7,7 @@ class CameraComponent(py3dengine.Component):
         self.near_z = 0.0
         self.far_z = 0.0
 
-    def parse(self, values):
-        print(str(values.items()))
-
+    def parse(self, values, resource_manager):
         if 'fov_x_in_degrees' in values.keys():
             self.fov_x_in_degrees = float(values['fov_x_in_degrees'])
         if 'near_z' in values.keys():

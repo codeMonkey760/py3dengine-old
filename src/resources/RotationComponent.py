@@ -21,7 +21,7 @@ class RotationComponent(py3dengine.Component):
         displacement = Quaternion.FromAxisAndDegrees(self.axis, self.speed * dt)
         transform.rotate(displacement)
 
-    def parse(self, values):
+    def parse(self, values, resource_manager):
         if 'speed' in values.keys():
             self.speed = float(values['speed'])
 

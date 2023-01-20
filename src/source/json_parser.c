@@ -219,7 +219,8 @@ static bool parsePythonComponent(
         return false;
     }
 
-    PyObject *parseRet = PyObject_CallOneArg(pyParse, parsedData);
+    PyObject *parseArgs = Py_BuildValue("(NN)", parsedData, Py_None);
+    PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
     if (parseRet == NULL) {
         error_log(
             "[JsonParser]: \"parse\" raised exception for Component named \"%s\"",
@@ -239,6 +240,7 @@ static bool parsePythonComponent(
     }
 
     Py_CLEAR(parseRet);
+    Py_CLEAR(parseArgs);
     Py_CLEAR(parsedData);
     Py_CLEAR(pyParse);
 
