@@ -227,6 +227,35 @@ static void initializePyGameObject(struct GameObject *gameObject) {
     newPyGameObject->gameObject = gameObject;
 }
 
+static void updatePythonComponent(struct Py3dComponent *component, float dt) {
+    if (component == NULL) return;
+
+    if (PyObject_HasAttrString((PyObject *) component, "update") != 1) return;
+
+    PyObject *pyUpdate = PyObject_GetAttrString((PyObject *) component, "update");
+    if (PyCallable_Check(pyUpdate) != 1) {
+        Py_CLEAR(pyUpdate);
+        return;
+    }
+
+    PyObject *componentName = getNameFromPythonComponent((PyObject *) component);
+    const char *componentNameCStr = (componentName != NULL) ? PyUnicode_AsUTF8(componentName) : "NAME_ERROR";
+
+    PyObject *dtArg = PyFloat_FromDouble(dt);
+    PyObject *pyUpdateRet = PyObject_CallOneArg(pyUpdate, dtArg);
+    if (pyUpdateRet == NULL) {
+        error_log("[GameObject]: Python component named \"%s\" threw exception while updating", componentNameCStr);
+        handleException();
+    } else if (!Py_IsNone(pyUpdateRet)) {
+        warning_log("%s", "[GameObject]: Python component named \"%s\" returned something while updating, which is weird", componentNameCStr);
+    }
+
+    Py_CLEAR(componentName);
+    Py_CLEAR(dtArg);
+    Py_CLEAR(pyUpdateRet);
+    Py_CLEAR(pyUpdate);
+}
+
 bool PyInit_Py3dGameObject(PyObject *module) {
     if (PyType_Ready(&Py3dGameObjectType) == -1) return false;
 
@@ -295,26 +324,11 @@ void updateGameObject(struct GameObject *gameObject, float dt) {
     struct ComponentListNode *curNode = gameObject->components;
     while (curNode != NULL) {
         struct BaseComponent *curComponent = curNode->component;
-        PyObject *curPyComponent = (PyObject *) curNode->pyComponent;
+        struct Py3dComponent *curPyComponent = curNode->pyComponent;
         if (curComponent != NULL && curComponent->update != NULL) {
             curComponent->update(curComponent, dt);
         } else if (curPyComponent != NULL) {
-            if (PyObject_HasAttrString((PyObject *) curPyComponent, "update") == 1) {
-                PyObject *pyUpdate = PyObject_GetAttrString(curPyComponent, "update");
-                if (PyCallable_Check(pyUpdate) == 1) {
-                    PyObject *dtArg = PyFloat_FromDouble(dt);
-                    PyObject *pyUpdateRet = PyObject_CallOneArg(pyUpdate, dtArg);
-                    if (pyUpdateRet == NULL) {
-                        error_log("%s", "[GameObject]: Python component threw exception while updating");
-                        handleException();
-                    } else if (!Py_IsNone(pyUpdateRet)) {
-                        warning_log("%s", "[GameObject]: Python component returned something while updating, which is weird");
-                    }
-                    Py_CLEAR(dtArg);
-                    Py_CLEAR(pyUpdateRet);
-                }
-                Py_CLEAR(pyUpdate);
-            }
+            updatePythonComponent(curPyComponent, dt);
         }
 
         curNode = curNode->next;
