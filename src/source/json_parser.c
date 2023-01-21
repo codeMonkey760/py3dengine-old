@@ -219,7 +219,7 @@ static bool parsePythonComponent(
         return false;
     }
 
-    PyObject *parseArgs = Py_BuildValue("(NN)", parsedData, resourceManager->py3dResourceManager);
+    PyObject *parseArgs = Py_BuildValue("(OO)", parsedData, resourceManager->py3dResourceManager);
     PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
     if (parseRet == NULL) {
         error_log(
