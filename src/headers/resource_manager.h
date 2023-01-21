@@ -1,11 +1,27 @@
 #ifndef PY3DENGINE_RESOURCE_MANAGER_H
 #define PY3DENGINE_RESOURCE_MANAGER_H
 
+#include <stdbool.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 struct BaseResource;
+struct Py3dResourceManager;
 
 struct ResourceManager {
     struct ListNode *_root;
+    struct Py3dResourceManager *py3dResourceManager;
 };
+
+struct Py3dResourceManager {
+    PyObject_HEAD
+    struct ResourceManager *resourceManager;
+};
+
+extern bool PyInit_Py3dResourceManager(PyObject *module);
+extern bool findPy3dResourceManagerCtor(PyObject *module);
+extern void finalizePy3dResourceManagerCtor();
 
 extern void allocResourceManager(struct ResourceManager **resourceManagerPtr);
 extern void deleteResourceManager(struct ResourceManager **resourceManagerPtr);

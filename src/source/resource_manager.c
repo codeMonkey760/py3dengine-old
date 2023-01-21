@@ -3,7 +3,7 @@
 #include "custom_string.h"
 #include "resource_manager.h"
 #include "logger.h"
-
+#include "python/python_util.h"
 #include "resources/base_resource.h"
 
 struct ListNode {
@@ -11,6 +11,78 @@ struct ListNode {
 
     struct ListNode *next;
 };
+
+static PyObject *Py3dResourceManager_Ctor = NULL;
+
+static void Py3dResourceManager_Dealloc(struct Py3dResourceManager *self) {
+    Py_TYPE(self)->tp_free((PyObject *) self);
+}
+
+static int Py3dResourceManager_Init(struct Py3dResourceManager *self, PyObject *args, PyObject *kwds) {
+    self->resourceManager = NULL;
+
+    return 0;
+}
+
+PyMethodDef Py3dResourceManager_Methods[] = {
+    {NULL}
+};
+
+PyTypeObject Py3dResourceManager_Type = {
+        PyObject_HEAD_INIT(NULL)
+        .tp_name = "py3dengine.ResourceManager",
+        .tp_basicsize = sizeof(struct Py3dResourceManager),
+        .tp_dealloc = (destructor) Py3dResourceManager_Dealloc,
+        .tp_flags = Py_TPFLAGS_DEFAULT,
+        .tp_doc = "Class for storing imported resources",
+        .tp_methods = Py3dResourceManager_Methods,
+        .tp_init = (initproc) Py3dResourceManager_Init,
+        .tp_new = PyType_GenericNew
+};
+
+bool PyInit_Py3dResourceManager(PyObject *module) {
+    if (PyType_Ready(&Py3dResourceManager_Type) == -1) return false;
+
+    if (PyModule_AddObject(module, "ResourceManager", (PyObject *) &Py3dResourceManager_Type) == -1) return false;
+
+    Py_INCREF(&Py3dResourceManager_Type);
+
+    return true;
+}
+
+bool findPy3dResourceManagerCtor(PyObject *module) {
+    if (PyObject_HasAttrString(module, "ResourceManager") == 0) {
+        critical_log("%s", "[Python]: Py3dResourceManager has not been initialized properly");
+
+        return false;
+    }
+
+    Py3dResourceManager_Ctor = PyObject_GetAttrString(module, "ResourceManager");
+
+    return true;
+}
+
+void finalizePy3dResourceManagerCtor() {
+    Py_CLEAR(Py3dResourceManager_Ctor);
+}
+
+static struct Py3dResourceManager *Py3dResourceManager_New() {
+    if (Py3dResourceManager_Ctor == NULL) {
+        critical_log("%s", "[Python]: Py3dResourceManager has not been initialized properly");
+
+        return NULL;
+    }
+
+    struct Py3dResourceManager *py3dResourceManager = (struct Py3dResourceManager *) PyObject_Call(Py3dResourceManager_Ctor, PyTuple_New(0), NULL);
+    if (py3dResourceManager == NULL) {
+        critical_log("%s", "[Python]: Failed to allocate ResourceManager in python interpreter");
+        handleException();
+
+        return NULL;
+    }
+
+    return py3dResourceManager;
+}
 
 static void allocListNode(struct ListNode **listNodePtr) {
     if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
@@ -42,6 +114,9 @@ void allocResourceManager(struct ResourceManager **resourceManagerPtr){
     if (newResourceManager == NULL) return;
 
     newResourceManager->_root = NULL;
+    newResourceManager->py3dResourceManager = NULL;
+    newResourceManager->py3dResourceManager = Py3dResourceManager_New();
+    newResourceManager->py3dResourceManager->resourceManager = newResourceManager;
 
     (*resourceManagerPtr) = newResourceManager;
     newResourceManager = NULL;
@@ -53,6 +128,7 @@ void deleteResourceManager(struct ResourceManager **resourceManagerPtr){
     struct ResourceManager *manager = (*resourceManagerPtr);
 
     deleteListNode(&manager->_root);
+    Py_CLEAR(manager->py3dResourceManager);
 
     free(manager);
     manager = NULL;

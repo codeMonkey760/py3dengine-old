@@ -4,6 +4,7 @@
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 #include "rendering_context.h"
+#include "resource_manager.h"
 #include "game_object.h"
 
 static struct PyModuleDef py3dengineModuleDef = {
@@ -52,6 +53,13 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dResourceManager(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach ResourceManager to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -88,6 +96,10 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!findPy3dResourceManagerCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -95,4 +107,5 @@ void finalizePy3dEngineModule() {
     Py3dTransform_FinalizeCtor();
     finalizePyGameObjectCtor();
     Py3dRenderingContext_FinalizeCtor();
+    finalizePy3dResourceManagerCtor();
 }
