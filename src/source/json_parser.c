@@ -3,7 +3,6 @@
 
 #include "logger.h"
 #include "util.h"
-#include "config.h"
 #include "json_parser.h"
 #include "game_object.h"
 #include "resource_manager.h"
@@ -169,9 +168,10 @@ bool parseTransformComponent(json_object *json, struct Py3dTransform *component)
 
 static bool parsePythonComponent(
     struct Py3dComponent *pyComponent,
-    json_object *json
+    json_object *json,
+    struct ResourceManager *resourceManager
 ) {
-    if (json == NULL || pyComponent == NULL) return false;
+    if (json == NULL || pyComponent == NULL || resourceManager == NULL) return false;
 
     json_object *json_name = fetchProperty(json, "name", json_type_string);
     if (json_name == NULL) return false;
@@ -219,7 +219,7 @@ static bool parsePythonComponent(
         return false;
     }
 
-    PyObject *parseArgs = Py_BuildValue("(NN)", parsedData, Py_None);
+    PyObject *parseArgs = Py_BuildValue("(NN)", parsedData, resourceManager->py3dResourceManager);
     PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
     if (parseRet == NULL) {
         error_log(
@@ -314,7 +314,7 @@ bool parseGameObject(
             if (!isResourceTypePythonScript(pyScript)) continue;
 
             createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
-            if (!parsePythonComponent(pyComponent, cur_component_json)) {
+            if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
                 error_log("%s", "[JsonParser]: Python component failed to parse. Discarding it.");
                 Py_CLEAR(pyComponent);
 
