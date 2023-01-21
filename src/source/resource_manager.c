@@ -29,15 +29,16 @@ PyMethodDef Py3dResourceManager_Methods[] = {
 };
 
 PyTypeObject Py3dResourceManager_Type = {
-        PyObject_HEAD_INIT(NULL)
-        .tp_name = "py3dengine.ResourceManager",
-        .tp_basicsize = sizeof(struct Py3dResourceManager),
-        .tp_dealloc = (destructor) Py3dResourceManager_Dealloc,
-        .tp_flags = Py_TPFLAGS_DEFAULT,
-        .tp_doc = "Class for storing imported resources",
-        .tp_methods = Py3dResourceManager_Methods,
-        .tp_init = (initproc) Py3dResourceManager_Init,
-        .tp_new = PyType_GenericNew
+    PyObject_HEAD_INIT(NULL)
+    .tp_name = "py3dengine.ResourceManager",
+    .tp_basicsize = sizeof(struct Py3dResourceManager),
+    .tp_itemsize = 0,
+    .tp_dealloc = (destructor) Py3dResourceManager_Dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = "Class for storing imported resources",
+    .tp_methods = Py3dResourceManager_Methods,
+    .tp_init = (initproc) Py3dResourceManager_Init,
+    .tp_new = PyType_GenericNew
 };
 
 bool PyInit_Py3dResourceManager(PyObject *module) {
