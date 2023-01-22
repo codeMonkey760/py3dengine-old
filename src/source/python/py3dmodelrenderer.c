@@ -8,6 +8,7 @@
 #include "resources/model.h"
 #include "util.h"
 #include "rendering_context.h"
+#include "resource_manager.h"
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
@@ -76,8 +77,75 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     Py_RETURN_NONE;
 }
 
+static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct ResourceManager *rm) {
+    PyObject *curAttr = NULL;
+    curAttr = PyDict_GetItemString(parseDataDict, name);
+    if (curAttr == NULL) return NULL;
+    // TODO: PyDict_GetItemString returns borrowed reference so this overwrite isnt a leak ... right?
+    curAttr = PyObject_Str(curAttr);
+    if (curAttr == NULL) return NULL;
+
+    const char *modelName = PyUnicode_AsUTF8(curAttr);
+    struct BaseResource *ret = getResource(rm, modelName);
+    Py_CLEAR(curAttr);
+
+    if (ret == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Resource not imported");
+        return NULL;
+    }
+
+    return ret;
+}
+
+static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
+    PyObject *parseDataDict = NULL;
+    struct Py3dResourceManager *py3dResourceManager = NULL;
+    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3dResourceManager) != 1) return NULL;
+
+    struct ResourceManager *rm = py3dResourceManager->resourceManager;
+    if (rm == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Resource Manager argument is not well formed");
+        return NULL;
+    }
+
+    struct BaseResource *curRes = NULL;
+
+    lookupResource("model", parseDataDict, rm);
+    if (curRes == NULL) return NULL;
+    if (!isResourceTypeModel(curRes)) {
+        PyErr_SetString(PyExc_ValueError, "Resource is not model");
+        return NULL;
+    } else {
+        self->model = (struct Model *) curRes;
+        curRes = NULL;
+    }
+
+    lookupResource("shader", parseDataDict, rm);
+    if (curRes == NULL) return NULL;
+    if (!isResourceTypeShader(curRes)) {
+        PyErr_SetString(PyExc_ValueError, "Resource is not shader");
+        return NULL;
+    } else {
+        self->shader = (struct Shader *) curRes;
+        curRes = NULL;
+    }
+
+    lookupResource("material", parseDataDict, rm);
+    if (curRes == NULL) return NULL;
+    if (!isResourceTypeMaterial(curRes)) {
+        PyErr_SetString(PyExc_ValueError, "Resource is not material");
+        return NULL;
+    } else {
+        self->material = (struct Material *) curRes;
+        curRes = NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dModelRenderer_Methods[] = {
     {"render", (PyCFunction) Py3dModelRenderer_Render, METH_VARARGS, "Render function for ModelRendererComponent"},
+    {"parse", (PyCFunction) Py3dModelRenderer_Parse, METH_VARARGS, "Parse function for ModelRendererComponent"},
     {NULL}
 };
 
