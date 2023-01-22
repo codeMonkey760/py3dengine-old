@@ -29,7 +29,7 @@ static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject
     return 0;
 }
 
-static PyTypeObject Py3dRenderingContext_Type = {
+PyTypeObject Py3dRenderingContext_Type = {
     PyObject_HEAD_INIT(NULL)
     .tp_name = "py3dengine.RenderingContext",
     .tp_doc = "Represents the current rendering pass",

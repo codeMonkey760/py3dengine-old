@@ -3,6 +3,11 @@
 #include "python/python_util.h"
 #include "python/py3dtransform.h"
 #include "game_object.h"
+#include "resources/shader.h"
+#include "resources/material.h"
+#include "resources/model.h"
+#include "util.h"
+#include "rendering_context.h"
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
@@ -35,10 +40,38 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
         return NULL;
     }
 
+    struct Py3dRenderingContext *pyRenderingContext = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &pyRenderingContext) != 1) return NULL;
+
+    struct RenderingContext *rc = pyRenderingContext->renderingContext;
+    if (rc == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3dRendering context has no rendering context object");
+        return NULL;
+    }
+
     struct Py3dTransform *transform = getTransform(self);
     if (transform == NULL) return NULL;
 
+    enableShader(self->shader);
+    float color[3] = {0.0f};
+    Vec3Fill(color, 1.0f);
+    setDiffuseColor(self->shader, getMaterialDiffuseColor(self->material));
 
+    setCameraPosition(self->shader, rc->cameraPositionW);
+
+    setWMtx(self->shader, getTransformWorldMtx(transform));
+    setWITMtx(self->shader, getTransformWITMtx(transform));
+
+    float wvpMtx[16] = {0.0f};
+    Mat4Identity(wvpMtx);
+    Mat4Mult(wvpMtx, getTransformWorldMtx(transform), rc->vpMtx);
+    setWVPMtx(self->shader, wvpMtx);
+
+    bindModel(self->model);
+    renderModel(self->model);
+    unbindModel(self->model);
+
+    disableShader(self->shader);
 
     Py_RETURN_NONE;
 }

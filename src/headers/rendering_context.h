@@ -20,6 +20,8 @@ struct Py3dRenderingContext {
     struct RenderingContext *renderingContext;
 };
 
+extern PyTypeObject Py3dRenderingContext_Type;
+
 extern bool PyInit_Py3dRenderingContext(PyObject *module);
 extern bool Py3dRenderingContext_FindCtor(PyObject *module);
 extern void Py3dRenderingContext_FinalizeCtor();
