@@ -23,5 +23,6 @@ extern bool PyInit_Py3dModelRenderer(PyObject *module);
 extern bool Py3dModelRenderer_FindCtor(PyObject *module);
 extern void Py3dModelRenderer_FinalizeCtor();
 extern struct Py3dModelRenderer *Py3dModelRenderer_New();
+extern int Py3dModelRenderer_Check(PyObject *obj);
 
 #endif

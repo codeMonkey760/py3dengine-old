@@ -119,3 +119,7 @@ struct Py3dModelRenderer *Py3dModelRenderer_New() {
 
     return py3dModelRenderer;
 }
+
+int Py3dModelRenderer_Check(PyObject *obj) {
+    return PyObject_IsInstance(obj, (PyObject *) &Py3dModelRenderer_Type);
+}
