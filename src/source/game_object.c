@@ -48,8 +48,8 @@ static PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *P
     return PyUnicode_FromString(getChars(getGameObjectName(self->gameObject)));
 }
 
-static PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
-    if (self == NULL || self->gameObject == NULL) {
+PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    if (self->gameObject == NULL) {
         PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
         return NULL;
     }
@@ -57,6 +57,11 @@ static PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObje
     if (self->gameObject->transform == NULL) {
         // Should I set an exception here instead?
         Py_RETURN_NONE;
+    }
+
+    if (Py3dTransform_Check((PyObject *) self->gameObject->transform) == 0) {
+        PyErr_SetString(PyExc_AssertionError, "Python GameObject's transform is not of type Py3dTransform");
+        return NULL;
     }
 
     Py_INCREF(self->gameObject->transform);
@@ -280,6 +285,10 @@ bool findPyGameObjectCtor(PyObject *module) {
 
 void finalizePyGameObjectCtor() {
     Py_CLEAR(py3dGameObjectCtor);
+}
+
+int Py3dGameObject_Check(PyObject *obj) {
+    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType)
 }
 
 void allocGameObject(struct GameObject **gameObjectPtr) {

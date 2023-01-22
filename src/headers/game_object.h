@@ -28,6 +28,8 @@ struct GameObject {
 extern bool PyInit_Py3dGameObject(PyObject *module);
 extern bool findPyGameObjectCtor(PyObject *module);
 extern void finalizePyGameObjectCtor();
+extern int Py3dGameObject_Check(PyObject *obj);
+extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 
 extern void allocGameObject(struct GameObject **gameObjectPtr);
 extern void deleteGameObject(struct GameObject **gameObjectPtr);
