@@ -4,6 +4,8 @@
 #include "game_object.h"
 
 #include "python/python_util.h"
+#include "logger.h"
+#include "rendering_context.h"
 
 static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
     Py_CLEAR(self->name);
@@ -34,7 +36,7 @@ static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UN
     Py_RETURN_NONE;
 }
 
-static PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     if (self->name == NULL) {
         PyErr_SetString(PyExc_AttributeError, "name");
         return NULL;
@@ -108,3 +110,76 @@ bool Py3dComponent_IsComponent(PyObject *pyObj) {
 
     return res == 1;
 }
+
+void Py3dComponent_CallUpdate(struct Py3dComponent *component, float dt) {
+    if (component == NULL) return;
+
+    PyObject *pyUpdate = PyObject_GetAttrString((PyObject *) component, "update");
+    if (pyUpdate == NULL) {
+        handleException();
+        return;
+    }
+
+    PyObject *componentName = Py3dComponent_GetName(component, NULL);
+    const char *componentNameAsCStr = NULL;
+    if (componentName == NULL) {
+        handleException();
+        componentNameAsCStr = "NAME_ERROR";
+    } else {
+        componentNameAsCStr = PyUnicode_AsUTF8(componentName);
+    }
+
+    PyObject *dtArg = PyFloat_FromDouble(dt);
+    PyObject *pyUpdateRet = PyObject_CallOneArg(pyUpdate, dtArg);
+    if (pyUpdateRet == NULL) {
+        error_log("[Py3dComponent]: Python component named \"%s\" threw exception while updating", componentNameAsCStr);
+        handleException();
+    } else if (!Py_IsNone(pyUpdateRet)) {
+        warning_log("%s", "[Py3dComponent]: Python component named \"%s\" returned something while updating, which is weird", componentNameAsCStr);
+    }
+
+    Py_CLEAR(componentName);
+    Py_CLEAR(dtArg);
+    Py_CLEAR(pyUpdateRet);
+    Py_CLEAR(pyUpdate);
+}
+
+void Py3dComponent_CallRender(struct Py3dComponent *component, struct RenderingContext *renderingContext) {
+    if (component == NULL || renderingContext == NULL) return;
+
+    PyObject *pyRender = PyObject_GetAttrString((PyObject *) component, "render");
+    if (pyRender == NULL) {
+        handleException();
+        return;
+    }
+
+    PyObject *componentName = Py3dComponent_GetName(component, NULL);
+    const char *componentNameAsCStr = NULL;
+    if (componentName == NULL) {
+        handleException();
+        componentNameAsCStr = "NAME_ERROR";
+    } else {
+        componentNameAsCStr = PyUnicode_AsUTF8(componentName);
+    }
+
+    PyObject *py3dRenderingContext = (PyObject *) renderingContext->py3dRenderingContext;
+    if (py3dRenderingContext == NULL) {
+        critical_log("[Py3dComponent]: Python component named \"%s\" failed sanity check. Its render function was passed a mal-formed rendering context");
+        Py_CLEAR(pyRender);
+        Py_CLEAR(componentName);
+    }
+
+    PyObject *pyRenderRet = PyObject_CallOneArg(pyRender, py3dRenderingContext);
+    if (pyRenderRet == NULL) {
+        error_log("[Py3dComponent]: Python component named \"%s\" threw exception while rendering", componentNameAsCStr);
+        handleException();
+    } else if (!Py_IsNone(pyRenderRet)) {
+        warning_log("%s", "[Py3dComponent]: Python component named \"%s\" returned something while rendering, which is weird", componentNameAsCStr);
+    }
+
+    Py_CLEAR(componentName);
+    Py_CLEAR(pyRenderRet);
+    Py_CLEAR(pyRender);
+}
+
+void Py3dComponent_CallParse(struct Py3dComponent *component, json_object *data) {}
