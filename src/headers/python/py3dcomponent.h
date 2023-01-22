@@ -6,11 +6,10 @@
 #include <structmember.h>
 #include <stdbool.h>
 
-#include <json-c/json.h>
-
 struct GameObject;
 struct Py3dGameObject;
 struct RenderingContext;
+struct ResourceManager;
 
 struct Py3dComponent {
     PyObject_HEAD
@@ -27,6 +26,6 @@ extern PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py
 
 extern void Py3dComponent_CallUpdate(struct Py3dComponent *component, float dt);
 extern void Py3dComponent_CallRender(struct Py3dComponent *component, struct RenderingContext *renderingContext);
-extern void Py3dComponent_CallParse(struct Py3dComponent *component, json_object *data);
+extern bool Py3dComponent_CallParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm);
 
 #endif

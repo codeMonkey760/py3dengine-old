@@ -183,31 +183,6 @@ static bool parsePythonComponent(
     // AVOID direct parameter assignments like this!!!!
     ((struct Py3dComponent *) pyComponent)->name = pyName;
 
-    if (PyObject_HasAttrString((PyObject *) pyComponent, "parse") != 1) {
-        error_log(
-            "[JsonParser]: Component named \"%s\" did not have a parse attribute",
-            json_object_get_string(json_name)
-        );
-        return false;
-    }
-    PyObject *pyParse = PyObject_GetAttrString((PyObject *) pyComponent, "parse");
-    if (pyParse == NULL) {
-        critical_log(
-            "[JsonParser]: Failed to retrieve \"parse\" attribute from \"%s\"",
-            json_object_get_string(json_name)
-        );
-        handleException();
-        return false;
-    }
-    if (PyCallable_Check(pyParse) != 1) {
-        error_log(
-            "[JsonParser]: \"parse\" attribute for component \"%s\" must be callable",
-            json_object_get_string(json_name)
-        );
-        Py_CLEAR(pyParse);
-        return false;
-    }
-
     PyObject *parsedData = createPyDictFromJsonObject(json);
     if (parsedData == NULL) {
         critical_log(
@@ -215,36 +190,15 @@ static bool parsePythonComponent(
             json_object_get_string(json_name)
         );
         handleException();
-        Py_CLEAR(pyParse);
         return false;
     }
 
-    PyObject *parseArgs = Py_BuildValue("(OO)", parsedData, resourceManager->py3dResourceManager);
-    PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
-    if (parseRet == NULL) {
-        error_log(
-            "[JsonParser]: \"parse\" raised exception for Component named \"%s\"",
-            json_object_get_string(json_name)
-        );
-        handleException();
+    if (!Py3dComponent_CallParse(pyComponent, parsedData, resourceManager)) {
         Py_CLEAR(parsedData);
-        Py_CLEAR(parseArgs);
-        Py_CLEAR(pyParse);
         return false;
     }
 
-    if (!Py_IsNone(parseRet)) {
-        warning_log(
-            "[JsonParser]: \"parse\" returned a value for Component named \"%s\", which is weird",
-            json_object_get_string(json_name)
-        );
-    }
-
-    Py_CLEAR(parseRet);
-    Py_CLEAR(parseArgs);
     Py_CLEAR(parsedData);
-    Py_CLEAR(pyParse);
-
     return true;
 }
 

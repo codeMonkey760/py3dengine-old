@@ -6,6 +6,7 @@
 #include "python/python_util.h"
 #include "logger.h"
 #include "rendering_context.h"
+#include "resource_manager.h"
 
 static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
     Py_CLEAR(self->name);
@@ -182,4 +183,29 @@ void Py3dComponent_CallRender(struct Py3dComponent *component, struct RenderingC
     Py_CLEAR(pyRender);
 }
 
-void Py3dComponent_CallParse(struct Py3dComponent *component, json_object *data) {}
+bool Py3dComponent_CallParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm) {
+    if (component == NULL || data == NULL) return false;
+
+    PyObject *pyParse = PyObject_GetAttrString((PyObject *) component, "parse");
+    if (pyParse == NULL) {
+        handleException();
+
+        return false;
+    }
+
+    PyObject *parseArgs = Py_BuildValue("(OO)", data, rm->py3dResourceManager);
+    PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
+    if (parseRet == NULL) {
+        handleException();
+        Py_CLEAR(parseArgs);
+        Py_CLEAR(pyParse);
+
+        return false;
+    }
+
+    Py_CLEAR(parseRet);
+    Py_CLEAR(parseArgs);
+    Py_CLEAR(pyParse);
+
+    return true;
+}
