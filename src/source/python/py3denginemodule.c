@@ -115,6 +115,10 @@ bool initPy3dEngineObjects() {
     return true;
 }
 
+PyObject *getPy3dEngineModule() {
+    return module;
+}
+
 void finalizePy3dEngineModule() {
     Py3dTransform_FinalizeCtor();
     finalizePyGameObjectCtor();
