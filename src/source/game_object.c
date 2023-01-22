@@ -288,7 +288,7 @@ void finalizePyGameObjectCtor() {
 }
 
 int Py3dGameObject_Check(PyObject *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType)
+    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType);
 }
 
 void allocGameObject(struct GameObject **gameObjectPtr) {
