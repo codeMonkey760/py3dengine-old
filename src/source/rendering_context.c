@@ -193,6 +193,7 @@ void allocRenderingContext(struct RenderingContext **contextPtr) {
     Vec3Identity(context->cameraPositionW);
     context->py3dRenderingContext = NULL;
     context->py3dRenderingContext = Py3dRenderingContext_New();
+    context->py3dRenderingContext->renderingContext = context;
 
     (*contextPtr) = context;
     context = NULL;
