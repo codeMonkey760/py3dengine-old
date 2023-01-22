@@ -61,12 +61,12 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-//    if (!PyInit_Py3dModelRenderer(newModule)) {
-//        critical_log("%s", "[Python]: Failed to attach ModelRendererComponent to py3dengine module");
-//
-//        Py_CLEAR(newModule);
-//        return NULL;
-//    }
+    if (!PyInit_Py3dModelRenderer(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach ModelRendererComponent to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
 
     return newModule;
 }
@@ -107,10 +107,10 @@ bool initPy3dEngineObjects() {
     if (!findPy3dResourceManagerCtor(module)) {
         return false;
     }
-//
-//    if (!Py3dModelRenderer_FindCtor(module)) {
-//        return false;
-//    }
+
+    if (!Py3dModelRenderer_FindCtor(module)) {
+        return false;
+    }
 
     return true;
 }
@@ -120,5 +120,5 @@ void finalizePy3dEngineModule() {
     finalizePyGameObjectCtor();
     Py3dRenderingContext_FinalizeCtor();
     finalizePy3dResourceManagerCtor();
-//    Py3dModelRenderer_FinalizeCtor();
+    Py3dModelRenderer_FinalizeCtor();
 }
