@@ -10,6 +10,7 @@
 #include "resources/python_script.h"
 #include "resource_manager.h"
 #include "python/python_util.h"
+#include "python/py3denginemodule.h"
 
 static const char *vertex_shader_source =
         "#version 460 core\n\n"
@@ -118,6 +119,24 @@ static void importTestScript(struct PythonScript **scriptPtr, const char *name) 
     setResourceName((struct BaseResource *) newScript, name);
 
     (*scriptPtr) = newScript;
+    newScript = NULL;
+}
+
+static void importBuiltinComponent(struct PythonScript **scriptPtr, const char *name) {
+    if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
+
+    PyObject *py3dEngineModule = getPy3dEngineModule();
+    if (py3dEngineModule == NULL) return;
+
+    struct PythonScript *newScript = NULL;
+    allocPythonScript(&newScript);
+    if (newScript == NULL) return;
+
+    initPythonScript(newScript, py3dEngineModule, name);
+    setResourceName((struct BaseResource *) newScript, name);
+
+    (*scriptPtr) = newScript;
+    newScript = NULL;
 }
 
 void allocSceneImporter(struct SceneImporter **importerPtr) {
@@ -207,6 +226,13 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     fclose(wfoFile);
 
     struct PythonScript *script = NULL;
+    importBuiltinComponent(&script, "ModelRendererComponent");
+    if (script == NULL) {
+        error_log("%s", "[SceneImporter]: Unable to load ModelRendererComponent builtin");
+    }
+    storeResource(importer->manager, (struct BaseResource *) script);
+    script = NULL;
+
     importTestScript(&script, "RotationComponent");
     if (script == NULL) {
         error_log("%s", "[SceneImporter]: Unable to load RotationComponent python script");
