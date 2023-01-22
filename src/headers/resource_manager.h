@@ -19,6 +19,8 @@ struct Py3dResourceManager {
     struct ResourceManager *resourceManager;
 };
 
+extern PyTypeObject Py3dResourceManager_Type;
+
 extern bool PyInit_Py3dResourceManager(PyObject *module);
 extern bool findPy3dResourceManagerCtor(PyObject *module);
 extern void finalizePy3dResourceManagerCtor();
