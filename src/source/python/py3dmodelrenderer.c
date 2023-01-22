@@ -110,7 +110,7 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
 
     struct BaseResource *curRes = NULL;
 
-    lookupResource("model", parseDataDict, rm);
+    curRes = lookupResource("model", parseDataDict, rm);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeModel(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not model");
@@ -120,7 +120,7 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
         curRes = NULL;
     }
 
-    lookupResource("shader", parseDataDict, rm);
+    curRes = lookupResource("shader", parseDataDict, rm);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeShader(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not shader");
@@ -130,7 +130,7 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
         curRes = NULL;
     }
 
-    lookupResource("material", parseDataDict, rm);
+    curRes = lookupResource("material", parseDataDict, rm);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeMaterial(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not material");
