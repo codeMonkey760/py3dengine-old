@@ -6,13 +6,11 @@
 #include "custom_string.h"
 #include "logger.h"
 #include "game_object.h"
-#include "components/base_component.h"
 #include "python/python_util.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 
 struct ComponentListNode {
-    struct BaseComponent *component;
     struct Py3dComponent *pyComponent;
     struct ComponentListNode *next;
 };
@@ -110,7 +108,6 @@ static void allocComponentListNode(struct ComponentListNode **listNodePtr) {
     struct ComponentListNode *newNode = calloc(1, sizeof(struct ComponentListNode));
     if (newNode == NULL) return;
 
-    newNode->component = NULL;
     newNode->pyComponent = NULL;
     newNode->next = NULL;
 
@@ -122,7 +119,6 @@ static void deleteComponentListNode(struct ComponentListNode **listNodePtr) {
     if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
 
     struct ComponentListNode *node = (*listNodePtr);
-    deleteComponent(&node->component);
     Py_CLEAR(node->pyComponent);
 
     deleteComponentListNode(&node->next);
@@ -158,38 +154,6 @@ static PyObject *getNameFromPythonComponent(PyObject *pyComponent) {
     }
 
     return name;
-}
-
-static bool componentNamesAreEqual(struct ComponentListNode *listNode, const char *componentName) {
-    if (listNode == NULL || componentName == NULL) return false;
-
-    unsigned int componentNameLen = strlen(componentName);
-    if (componentNameLen == 0) return false;
-
-    if (
-        (listNode->component == NULL && listNode->pyComponent == NULL) ||
-        (listNode->component != NULL && listNode->pyComponent != NULL)
-    ) {
-        critical_log("%s", "[GameObject]: Component list node failed sanity check and is not well formed.");
-        return false;
-    }
-
-    if (listNode->component != NULL) {
-        return stringEqualsCStr(getComponentName(listNode->component), componentName);
-    }
-
-    PyObject *nodeName = getNameFromPythonComponent((PyObject *) listNode->pyComponent);
-    if (nodeName == NULL) {
-        critical_log("%s", "Could not query name for already attached component");
-        return false;
-    }
-    const char *nodeNameCStr = PyUnicode_AsUTF8(nodeName);
-    unsigned int nodeNameLen = strlen(nodeNameCStr);
-    if (nodeNameLen == 0) return false;
-
-    unsigned int longestLen = (nodeNameLen > componentNameLen) ? nodeNameLen : componentNameLen;
-
-    return strncmp(nodeNameCStr, componentName, longestLen) == 0;
 }
 
 static void allocChildListNode(struct ChildListNode **listNodePtr) {
@@ -303,13 +267,7 @@ void updateGameObject(struct GameObject *gameObject, float dt) {
 
     struct ComponentListNode *curNode = gameObject->components;
     while (curNode != NULL) {
-        struct BaseComponent *curComponent = curNode->component;
-        struct Py3dComponent *curPyComponent = curNode->pyComponent;
-        if (curComponent != NULL && curComponent->update != NULL) {
-            curComponent->update(curComponent, dt);
-        } else if (curPyComponent != NULL) {
-            Py3dComponent_CallUpdate(curPyComponent, dt);
-        }
+        Py3dComponent_CallUpdate(curNode->pyComponent, dt);
 
         curNode = curNode->next;
     }
@@ -327,13 +285,7 @@ void renderGameObject(struct GameObject *gameObject, struct RenderingContext *re
 
     struct ComponentListNode *curNode = gameObject->components;
     while (curNode != NULL) {
-        struct BaseComponent *curComponent = curNode->component;
-        struct Py3dComponent *curPyComponent = curNode->pyComponent;
-        if (curComponent != NULL && curComponent->render != NULL) {
-            curComponent->render(curComponent, renderingContext);
-        } else if (curPyComponent != NULL) {
-            Py3dComponent_CallRender(curPyComponent, renderingContext);
-        }
+        Py3dComponent_CallRender(curNode->pyComponent, renderingContext);
 
         curNode = curNode->next;
     }
@@ -412,40 +364,6 @@ struct GameObject *findGameObjectByName(struct GameObject *gameObject, const cha
     return ret;
 }
 
-void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent) {
-    if (gameObject == NULL || newComponent == NULL) return;
-
-    struct String *newComponentName = getComponentName(newComponent);
-    if (newComponentName == NULL) {
-        error_log("%s", "Cannot attach component to game object unless it has a name");
-        return;
-    }
-
-    struct ComponentListNode *prevNode = NULL, *curNode = gameObject->components;
-    while (curNode != NULL) {
-        if (stringEquals(getComponentName(curNode->component), newComponentName)) {
-            error_log("%s", "Cannot attach component to game object unless its name is unique");
-            return;
-        }
-
-        prevNode = curNode;
-        curNode = curNode->next;
-    }
-
-    struct ComponentListNode *newNode = NULL;
-    allocComponentListNode(&newNode);
-    if (newNode == NULL) return;
-
-    newNode->component = newComponent;
-
-    if (prevNode == NULL) {
-        gameObject->components = newNode;
-    } else {
-        prevNode->next = newNode;
-    }
-    newComponent->_owner = gameObject;
-}
-
 void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent) {
     if (gameObject == NULL || newPyComponent == NULL) return;
 
@@ -458,10 +376,11 @@ void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newP
 
     struct ComponentListNode *prevNode = NULL, *curNode = gameObject->components;
     while (curNode != NULL) {
-        if (componentNamesAreEqual(curNode, pyComponentNameAsCStr)) {
-            error_log("[GameObject]: Cannot attach python component named \"%s\". Component names must be unique");
-            return;
-        }
+        // TODO: reimplement this by testing PyObject
+//        if (componentNamesAreEqual(curNode, pyComponentNameAsCStr)) {
+//            error_log("[GameObject]: Cannot attach python component named \"%s\". Component names must be unique");
+//            return;
+//        }
 
         prevNode = curNode;
         curNode = curNode->next;
@@ -478,21 +397,6 @@ void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newP
         prevNode->next = newNode;
     }
     newPyComponent->owner = gameObject;
-}
-
-struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName) {
-    if (gameObject == NULL || typeName == NULL) return NULL;
-
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        if (stringEqualsCStr(getComponentTypeName(curNode->component), typeName)) {
-            return curNode->component;
-        }
-
-        curNode = curNode->next;
-    }
-
-    return NULL;
 }
 
 size_t getGameObjectComponentsLength(struct GameObject *gameObject) {

@@ -10,9 +10,6 @@
 #include "resources/shader.h"
 #include "resources/material.h"
 #include "resources/python_script.h"
-#include "components/component_factory.h"
-#include "components/base_component.h"
-#include "components/model_renderer_component.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 #include "python/python_util.h"
@@ -101,50 +98,6 @@ static PyObject *createPyDictFromJsonObject(json_object *root) {
     return ret;
 }
 
-bool parseModelRendererComponent(struct ModelRendererComponent *component, json_object *json, struct ResourceManager *manager) {
-    if (component == NULL || json == NULL || manager == NULL) return false;
-
-    json_object *json_name = fetchProperty(json, "name", json_type_string);
-    if (json_name == NULL) return false;
-
-    json_object *json_model_name = fetchProperty(json, "model", json_type_string);
-    if (json_model_name == NULL) return false;
-
-    json_object *json_shader_name = fetchProperty(json, "shader", json_type_string);
-    if (json_shader_name == NULL) return false;
-
-    json_object *json_material_name = fetchProperty(json, "material", json_type_string);
-    if (json_material_name == NULL) return false;
-
-    setComponentName((struct BaseComponent *) component, json_object_get_string(json_name));
-
-    const char *newModelName = json_object_get_string(json_model_name);
-    struct BaseResource *newModel = getResource(manager, newModelName);
-    if (newModel != NULL || !isResourceTypeModel(newModel)) {
-        setModelRendererComponentModel(component, (struct Model *) newModel);
-    } else {
-        warning_log("[JsonParser]: Model resource look up failed for \"%s\" while parsing component", newModelName);
-    }
-
-    const char *newShaderName = json_object_get_string(json_shader_name);
-    struct BaseResource *newShader = getResource(manager, newShaderName);
-    if (newShader != NULL || !isResourceTypeShader(newShader)) {
-        setModelRendererComponentShader(component, (struct Shader *) newShader);
-    } else {
-        warning_log("[JsonParser]: Shader resource look up failed for \"%s\" while parsing component", newShaderName);
-    }
-
-    const char *newMaterialName = json_object_get_string(json_material_name);
-    struct BaseResource *newMaterial = getResource(manager, newMaterialName);
-    if (newMaterial != NULL || !isResourceTypeMaterial(newMaterial)) {
-        setModelRendererComponentMaterial(component, (struct Material *) newMaterial);
-    } else {
-        warning_log("[JsonParser]: Material resource look up failed for \"%s\" while parsing component", newMaterialName);
-    }
-
-    return true;
-}
-
 bool parseTransformComponent(json_object *json, struct Py3dTransform *component) {
     if (json == NULL || component == NULL) return false;
 
@@ -202,21 +155,6 @@ static bool parsePythonComponent(
     return true;
 }
 
-bool parseComponentByType(
-    struct BaseComponent *component,
-    const char *typeName,
-    json_object *json,
-    struct ResourceManager *resourceManager
-) {
-    if (component == NULL || typeName == NULL || json == NULL || resourceManager == NULL) return false;
-
-    if (strncmp(COMPONENT_TYPE_NAME_MODEL_RENDERER, typeName, TYPE_NAME_MAX_SIZE) == 0) {
-        return parseModelRendererComponent((struct ModelRendererComponent *) component, json, resourceManager);
-    }
-
-    return false;
-}
-
 bool parseGameObject(
         json_object *json,
         struct GameObject *parent,
@@ -260,34 +198,20 @@ bool parseGameObject(
         if (type_name_json == NULL) continue;
         const char *typeName = json_object_get_string(type_name_json);
 
-        struct BaseComponent *newComponent = NULL;
         struct Py3dComponent *pyComponent = NULL;
-        componentFactoryCreateComponentFromTypeName(typeName, &newComponent);
-        if (newComponent == NULL) {
-            struct BaseResource *pyScript = getResource(resourceManager,typeName);
-            if (!isResourceTypePythonScript(pyScript)) continue;
+        struct BaseResource *pyScript = getResource(resourceManager,typeName);
+        if (!isResourceTypePythonScript(pyScript)) continue;
 
-            createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
-            if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
-                error_log("%s", "[JsonParser]: Python component failed to parse. Discarding it.");
-                Py_CLEAR(pyComponent);
+        createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
+        if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
+            error_log("%s", "[JsonParser]: Python component failed to parse. Discarding it.");
+            Py_CLEAR(pyComponent);
 
-                continue;
-            }
-
-            attachPyComponent(newGO, pyComponent);
-            pyComponent = NULL;
-        } else {
-            if (!parseComponentByType(newComponent, typeName, cur_component_json, resourceManager)) {
-                error_log("%s", "[JsonParser]: Component failed to parse. Discarding it.");
-                deleteComponent(&newComponent);
-
-                continue;
-            }
-
-            attachComponent(newGO, newComponent);
-            newComponent = NULL;
+            continue;
         }
+
+        attachPyComponent(newGO, pyComponent);
+        pyComponent = NULL;
     }
 
     size_t json_children_array_length = json_object_array_length(json_children_array);

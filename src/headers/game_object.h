@@ -9,7 +9,6 @@
 struct ComponentListNode;
 struct Py3dTransform;
 struct ChildListNode;
-struct BaseComponent;
 struct String;
 struct RenderingContext;
 struct ResourceManager;
@@ -43,7 +42,6 @@ extern void removeChildByName(struct GameObject *gameObject, const char* name);
 
 extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name);
 
-extern void attachComponent(struct GameObject *gameObject, struct BaseComponent *newComponent);
 extern void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent);
 extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
 extern size_t getGameObjectComponentsLength(struct GameObject *gameObject);
