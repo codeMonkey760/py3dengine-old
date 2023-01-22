@@ -44,11 +44,16 @@ static PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_
     return self->name;
 }
 
-static PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     if (self->owner == NULL) Py_RETURN_NONE;
 
     if (self->owner->pyGameObject == NULL) {
         PyErr_SetString(PyExc_AssertionError, "Sanity check failed. Owner GameObject is detached from its python object");
+        return NULL;
+    }
+
+    if (Py3dGameObject_Check((PyObject *) self->owner->pyGameObject) == 0) {
+        PyErr_SetString(PyExc_AssertionError, "Sanity check failed. Owner is not a Game Object");
         return NULL;
     }
 

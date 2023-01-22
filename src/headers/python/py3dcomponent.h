@@ -6,6 +6,9 @@
 #include <structmember.h>
 #include <stdbool.h>
 
+struct GameObject;
+struct Py3dGameObject;
+
 struct Py3dComponent {
     PyObject_HEAD
     PyObject *name;
@@ -16,5 +19,6 @@ extern PyTypeObject Py3dComponent_Type;
 
 extern bool PyInit_Py3dComponent(PyObject *module);
 extern bool Py3dComponent_IsComponent(PyObject *pyObj);
+extern PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 
 #endif
