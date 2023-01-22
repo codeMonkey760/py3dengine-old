@@ -26,6 +26,7 @@ extern bool PyInit_Py3dTransform(PyObject *module);
 extern bool Py3dTransform_FindCtor(PyObject *module);
 extern void Py3dTransform_FinalizeCtor();
 extern struct Py3dTransform *Py3dTransform_New();
+extern int Py3dTransform_Check(PyObject *obj);
 extern float *getTransformWorldMtx(struct Py3dTransform *component);
 extern float *getTransformWITMtx(struct Py3dTransform *component);
 extern float *getTransformViewMtx(struct Py3dTransform *component);
