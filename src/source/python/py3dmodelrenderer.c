@@ -1,10 +1,50 @@
 #include "python/py3dmodelrenderer.h"
 #include "logger.h"
 #include "python/python_util.h"
+#include "python/py3dtransform.h"
+#include "game_object.h"
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
+static struct Py3dTransform *getTransform(struct Py3dModelRenderer *self) {
+    PyObject *get_owner = PyObject_GetAttrString((PyObject *) self, "get_owner");
+    if (get_owner == NULL) {
+        PyErr_SetString(PyExc_ValueError, "ModelRenderComponent does not have a \"get_owner\" attribute");
+        return NULL;
+    } else if (PyCallable_Check(get_owner) != 1) {
+        PyErr_SetString(PyExc_ValueError, "ModelRenderComponent's \"get_owner\" attribute is not callable");
+        Py_CLEAR(get_owner);
+        return NULL;
+    }
+
+    PyObject *ownerObj = PyObject_CallNoArgs(get_owner);
+    Py_CLEAR(get_owner);
+    if (ownerObj == NULL) {
+        return NULL;
+    } else if (PyObject_IsInstance(ownerObj, &Py3dGameObject_Type) != 1) {
+        PyErr_SetString(PyExc_ValueError, "ModelRenderComponent's owner is improperly set");
+        return NULL;
+    }
+    struct Py3dGameObject *pyOwner = (struct Py3dGameObject *) ownerObj;
+    if (pyOwner->gameObject == NULL) {
+        PyErr_Set()
+    }
+}
+
 static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
+    if (self->shader == NULL || self->model == NULL || self->material == NULL) {
+        PyErr_SetString(PyExc_ValueError, "ModelRendererComponent is not correctly configured");
+        return NULL;
+    }
+
+    // TODO: This is an atrocity ... I should be using the python functions get_owner and get_transform to do this
+    if (self->base.owner == NULL || self->base.owner->transform) {
+        PyErr_SetString(PyExc_ValueError, "ModelRendererComponent cannot retrieve owner's transform");
+    }
+    struct Py3dTransform *transform = self->base.owner->transform;
+
+
+
     Py_RETURN_NONE;
 }
 
