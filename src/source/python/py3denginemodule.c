@@ -92,7 +92,7 @@ bool importPy3dEngineModule() {
 }
 
 bool initPy3dEngineObjects() {
-    if (!findPyGameObjectCtor(module)) {
+    if (!Py3dGameObject_FindCtor(module)) {
         return false;
     }
 
@@ -121,7 +121,7 @@ PyObject *getPy3dEngineModule() {
 
 void finalizePy3dEngineModule() {
     Py3dTransform_FinalizeCtor();
-    finalizePyGameObjectCtor();
+    Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();
     finalizePy3dResourceManagerCtor();
     Py3dModelRenderer_FinalizeCtor();

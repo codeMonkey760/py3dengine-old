@@ -1,10 +1,10 @@
 #ifndef PY3DENGINE_GAME_OBJECT_H
 #define PY3DENGINE_GAME_OBJECT_H
 
-#include <stdbool.h>
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#include <stdbool.h>
 
 struct ComponentListNode;
 struct Py3dTransform;
@@ -25,8 +25,8 @@ struct GameObject {
 };
 
 extern bool PyInit_Py3dGameObject(PyObject *module);
-extern bool findPyGameObjectCtor(PyObject *module);
-extern void finalizePyGameObjectCtor();
+extern bool Py3dGameObject_FindCtor(PyObject *module);
+extern void Py3dGameObject_FinalizeCtor();
 extern int Py3dGameObject_Check(PyObject *obj);
 extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 

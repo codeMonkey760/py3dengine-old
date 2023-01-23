@@ -206,7 +206,7 @@ bool PyInit_Py3dGameObject(PyObject *module) {
     return true;
 }
 
-bool findPyGameObjectCtor(PyObject *module) {
+bool Py3dGameObject_FindCtor(PyObject *module) {
     if (PyObject_HasAttrString(module, "GameObject") == 0) {
         critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
 
@@ -218,7 +218,7 @@ bool findPyGameObjectCtor(PyObject *module) {
     return true;
 }
 
-void finalizePyGameObjectCtor() {
+void Py3dGameObject_FinalizeCtor() {
     Py_CLEAR(py3dGameObjectCtor);
 }
 
