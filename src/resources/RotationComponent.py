@@ -1,6 +1,5 @@
 import py3dengine
 from py3dmath import Vector3, Quaternion
-import py3dlogger
 
 
 class RotationComponent(py3dengine.Component):
