@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "glad/gl.h"
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "logger.h"
@@ -124,7 +124,7 @@ void initializeEngine(int argc, char **argv){
 
     glfwMakeContextCurrent(glfwWindow);
 
-    gladLoadGL(glfwGetProcAddress);
+    gladLoadGL();
 
     glfwSwapInterval(getConfigSwapInterval());
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
@@ -141,9 +141,10 @@ void initializeEngine(int argc, char **argv){
         critical_log("%s", "[Engine]: Unable to allocate scene importer. Scene parsing will fail");
     }
 
-    FILE *startingScene = fopen(getConfigStartingScene(), "r");
+    const char *startingScenePath = getConfigStartingScene();
+    FILE *startingScene = fopen(startingScenePath, "r");
     if (startingScene == NULL) {
-        critical_log("%s", "[Engine]: Unable to open the starting scene for parsing. Cannot initialize");
+        critical_log("[Engine]: Unable to open \"%s\" as scene descriptor for parsing. Cannot initialize", startingScenePath);
     }
 
     initSceneImporter(importer, resourceManager, &root);
