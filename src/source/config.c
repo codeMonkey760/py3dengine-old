@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <ini.h>
+//#include <ini.h>
 
 #include "logger.h"
 #include "config.h"
@@ -79,9 +79,11 @@ static int handler(void *user, const char *section, const char *name, const char
 }
 
 void parseConfig(FILE *configFile) {
-    if (ini_parse_file(configFile, handler, &config) < 0) {
-        error_log("%s", "[Config]: An error occurred while parsing configuration");
-    }
+//    if (ini_parse_file(configFile, handler, &config) < 0) {
+//        error_log("%s", "[Config]: An error occurred while parsing configuration");
+//    }
+
+    return;
 }
 
 void parseConfigFile(const char *fileName) {
