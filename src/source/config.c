@@ -137,19 +137,19 @@ void parseConfig(FILE *configFile) {
     }
     allocString(&config.startingScene, STARTING_SCENE_DEFAULT);
 
-    trace_log("Attempting to set \"%s\" from config", SCREEN_WIDTH_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", SCREEN_WIDTH_CONFIG_NAME);
     getIntFromObject(config_root, SCREEN_WIDTH_CONFIG_NAME, &config.screen_width, SCREEN_WIDTH_DEFAULT);
-    trace_log("Attempting to set \"%s\" from config", SCREEN_HEIGHT_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", SCREEN_HEIGHT_CONFIG_NAME);
     getIntFromObject(config_root, SCREEN_HEIGHT_CONFIG_NAME, &config.screen_height, SCREEN_HEIGHT_DEFAULT);
-    trace_log("Attempting to set \"%s\" from config", SCREEN_LEFT_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", SCREEN_LEFT_CONFIG_NAME);
     getIntFromObject(config_root, SCREEN_LEFT_CONFIG_NAME, &config.screen_left, SCREEN_LEFT_DEFAULT);
-    trace_log("Attempting to set \"%s\" from config", SCREEN_TOP_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", SCREEN_TOP_CONFIG_NAME);
     getIntFromObject(config_root, SCREEN_TOP_CONFIG_NAME, &config.screen_top, SCREEN_TOP_DEFAULT);
-    trace_log("Attempting to set \"%s\" from config", FULL_SCREEN_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", FULL_SCREEN_CONFIG_NAME);
     getBoolFromObject(config_root, FULL_SCREEN_CONFIG_NAME, &config.full_screen, FULL_SCREEN_DEFAULT);
-    trace_log("Attempting to set \"%s\" from config", SWAP_INTERVAL_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", SWAP_INTERVAL_CONFIG_NAME);
     getIntFromObject(config_root, SWAP_INTERVAL_CONFIG_NAME, &config.swap_interval, SWAP_INTERVAL_DEFAULT);
-    trace_log("Attempting to set \"%s\" from config", STARTING_SCENE_CONFIG_NAME);
+    trace_log("[Config]: Attempting to set \"%s\" from config", STARTING_SCENE_CONFIG_NAME);
     getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
 
     json_object_put(config_root);
