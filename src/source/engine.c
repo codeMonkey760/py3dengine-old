@@ -92,7 +92,7 @@ static void resizeEngine() {
 }
 
 void initializeEngine(int argc, char **argv){
-    parseConfigFile("config.ini");
+    parseConfigFile("config.json");
 
     if (!initializePython(argc, argv)) {
         critical_log("%s", "Could not initialize python. Halting");

@@ -1,13 +1,9 @@
-#include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-//#include <ini.h>
+#include <json.h>
 
 #include "logger.h"
 #include "config.h"
 #include "custom_string.h"
-
-#define MAX_NAME_SIZE 64
 
 #define SCREEN_WIDTH_DEFAULT 1280
 #define SCREEN_WIDTH_CONFIG_NAME "screen_width"
@@ -48,42 +44,116 @@ struct Configuration {
     .startingScene = NULL
 };
 
-static int handler(void *user, const char *section, const char *name, const char *value) {
-    struct Configuration *local_config = (struct Configuration *) user;
-
-    if (strncmp(name, SCREEN_WIDTH_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        local_config->screen_width = (int) strtol(value, NULL, 10);
-    } else if (strncmp(name, SCREEN_HEIGHT_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        local_config->screen_height = (int) strtol(value, NULL, 10);
-    } else if (strncmp(name, SCREEN_LEFT_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        local_config->screen_left = (int) strtol(value, NULL, 10);
-    } else if (strncmp(name, SCREEN_TOP_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        local_config->screen_top = (int) strtol(value, NULL, 10);
-    } else if (strncmp(name, FULL_SCREEN_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        local_config->full_screen = (bool) strncmp(value, "true", 4) == 0;
-    } else if (strncmp(name, SWAP_INTERVAL_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        local_config->swap_interval = (int) strtol(value, NULL, 10);
-    } else if (strncmp(name, STARTING_SCENE_CONFIG_NAME, MAX_NAME_SIZE) == 0) {
-        if (local_config->startingScene == NULL) {
-            allocString(&local_config->startingScene, value);
-        } else {
-            setChars(local_config->startingScene, value);
-        }
-    } else {
-        warning_log("[Config]: Unrecognized configuration setting \"%s\"", name);
-        return 0;
+static json_object *get_object(json_object *parent, const char *key_name) {
+    json_object *valueObj = json_object_object_get(parent, key_name);
+    if (valueObj == NULL) {
+        warning_log("[Config]: No value for \"%s\" was found in config", key_name);
     }
 
-    trace_log("[Config]: Successfully set \"%s\" to %s", name, value);
-    return 1;
+    return valueObj;
+}
+
+static bool check_type(json_object *obj, json_type expected_type) {
+    json_type actual_type = json_object_get_type(obj);
+    if (actual_type != expected_type) {
+        warning_log(
+            "[Config]: Expected \"%s\"  but found \"%s\" instead",
+            json_type_to_name(expected_type),
+            json_type_to_name(actual_type)
+        );
+
+        return false;
+    }
+
+    return true;
+}
+
+static void getIntFromObject(json_object *obj, const char *key_name, int *dst, int default_value) {
+    if (obj == NULL || key_name == NULL || dst == NULL) return;
+
+    json_object *valueObj = get_object(obj, key_name);
+    if (valueObj == NULL) {
+        (*dst) = default_value;
+        return;
+    }
+
+    if (!check_type(valueObj, json_type_int)) {
+        (*dst) = default_value;
+        return;
+    }
+
+    int value = json_object_get_int(valueObj);
+    (*dst) = value;
+    trace_log("[Config]: Config value \"%s\" was successful set to \"%d\"", key_name, value);
+}
+
+static void getBoolFromObject(json_object *obj, const char *key_name, bool *dst, bool default_value) {
+    if (obj == NULL || key_name == NULL || dst == NULL) return;
+
+    json_object *valueObj = get_object(obj, key_name);
+    if (valueObj == NULL) {
+        (*dst) = default_value;
+        return;
+    }
+
+    if (!check_type(valueObj, json_type_boolean)) {
+        (*dst) = default_value;
+        return;
+    }
+
+    bool value = json_object_get_boolean(valueObj);
+    (*dst) = value;
+    trace_log("[Config]: Config value \"%s\" was successful set to \"%s\"", key_name, (value) ? "true" : "false");
+}
+
+static void getStringFromObject(json_object *obj, const char *key_name, struct String *dst, const char *default_value) {
+    if (obj == NULL || key_name == NULL || dst == NULL) return;
+
+    json_object *valueObj = get_object(obj, key_name);
+    if (valueObj == NULL) {
+        setChars(dst, default_value);
+        return;
+    }
+
+    if (!check_type(valueObj, json_type_string)) {
+        setChars(dst, default_value);
+        return;
+    }
+
+    const char *value = json_object_get_string(valueObj);
+    setChars(dst, value);
+    trace_log("[Config]: Config value \"%s\" was successful set to \"%s\"", key_name, value);
 }
 
 void parseConfig(FILE *configFile) {
-//    if (ini_parse_file(configFile, handler, &config) < 0) {
-//        error_log("%s", "[Config]: An error occurred while parsing configuration");
-//    }
+    json_object *config_root = json_object_from_fd(_fileno(configFile));
+    if (config_root == NULL) {
+        critical_log("[Config]: Could not parse config as JSON. It may not be valid. Default values will be used");
+        return;
+    }
 
-    return;
+    if (config.startingScene != NULL) {
+        deleteString(&config.startingScene);
+    }
+    allocString(&config.startingScene, STARTING_SCENE_DEFAULT);
+
+    trace_log("Attempting to set \"%s\" from config", SCREEN_WIDTH_CONFIG_NAME);
+    getIntFromObject(config_root, SCREEN_WIDTH_CONFIG_NAME, &config.screen_width, SCREEN_WIDTH_DEFAULT);
+    trace_log("Attempting to set \"%s\" from config", SCREEN_HEIGHT_CONFIG_NAME);
+    getIntFromObject(config_root, SCREEN_HEIGHT_CONFIG_NAME, &config.screen_height, SCREEN_HEIGHT_DEFAULT);
+    trace_log("Attempting to set \"%s\" from config", SCREEN_LEFT_CONFIG_NAME);
+    getIntFromObject(config_root, SCREEN_LEFT_CONFIG_NAME, &config.screen_left, SCREEN_LEFT_DEFAULT);
+    trace_log("Attempting to set \"%s\" from config", SCREEN_TOP_CONFIG_NAME);
+    getIntFromObject(config_root, SCREEN_TOP_CONFIG_NAME, &config.screen_top, SCREEN_TOP_DEFAULT);
+    trace_log("Attempting to set \"%s\" from config", FULL_SCREEN_CONFIG_NAME);
+    getBoolFromObject(config_root, FULL_SCREEN_CONFIG_NAME, &config.full_screen, FULL_SCREEN_DEFAULT);
+    trace_log("Attempting to set \"%s\" from config", SWAP_INTERVAL_CONFIG_NAME);
+    getIntFromObject(config_root, SWAP_INTERVAL_CONFIG_NAME, &config.swap_interval, SWAP_INTERVAL_DEFAULT);
+    trace_log("Attempting to set \"%s\" from config", STARTING_SCENE_CONFIG_NAME);
+    getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
+
+    json_object_put(config_root);
+    config_root = NULL;
 }
 
 void parseConfigFile(const char *fileName) {
