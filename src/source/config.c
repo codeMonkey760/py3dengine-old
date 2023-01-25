@@ -126,7 +126,7 @@ static void getStringFromObject(json_object *obj, const char *key_name, struct S
 }
 
 void parseConfig(FILE *configFile) {
-    json_object *config_root = json_object_from_fd(_fileno(configFile));
+    json_object *config_root = json_object_from_fd(fileno(configFile));
     if (config_root == NULL) {
         critical_log("[Config]: Could not parse config as JSON. It may not be valid. Default values will be used");
         return;
