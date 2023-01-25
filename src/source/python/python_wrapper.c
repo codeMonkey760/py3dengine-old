@@ -10,6 +10,49 @@
 #include "python/py3dloggermodule.h"
 #include "python/python_util.h"
 
+static void addResourcesPath() {
+    PyObject *sysMod = PyImport_ImportModule("sys");
+    if (sysMod == NULL) {
+        critical_log("[Python]: Could not import \"sys\" module");
+        handleException();
+        return;
+    }
+
+    PyObject *path = PyObject_GetAttrString(sysMod, "path");
+    if (path == NULL) {
+        critical_log("[Python]: Could not get reference to \"sys.path\"");
+        handleException();
+        Py_CLEAR(sysMod);
+        return;
+    }
+    if (PyList_Check(path) != 1) {
+        critical_log("[Python]: \"sys.path\" isn't a list for some reason");
+        Py_CLEAR(path);
+        Py_CLEAR(sysMod);
+        return;
+    }
+
+    char buffer[256];
+    memset(buffer, 0, sizeof(char) * 256);
+    getcwd(buffer, 255);
+
+    // TODO: this probably won't work on windows
+    PyObject *cwdObj = PyUnicode_FromString(buffer);
+    PyObject *resObj = PyUnicode_FromString("/resources");
+    PyObject *fullPath = PyNumber_Add(cwdObj, resObj);
+    Py_CLEAR(cwdObj);
+    Py_CLEAR(resObj);
+
+
+    if (PyList_Append(path, fullPath) != 0) {
+        critical_log("[Python]: Modifying the import path failed");
+    }
+
+    Py_CLEAR(fullPath);
+    Py_CLEAR(path);
+    Py_CLEAR(sysMod);
+}
+
 bool initializePython(int argc, char **argv) {
     if (!appendPy3dEngineModule()) return false;
     if (!appendPy3dMathModule()) return false;
@@ -41,6 +84,8 @@ bool initializePython(int argc, char **argv) {
 
     if (!initPy3dEngineObjects()) return false;
     if (!initPy3dMathObjects()) return false;
+
+    addResourcesPath();
 
     trace_log(
         "[Python]: Initialization successful: %s\n"
