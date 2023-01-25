@@ -10,6 +10,37 @@
 #include "python/py3dloggermodule.h"
 #include "python/python_util.h"
 
+static PyObject *getCwd() {
+    PyObject *osMod = PyImport_ImportModule("os");
+    if (osMod == NULL) return NULL;
+
+    PyObject *getcwd = PyObject_GetAttrString(osMod, "getcwd");
+    if (getcwd == NULL) {
+        Py_CLEAR(osMod);
+        return NULL;
+    }
+
+    PyObject *getcwdret = PyObject_CallNoArgs(getcwd);
+    if (getcwdret == NULL) {
+        Py_CLEAR(getcwd);
+        Py_CLEAR(osMod);
+        return NULL;
+    }
+
+    if (PyUnicode_Check(getcwdret) != 1) {
+        PyErr_SetString(PyExc_ValueError, "os.getcwd() did not return PyUnicode Object");
+        Py_CLEAR(getcwdret);
+        Py_CLEAR(getcwd);
+        Py_CLEAR(osMod);
+        return NULL;
+    }
+
+    Py_CLEAR(getcwd);
+    Py_CLEAR(osMod);
+
+    return getcwdret;
+}
+
 static void addResourcesPath() {
     PyObject *sysMod = PyImport_ImportModule("sys");
     if (sysMod == NULL) {
@@ -32,16 +63,18 @@ static void addResourcesPath() {
         return;
     }
 
-    char buffer[256];
-    memset(buffer, 0, sizeof(char) * 256);
-    getcwd(buffer, 255);
+    PyObject *cwd = getCwd();
+    if (cwd == NULL) {
+        critical_log("[Python]: Could not query current working directory");
+        Py_CLEAR(path);
+        Py_CLEAR(sysMod);
+        return;
+    }
 
-    // TODO: this probably won't work on windows
-    PyObject *cwdObj = PyUnicode_FromString(buffer);
-    PyObject *resObj = PyUnicode_FromString("/resources");
-    PyObject *fullPath = PyNumber_Add(cwdObj, resObj);
-    Py_CLEAR(cwdObj);
-    Py_CLEAR(resObj);
+    PyObject *res = PyUnicode_FromString("/resources");
+    PyObject *fullPath = PyNumber_Add(cwd, res);
+    Py_CLEAR(cwd);
+    Py_CLEAR(res);
 
 
     if (PyList_Append(path, fullPath) != 0) {
