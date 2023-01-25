@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "glad/gl.h"
+#include <glad/glad.h>
 #include "custom_string.h"
 #include "resources/model.h"
 

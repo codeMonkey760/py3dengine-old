@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <glad/glad.h>
 
 #include "logger.h"
 #include "custom_string.h"
 #include "resources/shader.h"
-#include "glad/gl.h"
 
 #define RESOURCE_TYPE_SHADER 3
 

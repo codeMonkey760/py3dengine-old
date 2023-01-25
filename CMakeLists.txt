@@ -2,15 +2,64 @@ cmake_minimum_required(VERSION 3.22)
 project(py3dengine C)
 
 set(CMAKE_C_STANDARD 17)
+set(BUILD_TESTING OFF)
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
 
-find_package(json-c REQUIRED)
+include(FetchContent)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/lib/glad/include)
-find_package(Python COMPONENTS Interpreter Development)
-add_custom_command(
-        OUTPUT lib/glad/include/glad/gl.h lib/glad/include/KHR/khrplatform.h lib/glad/src/gl.c
-        COMMAND ${Python_EXECUTABLE} -m glad --out-path lib/glad --api gl:core c
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG master
 )
+FetchContent_GetProperties(glfw)
+if(NOT glfw_POPULATED)
+    FetchContent_Populate(glfw)
+    add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+FetchContent_Declare(
+    json-c
+    GIT_REPOSITORY https://github.com/json-c/json-c
+    GIT_TAG master
+)
+if(NOT json-c_POPULATED)
+    FetchContent_Populate(json-c)
+    add_subdirectory(${json-c_SOURCE_DIR} ${json-c_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+FetchContent_Declare(
+    glad
+    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+    GIT_TAG master
+)
+FetchContent_GetProperties(glad)
+if(NOT glad_POPULATED)
+    FetchContent_Populate(glad)
+    add_subdirectory(${glad_SOURCE_DIR} ${glad_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+include(FindOpenGL)
+
+FetchContent_Declare(
+    soil
+    GIT_REPOSITORY https://github.com/paralin/soil.git
+    GIT_TAG master
+)
+FetchContent_GetProperties(soil)
+if(NOT soil_POPULATED)
+    FetchContent_Populate(soil)
+    add_subdirectory(${soil_SOURCE_DIR} ${soil_BINARY_DIR} EXCLUDE_FROM_ALL)
+    target_link_libraries(
+        soil
+        glad
+        ${OPENGL_LIBRARIES}
+    )
+endif()
+
+find_package(Python COMPONENTS Development)
 
 include_directories(src/headers)
 
@@ -19,12 +68,11 @@ configure_file(src/resources/solid_objs.obj ${CMAKE_CURRENT_BINARY_DIR}/resource
 configure_file(src/resources/solid_objs.mtl ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.mtl COPYONLY)
 configure_file(src/resources/RotationComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/RotationComponent.py COPYONLY)
 configure_file(src/resources/CameraComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/CameraComponent.py COPYONLY)
-configure_file(config.ini ${CMAKE_CURRENT_BINARY_DIR}/config.ini COPYONLY)
+configure_file(config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
 configure_file(default.json ${CMAKE_CURRENT_BINARY_DIR}/default.json COPYONLY)
 
 add_executable(
     py3dengine
-    lib/glad/src/gl.c
     src/source/main.c
     src/source/util.c
     src/source/logger.c
@@ -56,5 +104,12 @@ add_executable(
     src/source/math/vector3.c
     src/source/math/quaternion.c
 )
+
+find_library(MATH_LIBRARY m)
+if (MATH_LIBRARY)
+    target_link_libraries(py3dengine ${MATH_LIBRARY})
+endif()
+target_include_directories(py3dengine PRIVATE ${json-c_SOURCE_DIR})
+target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python json-c SOIL inih m)
+target_link_libraries(py3dengine glfw glad Python::Python json-c soil)

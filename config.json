@@ -1,0 +1,9 @@
+{
+  "screen_width": 800,
+  "screen_height": 600,
+  "screen_left": 100,
+  "screen_top": 100,
+  "full_screen": false,
+  "swap_interval": 1,
+  "starting_scene": "default.json"
+}
