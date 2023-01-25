@@ -16,18 +16,21 @@ static const char *vertex_shader_source =
         "#version 460 core\n\n"
 
         "layout(location = 0) in vec3 posL;\n"
-        "layout(location = 1) in vec3 normL;\n\n"
+        "layout(location = 1) in vec3 normL;\n"
+        "layout(location = 2) in vec2 texC;\n\n"
 
         "uniform mat4 gWMtx;\n"
         "uniform mat4 gWITMtx;\n"
         "uniform mat4 gWVPMtx;\n\n"
 
-        "out vec3 posW;\n"
-        "out vec3 normW;\n\n"
+        "varying vec3 posW;\n"
+        "varying vec3 normW;\n"
+        "varying vec2 texCoord;\n\n"
 
         "void main() {\n"
         "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
         "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n\n"
+        "    texCoord = texC;"
 
         "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
         "}\n";
@@ -35,11 +38,13 @@ static const char *vertex_shader_source =
 static const char *fragment_shader_source =
         "#version 460 core\n\n"
 
-        "in vec3 posW;\n"
-        "in vec3 normW;\n\n"
+        "varying vec3 posW;\n"
+        "varying vec3 normW;\n"
+        "varying vec2 texCoord;\n\n"
 
         "uniform vec3 gDiffuseColor;\n"
-        "uniform vec3 gCamPos;\n\n"
+        "uniform vec3 gCamPos;\n"
+        "uniform sampler2D gDiffuseMap;\n\n"
 
         "layout(location = 0) out vec4 outputColor;\n\n"
 
@@ -50,7 +55,10 @@ static const char *fragment_shader_source =
         "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
         "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
 
-        "    outputColor = vec4(gDiffuseColor * lightValue, 1.0f);\n"
+        "    vec3 mapColor = texture2D(gDiffuseMap, texCoord).rgb;\n"
+        "    vec4 diffuseColor = vec4(mapColor * gDiffuseColor, 1.0f);\n\n"
+
+        "    outputColor = diffuseColor;\n"
         "}\n";
 
 static void importModel(struct Model **modelPtr, struct WfoParser *wfoParser, const char *name) {

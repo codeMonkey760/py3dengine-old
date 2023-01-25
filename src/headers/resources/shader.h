@@ -5,6 +5,8 @@
 
 #define RESOURCE_TYPE_NAME_SHADER "Shader"
 
+struct Texture;
+
 struct Shader {
     struct BaseResource _base;
 
@@ -14,6 +16,7 @@ struct Shader {
 
     int _diffuseColorLoc;
     int _cameraPositionLoc;
+    int _diffuseMapLoc;
     int _wMtxLoc;
     int _witMtxLoc;
     int _wvpMtxLoc;
@@ -30,6 +33,7 @@ extern void disableShader(struct Shader *shader);
 
 extern void setDiffuseColor(struct Shader *shader, const float newDiffuseColor[3]);
 extern void setCameraPosition(struct Shader *shader, float newCameraPos[3]);
+extern void setDiffuseMap(struct Shader *shader, struct Texture *newDiffuseMap);
 extern void setWMtx(struct Shader *shader, float newWMtx[16]);
 extern void setWITMtx(struct Shader *shader, float newWITMtx[16]);
 extern void setWVPMtx(struct Shader *shader, float newWVPMtx[16]);
