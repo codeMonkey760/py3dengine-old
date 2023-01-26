@@ -50,6 +50,7 @@ void deleteMaterial(struct Material **materialPtr) {
     if (materialPtr == NULL || (*materialPtr) == NULL) return;
 
     struct Material *material = (*materialPtr);
+    deleteTexture(&material->_diffuseMap);
 
     finalizeBaseResource((struct BaseResource *) material);
 
