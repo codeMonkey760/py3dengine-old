@@ -55,8 +55,8 @@ static const char *fragment_shader_source =
         "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
         "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
 
-        "    vec3 mapColor = texture2D(gDiffuseMap, texCoord).rgb;\n"
-        "    vec4 diffuseColor = vec4(mapColor * gDiffuseColor, 1.0f);\n\n"
+        "    vec3 mapColor = texture(gDiffuseMap, texCoord).rgb;\n"
+        "    vec4 diffuseColor = vec4(mapColor * gDiffuseColor * lightValue, 1.0f);\n\n"
 
         "    outputColor = diffuseColor;\n"
         "}\n";
