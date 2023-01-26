@@ -23,14 +23,14 @@ static const char *vertex_shader_source =
         "uniform mat4 gWITMtx;\n"
         "uniform mat4 gWVPMtx;\n\n"
 
-        "varying vec3 posW;\n"
-        "varying vec3 normW;\n"
-        "varying vec2 texCoord;\n\n"
+        "out vec3 posW;\n"
+        "out vec3 normW;\n"
+        "out vec2 texCoord;\n\n"
 
         "void main() {\n"
         "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
-        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n\n"
-        "    texCoord = texC;"
+        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n"
+        "    texCoord = texC;\n\n"
 
         "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
         "}\n";
@@ -38,9 +38,9 @@ static const char *vertex_shader_source =
 static const char *fragment_shader_source =
         "#version 460 core\n\n"
 
-        "varying vec3 posW;\n"
-        "varying vec3 normW;\n"
-        "varying vec2 texCoord;\n\n"
+        "in vec3 posW;\n"
+        "in vec3 normW;\n"
+        "in vec2 texCoord;\n\n"
 
         "uniform vec3 gDiffuseColor;\n"
         "uniform vec3 gCamPos;\n"

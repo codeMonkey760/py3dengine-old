@@ -3,6 +3,8 @@
 #include "util.h"
 #include "custom_string.h"
 #include "resources/material.h"
+#include "resources/texture.h"
+#include "logger.h"
 
 #define RESOURCE_TYPE_MATERIAL 1
 
@@ -60,6 +62,16 @@ void setMaterialShader(struct Material *material, struct Shader *newShader) {
     if (material == NULL) return;
 
     material->_shader = newShader;
+}
+
+void setMaterialDiffuseMap(struct Material *material, struct Texture *newDiffuseMap) {
+    if (material == NULL || newDiffuseMap == NULL) return;
+
+    if (material->_diffuseMap != NULL) {
+        warning_log("%s", "[Material]: Overwriting previous diffuse map. It may be leaked");
+    }
+
+    material->_diffuseMap = newDiffuseMap;
 }
 
 const float *getMaterialDiffuseColor(struct Material *material) {

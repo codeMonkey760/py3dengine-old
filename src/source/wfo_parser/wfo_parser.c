@@ -10,11 +10,13 @@
 #include "wfo_parser/wfo_parser.h"
 #include "resource_manager.h"
 #include "resources/material.h"
+#include "resources/texture.h"
 
 #define LINE_BUFFER_SIZE_IN_ELEMENTS 256
 #define TYPE_BUFFER_SIZE_IN_ELEMENTS 16
 #define NAME_BUFFER_SIZE_IN_ELEMENTS 64
 #define INDEX_BUFFER_SIZE_IN_ELEMENTS 9
+#define FILE_NAME_BUFFER_SIZE_IN_ELEMENTS 256
 
 static void clearCharBuffer(char *lineBuffer, int sizeInElements) {
     memset(lineBuffer, 0, sizeInElements * sizeof(char));
@@ -291,6 +293,7 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
     char *curPos;
     char typeBuffer[TYPE_BUFFER_SIZE_IN_ELEMENTS+1];
     char nameBuffer[NAME_BUFFER_SIZE_IN_ELEMENTS+1];
+    char fileNameBuffer[FILE_NAME_BUFFER_SIZE_IN_ELEMENTS+1];
     float dataBuffer[3] = {0.0f};
     int lineNumber = 0;
 
@@ -332,6 +335,23 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
                 dataBuffer[2],
                 getChars(getResourceName(curMaterial))
             );
+        } else if (strncmp(typeBuffer, "map_Kd", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            if (curMaterial == NULL) {
+                error_log("%s", "[WfoParser]: Trying to write diffuse texture into NULL material.");
+                continue;
+            }
+            clearCharBuffer(fileNameBuffer, FILE_NAME_BUFFER_SIZE_IN_ELEMENTS+1);
+            readStringFromLine(curPos, fileNameBuffer, FILE_NAME_BUFFER_SIZE_IN_ELEMENTS);
+
+            trace_log("[WfoParser]: Allocating texture for \"%s\"", fileNameBuffer);
+
+            struct Texture *newTexture = NULL;
+            allocTexture(&newTexture);
+            initTexture(newTexture, fileNameBuffer);
+            setMaterialDiffuseMap((struct Material *) curMaterial, newTexture);
+            newTexture = NULL;
+
+            trace_log("%s", "[WfoParser]: Storing texture to material");
         } else {
             debug_log("[WfoParser]: Ignoring line #%d, unsupported type %s", lineNumber, typeBuffer);
         }
