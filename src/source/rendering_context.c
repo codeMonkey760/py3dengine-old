@@ -240,6 +240,7 @@ void initRenderingContext(struct RenderingContext *context, struct GameObject *a
     int width = 0, height = 0;
     getRenderingTargetDimensions(&width, &height);
     buildPerspectiveMatrix(pMtx, camera, width, height);
+    deletePerspectiveCamera(&camera);
 
     Mat4Mult(
         context->vpMtx,
