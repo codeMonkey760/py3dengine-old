@@ -1,12 +1,95 @@
+#include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <glad/glad.h>
+#include <string.h>
 
 #include "logger.h"
 #include "custom_string.h"
 #include "resources/shader.h"
+#include "resources/texture.h"
 
 #define RESOURCE_TYPE_SHADER 3
+
+struct UniformListNode {
+    struct String *name;
+    GLint location;
+    struct UniformListNode *next;
+};
+
+static void allocUniformListNode(struct UniformListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
+
+    struct UniformListNode *newNode = calloc(1, sizeof(struct UniformListNode));
+    if (newNode == NULL) return;
+    newNode->next = NULL;
+    newNode->name = NULL;
+    newNode->location = -1;
+
+    (*listNodePtr) = newNode;
+    newNode = NULL;
+}
+
+static void initUniformListNode(
+    struct UniformListNode *listNode,
+    GLint location,
+    const char *name
+) {
+    if (listNode == NULL || name == NULL || location == -1) return;
+
+    listNode->location = location;
+    if(listNode->name != NULL) {
+        setChars(listNode->name, name);
+    } else {
+        allocString(&listNode->name, name);
+    }
+}
+
+static void deleteUniformListNode(struct UniformListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
+
+    struct UniformListNode *node = (*listNodePtr);
+    deleteUniformListNode(&node->next);
+    deleteString(&node->name);
+
+    free(node);
+    node = NULL;
+    (*listNodePtr) = NULL;
+}
+
+static void storeShaderUniformInfo(struct Shader *shader, GLint location, const char *name) {
+    if (shader == NULL || location == -1 || name == NULL) return;
+
+    struct UniformListNode *prevNode = NULL, *curNode = shader->uniformList;
+    while(curNode != NULL) {
+        curNode = curNode->next;
+    }
+
+    struct UniformListNode *newNode = NULL;
+    allocUniformListNode(&newNode);
+    if (newNode == NULL) return;
+    initUniformListNode(newNode, location, name);
+
+    if (prevNode == NULL) {
+        shader->uniformList = newNode;
+    } else {
+        prevNode->next = newNode;
+    }
+    newNode = NULL;
+}
+
+static GLint getUniformLocation(struct Shader *shader, const char *name) {
+    if (shader == NULL || name == NULL) return -1;
+
+    struct UniformListNode *curNode = shader->uniformList;
+    while (curNode != NULL) {
+        if (stringEqualsCStr(curNode->name, name)) break;
+        curNode = curNode->next;
+    }
+
+    if (curNode == NULL) return -1;
+
+    return curNode->location;
+}
 
 static void compileShader(GLuint shader) {
     GLint result = GL_FALSE;
@@ -73,6 +156,25 @@ static void linkProgram(GLuint pgm) {
     link_log = NULL;
 }
 
+static void queryShaderUniformLocations(struct Shader *shader) {
+    if (shader == NULL || shader->_program == 0) return;
+
+    GLint numUniforms = 0;
+    glGetProgramiv(shader->_program, GL_ACTIVE_UNIFORMS, &numUniforms);
+    if (numUniforms == 0) return;
+
+    for (GLuint i = 0; i < numUniforms; ++i) {
+        char nameBuffer[64];
+        memset(nameBuffer, 0, sizeof(char) * 64);
+        GLsizei uniformSize = 0;
+        GLenum uniformType = 0;
+        GLsizei nameLength = 0;
+        glGetActiveUniform(shader->_program, i, 63, &nameLength, &uniformSize, &uniformType, nameBuffer);
+
+        storeShaderUniformInfo(shader, i, nameBuffer);
+    }
+}
+
 static GLint getUniformIndex(GLuint program, char *name) {
     if (program == -1 || name == NULL) return -1;
 
@@ -126,12 +228,7 @@ void allocShader(struct Shader **shaderPtr) {
     newShader->_fragShader = 0;
     newShader->_program = 0;
 
-    newShader->_diffuseColorLoc = -1;
-    newShader->_cameraPositionLoc = -1;
-    newShader->_diffuseMapLoc = -1;
-    newShader->_wMtxLoc = -1;
-    newShader->_witMtxLoc = -1;
-    newShader->_wvpMtxLoc = -1;
+    newShader->uniformList = NULL;
 
     (*shaderPtr) = newShader;
     newShader = NULL;
@@ -148,18 +245,65 @@ void deleteShader(struct Shader **shaderPtr) {
     glDeleteProgram(shader->_program);
     shader->_program = 0;
 
-    shader->_diffuseColorLoc = -1;
-    shader->_cameraPositionLoc = -1;
-    shader->_diffuseMapLoc = -1;
-    shader->_wMtxLoc = -1;
-    shader->_witMtxLoc = -1;
-    shader->_wvpMtxLoc = -1;
+    deleteUniformListNode(&shader->uniformList);
 
     finalizeBaseResource((struct BaseResource *) shader);
 
     free(shader);
     shader = NULL;
     (*shaderPtr) = NULL;
+}
+
+bool setFloatArrayUniform(struct Shader *shader, const char *name, float *src, size_t numElements) {
+    if (shader == NULL || name == NULL || src == NULL || numElements == 0) return false;
+
+    if (numElements > 4) return false;
+
+    GLint loc = getUniformLocation(shader, name);
+    if (loc == -1) return false;
+
+    switch (numElements) {
+    case 1:
+        glUniform1fv(loc, 1, src);
+        break;
+    case 2:
+        glUniform2fv(loc, 1, src);
+        break;
+    case 3:
+        glUniform3fv(loc, 1, src);
+        break;
+    case 4:
+        glUniform4fv(loc, 1, src);
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+bool setMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]) {
+    if (shader == NULL || name == NULL || matrix == NULL) return false;
+
+    GLint loc = getUniformLocation(shader, name);
+    if (loc == -1) return false;
+
+    glUniformMatrix4fv(loc, 1, GL_TRUE, matrix);
+
+    return true;
+}
+
+bool setTextureUniform(struct Shader *shader, const char *name, struct Texture *texture) {
+    if (shader == NULL || name == NULL || texture == NULL) return false;
+
+    if (!glIsTexture(texture->_id)) return false;
+
+    GLint loc = getUniformLocation(shader, name);
+    if (loc == -1) return false;
+
+    glUniform1i(loc, texture->_id);
+
+    return true;
 }
 
 void initShader(struct Shader *shader, const char *vertexShaderSource, const char *fragShaderSource) {
@@ -187,12 +331,7 @@ void initShader(struct Shader *shader, const char *vertexShaderSource, const cha
     shader->_program = pgm;
     pgm = 0;
 
-    shader->_diffuseColorLoc = getUniformIndex(shader->_program, "gDiffuseColor");
-    shader->_cameraPositionLoc = getUniformIndex(shader->_program, "gCamPos");
-    shader->_diffuseMapLoc = getUniformIndex(shader->_program, "gDiffuseMap");
-    shader->_wMtxLoc = getUniformIndex(shader->_program, "gWMtx");
-    shader->_witMtxLoc = getUniformIndex(shader->_program, "gWITMtx");
-    shader->_wvpMtxLoc = getUniformIndex(shader->_program, "gWVPMtx");
+    queryShaderUniformLocations(shader);
 }
 
 void enableShader(struct Shader *shader) {
@@ -205,34 +344,4 @@ void disableShader(struct Shader *shader) {
     if (shader == NULL) return;
 
     glUseProgram(0);
-}
-
-void setDiffuseColor(struct Shader *shader, const float newDiffuseColor[3]) {
-    if (shader == NULL || shader->_diffuseColorLoc == -1) return;
-
-    glUniform3fv(shader->_diffuseColorLoc, 1, newDiffuseColor);
-}
-
-void setCameraPosition(struct Shader *shader, float newCameraPos[3]) {
-    if (shader == NULL || shader->_cameraPositionLoc == -1) return;
-
-    glUniform3fv(shader->_cameraPositionLoc, 1, newCameraPos);
-}
-
-void setWMtx(struct Shader *shader, float newWMtx[16]) {
-    if (shader == NULL || shader->_wMtxLoc == -1) return;
-
-    glUniformMatrix4fv(shader->_wMtxLoc, 1, GL_TRUE, newWMtx);
-}
-
-void setWITMtx(struct Shader *shader, float newWITMtx[16]) {
-    if (shader == NULL || shader->_witMtxLoc == -1) return;
-
-    glUniformMatrix4fv(shader->_witMtxLoc, 1, GL_TRUE, newWITMtx);
-}
-
-void setWVPMtx(struct Shader *shader, float newWVPMtx[16]) {
-    if (shader == NULL || shader->_wvpMtxLoc == -1) return;
-
-    glUniformMatrix4fv(shader->_wvpMtxLoc, 1, GL_TRUE, newWVPMtx);
 }
