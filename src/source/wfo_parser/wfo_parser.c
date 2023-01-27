@@ -11,12 +11,19 @@
 #include "resource_manager.h"
 #include "resources/material.h"
 #include "resources/texture.h"
+#include "resources/model.h"
 
 #define LINE_BUFFER_SIZE_IN_ELEMENTS 256
 #define TYPE_BUFFER_SIZE_IN_ELEMENTS 16
 #define NAME_BUFFER_SIZE_IN_ELEMENTS 64
 #define INDEX_BUFFER_SIZE_IN_ELEMENTS 9
 #define FILE_NAME_BUFFER_SIZE_IN_ELEMENTS 256
+
+struct VertexPNT {
+    float position[3];
+    float normal[3];
+    float texCoord[2];
+};
 
 static void clearCharBuffer(char *lineBuffer, int sizeInElements) {
     memset(lineBuffer, 0, sizeInElements * sizeof(char));
@@ -126,65 +133,76 @@ static char* readIndicesFromLine(char *curPos, int *indexBuffer) {
 }
 
 static float getVertexDataElement(float *vertexDataBuffer, int index, size_t bufferSize) {
-    if (vertexDataBuffer == NULL || index < 0 || index >= bufferSize || bufferSize == 0) return 0.0f;
+    if (vertexDataBuffer == NULL || bufferSize == 0) return 0.0f;
+
+    if (index < 0 || index >= bufferSize) {
+        critical_log("Bad vertex data read while generating vertex buffer. VB will be corrupt. Read was \"%d\" / \"%d\"", index, bufferSize);
+        return 0.0f;
+    }
 
     return vertexDataBuffer[index];
 }
 
 static int getIndexBufferElement (int *indexBuffer, int index, size_t bufferSize) {
-    if (indexBuffer == NULL || index < 0 || index >= bufferSize || bufferSize == 0) return -1;
+    if (indexBuffer == NULL || bufferSize == 0) return 1;
+
+    if (index < 0 || index >= bufferSize) {
+        critical_log("Bad index buffer read while generating vertex buffer. VB will be corrupt. Read was \"%d\" / \"%d\"", index, bufferSize);
+        return 1;
+    }
 
     return indexBuffer[index];
 }
 
-void allocWfoParser(struct WfoParser **wfoParserPtr) {
-    if (wfoParserPtr == NULL || (*wfoParserPtr) != NULL) return;
+static void generateVertexBuffer(
+    struct VertexPNT **dst, size_t *dstSize,
+    float *posBuffer, size_t posSize,
+    float *normBuffer, size_t normSize,
+    float *tcBuffer, size_t tcSize,
+    int *indexBuffer, size_t indexBufferSize
+) {
+    if (
+        dst == NULL || (*dst) != NULL || dstSize == NULL ||
+        posBuffer == NULL || posSize == 0 ||
+        normBuffer == NULL || normSize == 0 ||
+        tcBuffer == NULL || tcSize == 0 ||
+        indexBuffer == NULL || indexBufferSize == 0
+    ) return;
 
-    struct WfoParser *wfoParser = calloc(1, sizeof(struct WfoParser));
-    if (wfoParser == NULL) return;
+    if (indexBufferSize % 3 != 0) {
+        critical_log("[WfoParser]: generateVertexBuffer sanity check failed. Index buffer is not mod 3 aligned");
+        return;
+    }
 
-    wfoParser->_posBuffer = NULL;
-    wfoParser->_posBufferSize = 0;
-    wfoParser->_normalBuffer = NULL;
-    wfoParser->_normalBufferSize = 0;
-    wfoParser->_texCoordBuffer = NULL;
-    wfoParser->_texCoordBuffSize = 0;
+    size_t vbSizeInVertices = indexBufferSize / 3;
+    struct VertexPNT *newVB = calloc(vbSizeInVertices, sizeof(struct VertexPNT));
 
-    wfoParser->_objectList = NULL;
+    for (size_t i = 0; i < vbSizeInVertices; ++i) {
+        // wfo indices start at 1 not 0 so subtract 1
+        int posIndex = getIndexBufferElement(indexBuffer, i * 3 + 0, indexBufferSize) -1;
+        // yes, these offsets are correct, wfo stores vertices as PTN format, I want them in PNT format
+        int normIndex = getIndexBufferElement(indexBuffer, i * 3 + 2, indexBufferSize) -1;
+        int texCoordIndex = getIndexBufferElement(indexBuffer, i * 3 + 1, indexBufferSize) -1;
 
-    (*wfoParserPtr) = wfoParser;
-    wfoParser = NULL;
+        newVB[i].position[0] = getVertexDataElement(posBuffer, (posIndex) * 3 + 0, posSize);
+        newVB[i].position[1] = getVertexDataElement(posBuffer, (posIndex) * 3 + 1, posSize);
+        newVB[i].position[2] = getVertexDataElement(posBuffer, (posIndex) * 3 + 2, posSize);
+
+        newVB[i].normal[0] = getVertexDataElement(normBuffer, (normIndex) * 3 + 0, normSize);
+        newVB[i].normal[1] = getVertexDataElement(normBuffer, (normIndex) * 3 + 1, normSize);
+        newVB[i].normal[2] = getVertexDataElement(normBuffer, (normIndex) * 3 + 2, normSize);
+
+        newVB[i].texCoord[0] = getVertexDataElement(tcBuffer, (texCoordIndex) * 2 + 0, tcSize);
+        newVB[i].texCoord[1] = getVertexDataElement(tcBuffer, (texCoordIndex) * 2 + 1, tcSize);
+    }
+
+    (*dst) = newVB;
+    newVB = NULL;
+    (*dstSize) = vbSizeInVertices;
 }
 
-void deleteWfoParser(struct WfoParser **wfoParserPtr) {
-    if (wfoParserPtr == NULL || (*wfoParserPtr) == NULL) return;
-
-    struct WfoParser *wfoParser = (*wfoParserPtr);
-    deleteObjectListNode(&wfoParser->_objectList);
-
-    if (wfoParser->_posBuffer != NULL) {
-        free(wfoParser->_posBuffer);
-        wfoParser->_posBuffer = NULL;
-    }
-    wfoParser->_posBufferSize = 0;
-    if (wfoParser->_normalBuffer != NULL) {
-        free(wfoParser->_normalBuffer);
-        wfoParser->_normalBuffer = NULL;
-    }
-    wfoParser->_normalBufferSize = 0;
-    if (wfoParser->_texCoordBuffer != NULL) {
-        free(wfoParser->_texCoordBuffer);
-        wfoParser->_texCoordBuffer = NULL;
-    }
-    wfoParser->_texCoordBuffSize = 0;
-
-    free(wfoParser);
-    wfoParser = NULL;
-    (*wfoParserPtr) = NULL;
-}
-
-void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
-    if (wfoParser == NULL || wfo == NULL) return;
+void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo) {
+    if (manager == NULL || wfo == NULL) return;
 
     char lineBuffer[LINE_BUFFER_SIZE_IN_ELEMENTS+1];
     char *curPos = NULL;
@@ -241,16 +259,66 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
 
     debug_log("Found %d positions, %d normals, %d texture coordinates", posCount, normalCount, texCoordCount);
 
-    flattenVectorList(posList, &wfoParser->_posBuffer, &wfoParser->_posBufferSize);
-    flattenVectorList(normalList, &wfoParser->_normalBuffer, &wfoParser->_normalBufferSize);
-    flattenVectorList(texCoordList, &wfoParser->_texCoordBuffer, &wfoParser->_texCoordBuffSize);
-    flattenObjectList(objectList);
+    float *positionFloatBuffer = NULL, *normalFloatBuffer = NULL, *texCoordFloatBuffer = NULL;
+    size_t positionBufferSize = 0, normalBufferSize = 0, texCoordBufferSize = 0;
 
-    wfoParser->_objectList = objectList;
+    flattenVectorList(posList, &positionFloatBuffer, &positionBufferSize);
+    flattenVectorList(normalList, &normalFloatBuffer, &normalBufferSize);
+    flattenVectorList(texCoordList, &texCoordFloatBuffer, &texCoordBufferSize);
+    flattenObjectList(objectList);
 
     deleteVectorList(&posList);
     deleteVectorList(&normalList);
     deleteVectorList(&texCoordList);
+
+    struct ObjectListNode *curNode = objectList;
+    while (curNode != NULL) {
+        struct VertexPNT *vb = NULL;
+        size_t vbSizeInVertices;
+        generateVertexBuffer(
+            &vb, &vbSizeInVertices,
+            positionFloatBuffer, positionBufferSize,
+            normalFloatBuffer, normalBufferSize,
+            texCoordFloatBuffer, texCoordBufferSize,
+            curNode->indexBuffer, curNode->indexBufferSize
+        );
+        if (vb == NULL) {
+            curNode = curNode->next;
+            continue;
+        }
+
+        struct Model *newModel = NULL;
+        allocModel(&newModel);
+        if (newModel == NULL) {
+            curNode = curNode->next;
+            continue;
+        }
+        setResourceName((struct BaseResource *) newModel, curNode->name);
+        setModelPNTBuffer(newModel, vb, vbSizeInVertices);
+
+        free(vb);
+        vb = NULL;
+
+        trace_log("[WfoParser]: Storing material named \"%s\"", curNode->name);
+        storeResource(manager, (struct BaseResource *) newModel);
+        newModel = NULL;
+
+        curNode = curNode->next;
+    }
+
+    free(positionFloatBuffer);
+    positionFloatBuffer = NULL;
+    positionBufferSize = 0;
+
+    free(normalFloatBuffer);
+    normalFloatBuffer = NULL;
+    normalBufferSize = 0;
+
+    free(texCoordFloatBuffer);
+    texCoordFloatBuffer = NULL;
+    texCoordBufferSize = 0;
+
+    deleteObjectListNode(&objectList);
 }
 
 void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
@@ -331,64 +399,5 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
         trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getResourceName(curMaterial)));
         storeResource(manager, curMaterial);
         curMaterial = NULL;
-    }
-}
-
-unsigned long getUnIndexedVertexBufferSizeInFloats(struct WfoParser *wfoParser, const char *name) {
-    if (wfoParser == NULL || name == NULL) return 0;
-
-    struct ObjectListNode *curNode = wfoParser->_objectList;
-
-    while (curNode != NULL) {
-        if (strncmp(curNode->name, name, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-            break;
-        }
-
-        curNode = curNode->next;
-    }
-
-    // This will handle curNode == NULL
-    // TODO: this is a nasty hack
-    return getIndexBufferSize(curNode) / 3 * 8;
-}
-
-void getUnIndexedVertexBuffer(struct WfoParser *wfoParser, const char *name, float *dst, size_t limit) {
-    if (wfoParser == NULL || name == NULL || dst == NULL || limit == 0) return;
-
-    struct ObjectListNode *curNode = wfoParser->_objectList;
-
-    while(curNode != NULL) {
-        if (strncmp(curNode->name, name, NAME_BUFFER_SIZE_IN_ELEMENTS) == 0) {
-            break;
-        }
-
-        curNode = curNode->next;
-    }
-    if (curNode == NULL) return;
-
-    int *indexBuffer = getIndexBuffer(curNode);
-    size_t indexBufferSize = getIndexBufferSize(curNode);
-    if (indexBuffer == NULL || indexBufferSize == 0) return;
-    int elementCount = 0;
-
-    // TODO: the end clause on this loop isn't correct if the buffer isn't mod 3 aligned
-    for (int i = 0; i < indexBufferSize; i+=3) {
-        int posIndex = getIndexBufferElement(indexBuffer, i + 0, indexBufferSize) - 1;
-        // yes this is correct, wfo stores vertex indices in ptn format and I want them in pnt format
-        int normalIndex = getIndexBufferElement(indexBuffer, i + 2, indexBufferSize) - 1;
-        int texCoordIndex = getIndexBufferElement(indexBuffer, i + 1, indexBufferSize) - 1;
-
-        dst[elementCount*8+0] = getVertexDataElement(wfoParser->_posBuffer, (posIndex * 3) + 0, wfoParser->_posBufferSize);
-        dst[elementCount*8+1] = getVertexDataElement(wfoParser->_posBuffer, (posIndex * 3) + 1, wfoParser->_posBufferSize);
-        dst[elementCount*8+2] = getVertexDataElement(wfoParser->_posBuffer, (posIndex * 3) + 2, wfoParser->_posBufferSize);
-
-        dst[elementCount*8+3] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 0, wfoParser->_normalBufferSize);
-        dst[elementCount*8+4] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 1, wfoParser->_normalBufferSize);
-        dst[elementCount*8+5] = getVertexDataElement(wfoParser->_normalBuffer, (normalIndex * 3) + 2, wfoParser->_normalBufferSize);
-
-        dst[elementCount*8+6] = getVertexDataElement(wfoParser->_texCoordBuffer, (texCoordIndex * 2) + 0, wfoParser->_texCoordBuffSize);
-        dst[elementCount*8+7] = getVertexDataElement(wfoParser->_texCoordBuffer, (texCoordIndex * 2) + 1, wfoParser->_texCoordBuffSize);
-
-        elementCount++;
     }
 }

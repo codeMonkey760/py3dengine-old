@@ -1,10 +1,14 @@
-#include <string.h>
-
 #include <glad/glad.h>
 #include "custom_string.h"
 #include "resources/model.h"
 
 #define RESOURCE_TYPE_MODEL 2
+
+struct VertexPNT {
+    float position[3];
+    float normal[3];
+    float texCoord[2];
+};
 
 // TODO: these should be in a vertex format file / struct
 const GLuint positionShaderIndex = 0;
@@ -82,8 +86,8 @@ void deleteModel(struct Model **modelPtr) {
 }
 
 // TODO: custom vertex formats?
-void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInElements) {
-    if (model == NULL || buffer == NULL || bufferSizeInElements == 0) return;
+void setModelPNTBuffer(struct Model *model, struct VertexPNT *buffer, size_t bufferSizeInVertices) {
+    if (model == NULL || buffer == NULL || bufferSizeInVertices == 0) return;
 
     GLuint newVao = -1;
     glGenVertexArrays(1, &newVao);
@@ -101,7 +105,8 @@ void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInE
 
     glBindBuffer(GL_ARRAY_BUFFER, newVbo);
     // TODO: valgrind has been reporting a bad read here for some time now
-    glBufferData(GL_ARRAY_BUFFER, ((long) bufferSizeInElements) * 3 * 96, buffer, GL_STATIC_DRAW);
+    size_t bufferSizeInBytes = (sizeof(struct VertexPNT)) * bufferSizeInVertices;
+    glBufferData(GL_ARRAY_BUFFER, bufferSizeInBytes, buffer, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(positionShaderIndex);
     glEnableVertexAttribArray(normalShaderIndex);
@@ -119,7 +124,7 @@ void setPNTBuffer(struct Model *model, const float *buffer, size_t bufferSizeInE
 
     model->_vao = newVao;
     model->_vbo = newVbo;
-    model->_sizeInVertices = bufferSizeInElements;
+    model->_sizeInVertices = bufferSizeInVertices;
 }
 
 void bindModel(struct Model *model) {

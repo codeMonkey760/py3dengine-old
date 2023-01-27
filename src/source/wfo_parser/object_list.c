@@ -203,14 +203,12 @@ void flattenObjectList(struct ObjectListNode *objectList) {
     flattenObjectList(objectList->next);
 }
 
-int *getIndexBuffer(struct ObjectListNode *objectListNode) {
-    if (objectListNode == NULL) return NULL;
+extern void getIndexBuffer(struct ObjectListNode *objectListNode, const char *name, int **dst, size_t *dstSize) {
+    if (objectListNode == NULL || name == NULL || dst == NULL || (*dst) != NULL || dstSize == NULL) return;
 
-    return objectListNode->indexBuffer;
-}
+    struct ObjectListNode *node = findObjectListNodeByName(objectListNode, name);
+    if (node == NULL) return;
 
-size_t getIndexBufferSize(struct ObjectListNode *objectListNode) {
-    if (objectListNode == NULL) return 0;
-
-    return objectListNode->indexBufferSize;
+    (*dst) = node->indexBuffer;
+    (*dstSize) = node->indexBufferSize;
 }
