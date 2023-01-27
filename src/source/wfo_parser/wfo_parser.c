@@ -125,36 +125,6 @@ static char* readIndicesFromLine(char *curPos, int *indexBuffer) {
     return curPos;
 }
 
-static void flattenVertexDataList(struct VertexListNode *vertexDataList, size_t elementCount, size_t elementSizeInFloats, float **dst) {
-    if (vertexDataList == NULL || elementCount == 0 || elementSizeInFloats == 0 || elementSizeInFloats > 3 || dst == NULL || (*dst) != NULL) return;
-
-    debug_log("Allocating %d * %d * %d = %d bytes for vertex data buffer", elementCount, elementSizeInFloats, sizeof(float), elementCount * elementSizeInFloats * sizeof(float));
-    float *buffer = calloc(elementCount * elementSizeInFloats, sizeof(float));
-    if (buffer == NULL) return;
-
-    struct VertexListNode *curNode = vertexDataList;
-    int count = 0;
-    while (curNode != NULL || count < elementCount) {
-        if (elementSizeInFloats != curNode->data_len) {
-            // TODO: panic? At least log or something
-            free(buffer);
-            buffer = NULL;
-
-            return;
-        }
-
-        for (int i = 0; i < elementSizeInFloats; ++i) {
-            buffer[(count*elementSizeInFloats)+i] = curNode->data[i];
-        }
-
-        count++;
-        curNode = curNode->next;
-    }
-
-    (*dst) = buffer;
-    buffer = NULL;
-}
-
 static float getVertexDataElement(float *vertexDataBuffer, int index, size_t bufferSize) {
     if (vertexDataBuffer == NULL || index < 0 || index >= bufferSize || bufferSize == 0) return 0.0f;
 
@@ -225,7 +195,7 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
     int lineNumber = 0;
     size_t posCount = 0, normalCount = 0, texCoordCount = 0;
 
-    struct VertexListNode *posList = NULL, *normalList = NULL, *texCoordList = NULL;
+    struct VectorListNode *posList = NULL, *normalList = NULL, *texCoordList = NULL;
     struct ObjectListNode *objectList = NULL;
 
     clearCharBuffer(lineBuffer, LINE_BUFFER_SIZE_IN_ELEMENTS+1);
@@ -242,17 +212,17 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
         if (strncmp(typeBuffer, "v", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 3);
-            appendVertexData(&posList, typeBuffer, dataBuffer, 3);
+            appendVector3(&posList, dataBuffer[0], dataBuffer[1], dataBuffer[2]);
             posCount++;
         } else if (strncmp(typeBuffer, "vn", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 3);
-            appendVertexData(&normalList, typeBuffer, dataBuffer, 3);
+            appendVector3(&normalList, dataBuffer[0], dataBuffer[1], dataBuffer[2]);
             normalCount++;
         } else if (strncmp(typeBuffer, "vt", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             Vec3Identity(dataBuffer);
             readFloatsFromLine(curPos, dataBuffer, 2);
-            appendVertexData(&texCoordList, typeBuffer, dataBuffer, 2);
+            appendVector2(&texCoordList, dataBuffer[0], dataBuffer[1]);
             texCoordCount++;
         } else if (strncmp(typeBuffer, "o", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             clearCharBuffer(nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS + 1);
@@ -271,19 +241,16 @@ void parseWaveFrontFile(struct WfoParser *wfoParser, FILE *wfo) {
 
     debug_log("Found %d positions, %d normals, %d texture coordinates", posCount, normalCount, texCoordCount);
 
-    flattenVertexDataList(posList, posCount, 3, &wfoParser->_posBuffer);
-    wfoParser->_posBufferSize = posCount * 3;
-    flattenVertexDataList(normalList, normalCount, 3, &wfoParser->_normalBuffer);
-    wfoParser->_normalBufferSize = normalCount * 3;
-    flattenVertexDataList(texCoordList, texCoordCount, 2, &wfoParser->_texCoordBuffer);
-    wfoParser->_texCoordBuffSize = texCoordCount * 2;
+    flattenVectorList(posList, &wfoParser->_posBuffer, &wfoParser->_posBufferSize);
+    flattenVectorList(normalList, &wfoParser->_normalBuffer, &wfoParser->_normalBufferSize);
+    flattenVectorList(texCoordList, &wfoParser->_texCoordBuffer, &wfoParser->_texCoordBuffSize);
     flattenObjectList(objectList);
 
     wfoParser->_objectList = objectList;
 
-    deleteVertexDataList(&posList);
-    deleteVertexDataList(&normalList);
-    deleteVertexDataList(&texCoordList);
+    deleteVectorList(&posList);
+    deleteVectorList(&normalList);
+    deleteVectorList(&texCoordList);
 }
 
 void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
