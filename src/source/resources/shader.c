@@ -128,6 +128,7 @@ void allocShader(struct Shader **shaderPtr) {
 
     newShader->_diffuseColorLoc = -1;
     newShader->_cameraPositionLoc = -1;
+    newShader->_diffuseMapLoc = -1;
     newShader->_wMtxLoc = -1;
     newShader->_witMtxLoc = -1;
     newShader->_wvpMtxLoc = -1;
@@ -149,6 +150,7 @@ void deleteShader(struct Shader **shaderPtr) {
 
     shader->_diffuseColorLoc = -1;
     shader->_cameraPositionLoc = -1;
+    shader->_diffuseMapLoc = -1;
     shader->_wMtxLoc = -1;
     shader->_witMtxLoc = -1;
     shader->_wvpMtxLoc = -1;
@@ -187,6 +189,7 @@ void initShader(struct Shader *shader, const char *vertexShaderSource, const cha
 
     shader->_diffuseColorLoc = getUniformIndex(shader->_program, "gDiffuseColor");
     shader->_cameraPositionLoc = getUniformIndex(shader->_program, "gCamPos");
+    shader->_diffuseMapLoc = getUniformIndex(shader->_program, "gDiffuseMap");
     shader->_wMtxLoc = getUniformIndex(shader->_program, "gWMtx");
     shader->_witMtxLoc = getUniformIndex(shader->_program, "gWITMtx");
     shader->_wvpMtxLoc = getUniformIndex(shader->_program, "gWVPMtx");

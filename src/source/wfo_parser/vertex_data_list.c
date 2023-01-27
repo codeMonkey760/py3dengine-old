@@ -1,73 +1,110 @@
 #include <stdlib.h>
-#include <string.h>
 
 #include "wfo_parser/vertex_data_list.h"
 
-void appendVertexData(struct VertexListNode **vertexDataListPtr, char *type, float *src, int size) {
-    if (vertexDataListPtr == NULL || type == NULL || src == NULL || size > 3) return;
+static void allocVectorListNode(struct VectorListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
 
-    struct VertexListNode *newNode = NULL;
-    newNode = calloc(1, sizeof(struct VertexListNode));
+    struct VectorListNode *newNode = calloc(1, sizeof(struct VectorListNode));
     if (newNode == NULL) return;
 
-    for (int i = 0; i < size; ++i) {
-        newNode->data[i] = src[i];
-    }
-    newNode->data_len = size;
-    strncpy(newNode->type, type, 2);
-    newNode->type[2] = 0;
     newNode->next = NULL;
+    newNode->size = 0;
+    newNode->elements[0] = 0.0f;
+    newNode->elements[1] = 0.0f;
+    newNode->elements[2] = 0.0f;
 
-    struct VertexListNode *prevNode = NULL, *curNode = NULL;
-    prevNode = curNode = (*vertexDataListPtr);
-    while(curNode != NULL) {
+    (*listNodePtr) = newNode;
+    newNode = NULL;
+};
+
+static struct VectorListNode *getVectorListEnd(struct VectorListNode *list) {
+    struct VectorListNode *prevNode = NULL, *curNode = list;
+    while (curNode != NULL) {
         prevNode = curNode;
         curNode = curNode->next;
     }
 
     if (prevNode == NULL) {
-        (*vertexDataListPtr) = newNode;
+        return list;
+    } else {
+        return prevNode;
+    }
+}
+
+void appendVector2(struct VectorListNode **vecListNodePtr, float x, float y) {
+    if (vecListNodePtr == NULL) return;
+
+    struct VectorListNode *prevNode = getVectorListEnd((*vecListNodePtr));
+    struct VectorListNode *newNode = NULL;
+    allocVectorListNode(&newNode);
+    if (newNode == NULL) return;
+
+    newNode->size = 2;
+    newNode->elements[0] = x;
+    newNode->elements[1] = y;
+
+    if (prevNode == NULL && (*vecListNodePtr) == NULL) {
+        (*vecListNodePtr) = newNode;
     } else {
         prevNode->next = newNode;
     }
+    newNode = NULL;
 }
 
-void deleteVertexDataList(struct VertexListNode **vertexDataListPtr) {
-    if (vertexDataListPtr == NULL || (*vertexDataListPtr) == NULL) return;
+void appendVector3(struct VectorListNode **vecListNodePtr, float x, float y, float z) {
+    if (vecListNodePtr == NULL) return;
 
-    struct VertexListNode *curNode = NULL, *temp = NULL;
-    curNode = (*vertexDataListPtr);
+    struct VectorListNode *prevNode = getVectorListEnd((*vecListNodePtr));
+    struct VectorListNode *newNode = NULL;
+    allocVectorListNode(&newNode);
+    if (newNode == NULL) return;
 
-    while (curNode != NULL) {
-        temp = curNode->next;
-        curNode->next = NULL;
+    newNode->size = 3;
+    newNode->elements[0] = x;
+    newNode->elements[1] = y;
+    newNode->elements[2] = z;
 
-        free(curNode);
-        curNode = temp;
+    if (prevNode == NULL && (*vecListNodePtr) == NULL) {
+        (*vecListNodePtr) = newNode;
+    } else {
+        prevNode->next = newNode;
     }
-
-    (*vertexDataListPtr) = NULL;
+    newNode = NULL;
 }
 
-void printVertexDataList(FILE *fd, struct VertexListNode *vertexDataList) {
-    if (fd == NULL) return;
+void deleteVectorList(struct VectorListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
 
-    if (vertexDataList == NULL) {
-        fprintf(fd, "List was empty\n");
+    struct VectorListNode *node = (*listNodePtr);
+    deleteVectorList(&node->next);
 
-        return;
-    }
+    free(node);
+    node = NULL;
+    (*listNodePtr) = NULL;
+}
 
-    struct VertexListNode *curNode = vertexDataList;
+void flattenVectorList(struct VectorListNode *vecList, float **dstPtr, size_t *dstSizePtr) {
+    if (vecList == NULL || dstPtr == NULL || (*dstPtr) != NULL || dstSizePtr == NULL) return;
+
+    size_t floatCount = 0;
+    struct VectorListNode *curNode = vecList;
     while (curNode != NULL) {
-        fprintf(fd, "%s ", curNode->type);
-
-        for (int i = 0; i < curNode->data_len; ++i) {
-            fprintf(fd, "%f ", curNode->data[i]);
-        }
-
-        fprintf(fd, "\n");
-
+        floatCount += curNode->size;
         curNode = curNode->next;
     }
+
+    float *vecBuffer = calloc(floatCount, sizeof(float));
+    size_t curFloat = 0;
+    curNode = vecList;
+    while (curNode != NULL) {
+        for (size_t i = 0; i < curNode->size; ++i) {
+            vecBuffer[curFloat++] = curNode->elements[i];
+        }
+        curNode = curNode->next;
+    }
+
+    (*dstPtr) = vecBuffer;
+    vecBuffer = NULL;
+    (*dstSizePtr) = floatCount;
 }

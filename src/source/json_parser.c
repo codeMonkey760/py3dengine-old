@@ -156,10 +156,10 @@ static bool parsePythonComponent(
 }
 
 bool parseGameObject(
-        json_object *json,
-        struct GameObject *parent,
-        struct GameObject **rootPtr,
-        struct ResourceManager *resourceManager
+    json_object *json,
+    struct GameObject *parent,
+    struct GameObject **rootPtr,
+    struct ResourceManager *resourceManager
 ) {
     if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return false;
 
@@ -235,4 +235,6 @@ bool parseGameObject(
         (*rootPtr) = newGO;
     }
     newGO = NULL;
+
+    return true;
 }

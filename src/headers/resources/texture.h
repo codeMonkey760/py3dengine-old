@@ -10,16 +10,13 @@
 struct Texture {
     struct BaseResource base;
 
-    unsigned int _texture;
-    int _width;
-    int _height;
-    int _channelCount;
-    int _format;
+    unsigned int _id;
 };
 
-extern bool isResourceTypeTexture(struct BaseResource *);
+extern bool isResourceTypeTexture(struct BaseResource *resource);
 extern void allocTexture(struct Texture **texturePtr);
 extern void deleteTexture(struct Texture **texturePtr);
+
 extern void initTexture(struct Texture *texture, const char *fileName);
 
 #endif

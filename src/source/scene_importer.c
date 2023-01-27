@@ -16,18 +16,21 @@ static const char *vertex_shader_source =
         "#version 460 core\n\n"
 
         "layout(location = 0) in vec3 posL;\n"
-        "layout(location = 1) in vec3 normL;\n\n"
+        "layout(location = 1) in vec3 normL;\n"
+        "layout(location = 2) in vec2 texC;\n\n"
 
         "uniform mat4 gWMtx;\n"
         "uniform mat4 gWITMtx;\n"
         "uniform mat4 gWVPMtx;\n\n"
 
         "out vec3 posW;\n"
-        "out vec3 normW;\n\n"
+        "out vec3 normW;\n"
+        "out vec2 texCoord;\n\n"
 
         "void main() {\n"
         "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
-        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n\n"
+        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n"
+        "    texCoord = texC;\n\n"
 
         "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
         "}\n";
@@ -36,10 +39,12 @@ static const char *fragment_shader_source =
         "#version 460 core\n\n"
 
         "in vec3 posW;\n"
-        "in vec3 normW;\n\n"
+        "in vec3 normW;\n"
+        "in vec2 texCoord;\n\n"
 
         "uniform vec3 gDiffuseColor;\n"
-        "uniform vec3 gCamPos;\n\n"
+        "uniform vec3 gCamPos;\n"
+        "uniform sampler2D gDiffuseMap;\n\n"
 
         "layout(location = 0) out vec4 outputColor;\n\n"
 
@@ -50,43 +55,11 @@ static const char *fragment_shader_source =
         "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
         "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
 
-        "    outputColor = vec4(gDiffuseColor * lightValue, 1.0f);\n"
+        "    vec3 mapColor = texture(gDiffuseMap, texCoord).rgb;\n"
+        "    vec4 diffuseColor = vec4(mapColor * gDiffuseColor * lightValue, 1.0f);\n\n"
+
+        "    outputColor = diffuseColor;\n"
         "}\n";
-
-static void importModel(struct Model **modelPtr, struct WfoParser *wfoParser, const char *name) {
-    if (modelPtr == NULL || (*modelPtr) != NULL || wfoParser == NULL || name == NULL) return;
-
-    unsigned long cubeVboSize = getUnIndexedVertexBufferSizeInFloats(wfoParser, name);
-    if (cubeVboSize == 0) return;
-
-    debug_log("Allocating %d * %d = %d for VBO with name %s",
-              cubeVboSize, sizeof(float),
-              cubeVboSize * sizeof(float),
-              name
-    );
-    float *vbo = calloc(cubeVboSize, sizeof(float));
-    if (vbo == NULL) return;
-
-    getUnIndexedVertexBuffer(wfoParser, name, vbo, cubeVboSize);
-
-    struct Model *newModel = NULL;
-    allocModel(&newModel);
-    if (newModel == NULL) {
-        free(vbo);
-        vbo = NULL;
-
-        return;
-    }
-
-    setPNTBuffer(newModel, vbo, cubeVboSize / 8);
-    setResourceName((struct BaseResource *) newModel, name);
-
-    free(vbo);
-    vbo = NULL;
-
-    (*modelPtr) = newModel;
-    newModel = NULL;
-}
 
 static void importShader(struct Shader **shaderPtr) {
     if (shaderPtr == NULL || (*shaderPtr) != NULL) return;
@@ -174,45 +147,12 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
     if (wfoFile == NULL) {
-        error_log("%s", "[Scene Importer]: Could not open solid_objs.obj wfo file");
+        error_log("%s", "[Scene Importer]: Could not open \"solid_objs.obj\" wfo file");
         return;
+    } else {
+        parseWaveFrontFile(importer->manager, wfoFile);
     }
-
-    struct WfoParser *wfoParser = NULL;
-    allocWfoParser(&wfoParser);
-    parseWaveFrontFile(wfoParser, wfoFile);
-
-    struct Model *curModel = NULL;
-
-    importModel(&curModel, wfoParser, "Cube");
-    if (curModel == NULL) {
-        error_log("%s", "[Scene Importer]: Unable to load \"Cube\" model");
-    }
-    storeResource(importer->manager, (struct BaseResource *) curModel);
-    curModel = NULL;
-
-    importModel(&curModel, wfoParser, "Pyramid");
-    if (curModel == NULL) {
-        error_log("%s", "[Scene Importer]: Unable to load \"Pyramid\" model");
-    }
-    storeResource(importer->manager, (struct BaseResource *) curModel);
-    curModel = NULL;
-
-    importModel(&curModel, wfoParser, "Quad");
-    if (curModel == NULL) {
-        error_log("%s", "[Scene Importer]: Unable to load \"Quad\" model");
-    }
-    storeResource(importer->manager, (struct BaseResource *) curModel);
-    curModel = NULL;
-
-    struct Shader *curShader = NULL;
-
-    importShader(&curShader);
-    if (curShader == NULL) {
-        error_log("%s", "[Scene Importer]: Unable to load \"SolidColorShader\" shader");
-    }
-    storeResource(importer->manager, (struct BaseResource *) curShader);
-    curShader = NULL;
+    fclose(wfoFile);
 
     FILE *mtlFile = fopen("resources/solid_objs.mtl", "r");
     if (mtlFile == NULL) {
@@ -222,8 +162,13 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     }
     fclose(mtlFile);
 
-    deleteWfoParser(&wfoParser);
-    fclose(wfoFile);
+    struct Shader *curShader = NULL;
+    importShader(&curShader);
+    if (curShader == NULL) {
+        error_log("%s", "[Scene Importer]: Unable to load \"SolidColorShader\" shader");
+    }
+    storeResource(importer->manager, (struct BaseResource *) curShader);
+    curShader = NULL;
 
     struct PythonScript *script = NULL;
     importBuiltinComponent(&script, "ModelRendererComponent");
