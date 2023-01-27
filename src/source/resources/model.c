@@ -104,7 +104,6 @@ void setModelPNTBuffer(struct Model *model, struct VertexPNT *buffer, size_t buf
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, newVbo);
-    // TODO: valgrind has been reporting a bad read here for some time now
     size_t bufferSizeInBytes = (sizeof(struct VertexPNT)) * bufferSizeInVertices;
     glBufferData(GL_ARRAY_BUFFER, bufferSizeInBytes, buffer, GL_STATIC_DRAW);
 
