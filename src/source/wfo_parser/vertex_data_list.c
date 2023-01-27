@@ -3,6 +3,37 @@
 
 #include "wfo_parser/vertex_data_list.h"
 
+static void allocVec2ListNode (struct Vec2ListNode **listNodePtr) {
+    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
+
+    struct Vec2ListNode *newNode = calloc(1, sizeof(struct Vec2ListNode));
+    if (newNode == NULL) return;
+
+    newNode->next = NULL;
+    newNode->elements[0] = 0.0f;
+    newNode->elements[1] = 0.0f;
+
+    (*listNodePtr) = newNode;
+    newNode = NULL;
+};
+
+void appendVec2(struct Vec2ListNode **vec2ListNodePtr, float x, float y) {
+    if (vec2ListNodePtr == NULL) return;
+
+    struct Vec2ListNode *prevNode = NULL, *curNode = (*vec2ListNodePtr);
+    while (curNode != NULL) {
+        prevNode = curNode;
+        curNode = curNode->next;
+    }
+
+    struct Vec2ListNode *newNode = NULL;
+    allocVec2ListNode(&newNode);
+    if (newNode == NULL) return;
+
+    newNode->elements[0] = x;
+    newNode->elements[1] = y;
+}
+
 void appendVertexData(struct VertexListNode **vertexDataListPtr, char *type, float *src, int size) {
     if (vertexDataListPtr == NULL || type == NULL || src == NULL || size > 3) return;
 

@@ -3,16 +3,22 @@
 
 #include <stdio.h>
 
-struct VertexListNode {
-    struct VertexListNode *next;
-    float data[3];
-    char type[3];
-    int data_len; //number of floats used from data array
+struct Vec2ListNode {
+    struct Vec2ListNode *next;
+    float elements[2];
 };
 
-extern void appendVertexData(struct VertexListNode **vertexDataListPtr, char *type, float *src, int size);
-extern void deleteVertexDataList(struct VertexListNode **vertexDataListPtr);
+extern void appendVec2(struct Vec2ListNode **vec2ListNodePtr, float x, float y);
+extern void deleteVec2List(struct Vec2ListNode **vec2ListNodePtr);
+extern void flattenVec2List(struct Vec2ListNode, float *dst, size_t *dstSize);
 
-extern void printVertexDataList(FILE *fd, struct VertexListNode *vertexDataList);
+struct Vec3ListNode {
+    struct Vec3ListNode *next;
+    float elements[3];
+};
+
+extern void appendVec3(struct Vec3ListNode **vec3ListNodePtr, float x, float y, float z);
+extern void deleteVec3List(struct Vec3ListNode **vec3ListNodePtr);
+extern void flattenVec3List(struct Vec3ListNode, float *dst, size_t *dstSize);
 
 #endif
