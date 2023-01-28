@@ -54,19 +54,16 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     if (transform == NULL) return NULL;
 
     enableShader(self->shader);
-    float color[3] = {0.0f};
-    Vec3Fill(color, 1.0f);
-    setDiffuseColor(self->shader, getMaterialDiffuseColor(self->material));
-
-    setCameraPosition(self->shader, rc->cameraPositionW);
-
-    setWMtx(self->shader, getTransformWorldMtx(transform));
-    setWITMtx(self->shader, getTransformWITMtx(transform));
+    setShaderFloatArrayUniform(self->shader, "gDiffuseColor", getMaterialDiffuseColor(self->material), 3);
+    setShaderFloatArrayUniform(self->shader, "gCamPos", rc->cameraPositionW, 3);
+    setShaderMatrixUniform(self->shader, "gWMtx", getTransformWorldMtx(transform));
+    setShaderMatrixUniform(self->shader, "gWITMtx", getTransformWITMtx(transform));
+    setShaderTextureUniform(self->shader, "gDiffuseMap", self->material->_diffuseMap);
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
     Mat4Mult(wvpMtx, getTransformWorldMtx(transform), rc->vpMtx);
-    setWVPMtx(self->shader, wvpMtx);
+    setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx);
 
     bindModel(self->model);
     renderModel(self->model);
