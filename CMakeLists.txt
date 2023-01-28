@@ -9,9 +9,12 @@ set(GLFW_BUILD_DOCS OFF)
 
 include(FetchContent)
 
+if (NOT PY3D_GLFW_LOCATION)
+    set(PY3D_GLFW_LOCATION https://github.com/glfw/glfw.git)
+endif()
 FetchContent_Declare(
     glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_REPOSITORY ${PY3D_GLFW_LOCATION}
     GIT_TAG master
 )
 FetchContent_GetProperties(glfw)
@@ -20,9 +23,12 @@ if(NOT glfw_POPULATED)
     add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+if (NOT PY3D_JSON_C_LOCATION)
+    set(PY3D_JSON_C_LOCATION https://github.com/json-c/json-c)
+endif()
 FetchContent_Declare(
     json-c
-    GIT_REPOSITORY https://github.com/json-c/json-c
+    GIT_REPOSITORY ${PY3D_JSON_C_LOCATION}
     GIT_TAG master
 )
 if(NOT json-c_POPULATED)
@@ -30,22 +36,14 @@ if(NOT json-c_POPULATED)
     add_subdirectory(${json-c_SOURCE_DIR} ${json-c_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG master
-)
-FetchContent_GetProperties(glad)
-if(NOT glad_POPULATED)
-    FetchContent_Populate(glad)
-    add_subdirectory(${glad_SOURCE_DIR} ${glad_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
 include(FindOpenGL)
 
+if (NOT PY3D_SOIL_LOCATION)
+    set(PY3D_SOIL_LOCATION https://github.com/paralin/soil.git)
+endif()
 FetchContent_Declare(
     soil
-    GIT_REPOSITORY https://github.com/paralin/soil.git
+    GIT_REPOSITORY ${PY3D_SOIL_LOCATION}
     GIT_TAG master
 )
 FetchContent_GetProperties(soil)
@@ -54,7 +52,6 @@ if(NOT soil_POPULATED)
     add_subdirectory(${soil_SOURCE_DIR} ${soil_BINARY_DIR} EXCLUDE_FROM_ALL)
     target_link_libraries(
         soil
-        glad
         ${OPENGL_LIBRARIES}
     )
 endif()
@@ -77,6 +74,7 @@ configure_file(default.json ${CMAKE_CURRENT_BINARY_DIR}/default.json COPYONLY)
 
 add_executable(
     py3dengine
+    src/source/glad/gl.c
     src/source/main.c
     src/source/util.c
     src/source/logger.c
@@ -116,4 +114,4 @@ endif()
 target_include_directories(py3dengine PRIVATE ${json-c_SOURCE_DIR})
 target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw glad Python::Python json-c soil)
+target_link_libraries(py3dengine glfw Python::Python json-c soil)

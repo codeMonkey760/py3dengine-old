@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include "custom_string.h"
 #include "resources/model.h"
 
