@@ -12,67 +12,55 @@
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
 
-static const char *vertex_shader_source =
-        "#version 460 core\n\n"
+static void importShader(struct Shader **shaderPtr, const char *fileName) {
+    if (shaderPtr == NULL || (*shaderPtr) != NULL || fileName == NULL) return;
 
-        "layout(location = 0) in vec3 posL;\n"
-        "layout(location = 1) in vec3 normL;\n"
-        "layout(location = 2) in vec2 texC;\n\n"
+    json_object *shader_desc_root = json_object_from_file(fileName);
 
-        "uniform mat4 gWMtx;\n"
-        "uniform mat4 gWITMtx;\n"
-        "uniform mat4 gWVPMtx;\n\n"
+    json_object *json_type_name = json_object_object_get(shader_desc_root, "type");
+    if (json_type_name == NULL || !json_object_is_type(json_type_name, json_type_string)) {
+        error_log("%s", "[SceneImporter]: Shader description must have an attribute of type \"string\" called \"type\"");
+        return;
+    }
+    if (strcmp(json_object_get_string(json_type_name), "shader") != 0) {
+        error_log("%s", "[SceneImporter]: Shader description type attribute must be set to \"shader\"");
+        return;
+    }
 
-        "out vec3 posW;\n"
-        "out vec3 normW;\n"
-        "out vec2 texCoord;\n\n"
+    json_object *json_name = json_object_object_get(shader_desc_root, "name");
+    if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
+        error_log("%s", "[SceneImporter]: Shader description must have an attribute of type \"string\" called \"name\"");
+        return;
+    }
 
-        "void main() {\n"
-        "    posW = (vec4(posL, 1.0f) * gWMtx).xyz;\n"
-        "    normW = (vec4(normL, 0.0f) * gWITMtx).xyz;\n"
-        "    texCoord = texC;\n\n"
+    json_object *vertex_shader_file_name = json_object_object_get(shader_desc_root, "vertex_shader_source_file");
+    if (vertex_shader_file_name == NULL || !json_object_is_type(vertex_shader_file_name, json_type_string)) {
+        error_log("%s", "[SceneImporter]: Shader description must have an attribute of type \"string\" called \"vertex_shader_source_file\"");
+        return;
+    }
 
-        "    gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
-        "}\n";
-
-static const char *fragment_shader_source =
-        "#version 460 core\n\n"
-
-        "in vec3 posW;\n"
-        "in vec3 normW;\n"
-        "in vec2 texCoord;\n\n"
-
-        "uniform vec3 gDiffuseColor;\n"
-        "uniform vec3 gCamPos;\n"
-        "uniform sampler2D gDiffuseMap;\n\n"
-
-        "layout(location = 0) out vec4 outputColor;\n\n"
-
-        "void main() {\n"
-        "    vec3 normWFixed = normalize(normW);\n"
-        "    vec3 toCamera = normalize(gCamPos - posW);\n\n"
-
-        "    float lightValue = max(dot(toCamera, normWFixed), 0.0f);\n"
-        "    lightValue = (lightValue * 0.7f) + 0.3f;\n\n"
-
-        "    vec3 mapColor = texture(gDiffuseMap, texCoord).rgb;\n"
-        "    vec4 diffuseColor = vec4(mapColor * gDiffuseColor * lightValue, 1.0f);\n\n"
-
-        "    outputColor = diffuseColor;\n"
-        "}\n";
-
-static void importShader(struct Shader **shaderPtr) {
-    if (shaderPtr == NULL || (*shaderPtr) != NULL) return;
+    json_object *fragment_shader_file_name = json_object_object_get(shader_desc_root, "fragment_shader_source_file");
+    if (fragment_shader_file_name == NULL || !json_object_is_type(fragment_shader_file_name, json_type_string)) {
+        error_log("%s", "[SceneImporter]: Shader description must have an attribute of type \"string\" called \"fragment_shader_source_file\"");
+        return;
+    }
 
     struct Shader *newShader = NULL;
     allocShader(&newShader);
     if (newShader == NULL) return;
 
-    initShader(newShader, vertex_shader_source, fragment_shader_source);
-    setResourceName((struct BaseResource *) newShader, "SolidColorShader");
+    initShaderFromFiles(
+        newShader,
+        json_object_get_string(vertex_shader_file_name),
+        json_object_get_string(fragment_shader_file_name)
+    );
+    setResourceName((struct BaseResource *) newShader, json_object_get_string(json_name));
 
     (*shaderPtr) = newShader;
     newShader = NULL;
+
+    json_object_put(shader_desc_root);
+    shader_desc_root = NULL;
 }
 
 static void importTestScript(struct PythonScript **scriptPtr, const char *name) {
@@ -163,9 +151,9 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     fclose(mtlFile);
 
     struct Shader *curShader = NULL;
-    importShader(&curShader);
+    importShader(&curShader, "resources/general_pnt.json");
     if (curShader == NULL) {
-        error_log("%s", "[Scene Importer]: Unable to load \"SolidColorShader\" shader");
+        error_log("%s", "[Scene Importer]: Unable to load \"general_pnt\" shader");
     }
     storeResource(importer->manager, (struct BaseResource *) curShader);
     curShader = NULL;

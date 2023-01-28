@@ -69,6 +69,9 @@ configure_file(src/resources/solid_objs.mtl ${CMAKE_CURRENT_BINARY_DIR}/resource
 configure_file(src/resources/RotationComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/RotationComponent.py COPYONLY)
 configure_file(src/resources/CameraComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/CameraComponent.py COPYONLY)
 configure_file(src/resources/TestPattern.png ${CMAKE_CURRENT_BINARY_DIR}/resources/TestPattern.png COPYONLY)
+configure_file(src/resources/general_pnt.json ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.json COPYONLY)
+configure_file(src/resources/general_pnt.vs ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.vs COPYONLY)
+configure_file(src/resources/general_pnt.frag ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.frag COPYONLY)
 configure_file(config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
 configure_file(default.json ${CMAKE_CURRENT_BINARY_DIR}/default.json COPYONLY)
 
