@@ -28,8 +28,8 @@ extern void initShader(struct Shader *shader, const char *vertexShaderSource, co
 extern void enableShader(struct Shader *shader);
 extern void disableShader(struct Shader *shader);
 
-extern bool setFloatArrayUniform(struct Shader *shader, const char *name, float *src, size_t numElements);
-extern bool setMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]);
-extern bool setTextureUniform(struct Shader *shader, const char *name, struct Texture *texture);
+extern bool setShaderFloatArrayUniform(struct Shader *shader, const char *name, const float *src, size_t numElements);
+extern bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]);
+extern bool setShaderTextureUniform(struct Shader *shader, const char *name, struct Texture *texture);
 
 #endif

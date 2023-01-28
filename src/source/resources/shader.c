@@ -61,6 +61,7 @@ static void storeShaderUniformInfo(struct Shader *shader, GLint location, const 
 
     struct UniformListNode *prevNode = NULL, *curNode = shader->uniformList;
     while(curNode != NULL) {
+        prevNode = curNode;
         curNode = curNode->next;
     }
 
@@ -205,6 +206,28 @@ static void delete(struct BaseResource **resourcePtr) {
     deleteShader((struct Shader **) resourcePtr);
 }
 
+static char *getFileContents(const char *fileName) {
+    char *buffer = NULL;
+    size_t length = 0;
+
+    FILE *f = fopen(fileName, "r");
+    if (!f) return NULL;
+
+    fseek(f, 0, SEEK_END);
+    length = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    buffer = calloc(length+1, sizeof(char));
+    if (buffer != NULL) {
+        fread(buffer, sizeof(char), length, f);
+        buffer[length] = 0;
+    }
+    fclose(f);
+    f = NULL;
+
+    return buffer;
+}
+
 bool isResourceTypeShader(struct BaseResource *resource) {
     if (resource == NULL) return false;
 
@@ -254,7 +277,7 @@ void deleteShader(struct Shader **shaderPtr) {
     (*shaderPtr) = NULL;
 }
 
-bool setFloatArrayUniform(struct Shader *shader, const char *name, float *src, size_t numElements) {
+bool setShaderFloatArrayUniform(struct Shader *shader, const char *name, const float *src, size_t numElements) {
     if (shader == NULL || name == NULL || src == NULL || numElements == 0) return false;
 
     if (numElements > 4) return false;
@@ -282,7 +305,7 @@ bool setFloatArrayUniform(struct Shader *shader, const char *name, float *src, s
     return true;
 }
 
-bool setMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]) {
+bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]) {
     if (shader == NULL || name == NULL || matrix == NULL) return false;
 
     GLint loc = getUniformLocation(shader, name);
@@ -293,17 +316,48 @@ bool setMatrixUniform(struct Shader *shader, const char *name, const float matri
     return true;
 }
 
-bool setTextureUniform(struct Shader *shader, const char *name, struct Texture *texture) {
+bool setShaderTextureUniform(struct Shader *shader, const char *name, struct Texture *texture) {
     if (shader == NULL || name == NULL || texture == NULL) return false;
 
     if (!glIsTexture(texture->_id)) return false;
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture->_id);
+
     GLint loc = getUniformLocation(shader, name);
     if (loc == -1) return false;
 
-    glUniform1i(loc, texture->_id);
+    glUniform1i(loc, 0);
+    if (glGetError() != GL_NO_ERROR) {
+        warning_log("[Shader]: OpenGL raised error when setting \"%s\" shader param", name);
+    }
 
     return true;
+}
+
+void initShaderFromFiles(struct Shader *shader, const char *vs_filename, const char *fs_filename) {
+    if (shader == NULL || vs_filename == NULL || fs_filename == NULL) return;
+
+    char *vs_source = getFileContents(vs_filename);
+    if (vs_source == NULL) {
+        error_log("[Shader]: Could not open \"%s\" for reading", vs_filename);
+        return;
+    }
+
+    char *fs_source = getFileContents(fs_filename);
+    if (fs_source == NULL) {
+        error_log("[Shader]: Could not open \"%s\" for reading", fs_filename);
+        free(vs_source);
+        vs_source = NULL;
+        return;
+    }
+
+    initShader(shader, vs_source, fs_source);
+
+    free(vs_source);
+    vs_source = NULL;
+    free(fs_source);
+    fs_source = NULL;
 }
 
 void initShader(struct Shader *shader, const char *vertexShaderSource, const char *fragShaderSource) {
