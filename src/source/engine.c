@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #include "logger.h"
@@ -124,7 +124,7 @@ void initializeEngine(int argc, char **argv){
 
     glfwMakeContextCurrent(glfwWindow);
 
-    gladLoadGL();
+    gladLoadGL(glfwGetProcAddress);
 
     glfwSwapInterval(getConfigSwapInterval());
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);

@@ -1,5 +1,5 @@
 #include <SOIL/SOIL.h>
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <stdlib.h>
 
 #include "custom_string.h"
