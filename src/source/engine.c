@@ -12,6 +12,8 @@
 #include "game_object.h"
 #include "rendering_context.h"
 #include "resource_manager.h"
+#include "custom_string.h"
+#include "custom_path.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -92,6 +94,11 @@ static void resizeEngine() {
 }
 
 void initializeEngine(int argc, char **argv){
+    struct String *pathTest = NULL;
+    createAbsolutePath(&pathTest, NULL);
+    trace_log("[Engine]: Abs path test: %s", getChars(pathTest));
+    deleteString(&pathTest);
+
     parseConfigFile("config.json");
 
     if (!initializePython(argc, argv)) {
