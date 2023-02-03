@@ -3,6 +3,8 @@
 
 #ifndef _WIN32
 #include <unistd.h>
+#else
+#include <windows.h>
 #endif
 
 #include "custom_string.h"
@@ -14,16 +16,18 @@ static void getWorkingDir(char *buffer) {
     if (buffer == NULL) return;
 
 #ifdef _WIN32
-    char sep = '\\';
+    char sep[] = {'\\', 0};
 #else
-    char sep = '/';
+    char sep[] = {'/', 0};
 #endif
 
 #ifndef _WIN32
     getcwd(buffer, MAX_PATH_PART_SIZE);
+#else
+    GetCurrentDirectoryA(MAX_PATH_PART_SIZE, buffer);
 #endif
 
-    strcat(buffer, &sep);
+    strcat(buffer, sep);
 }
 
 static void correctPathSeparators(char *path) {
@@ -31,7 +35,7 @@ static void correctPathSeparators(char *path) {
     char *curPos = path;
     while (curPos != NULL && (*curPos) != 0) {
         if ((*curPos) == '/') {
-            (*curPos) = sep;
+            (*curPos) = '\\';
         }
 
         curPos++;
@@ -44,8 +48,8 @@ void createAbsolutePath(struct String **stringPtr, const char *relativePath) {
 
     deleteString(stringPtr);
 
-    char basePath[MAX_PATH_PART_SIZE+1];
-    memset(basePath, 0, MAX_PATH_PART_SIZE * sizeof(char));
+    char basePath[MAX_PATH_PART_SIZE+2];
+    memset(basePath, 0, MAX_PATH_PART_SIZE+2 * sizeof(char));
     getWorkingDir(basePath);
     struct String *basePathStr = NULL;
     allocString(&basePathStr, basePath);
