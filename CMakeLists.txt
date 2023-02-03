@@ -80,6 +80,7 @@ add_executable(
     src/source/logger.c
     src/source/engine.c
     src/source/custom_string.c
+    src/source/custom_path.c
     src/source/game_object.c
     src/source/resource_manager.c
     src/source/scene_importer.c
