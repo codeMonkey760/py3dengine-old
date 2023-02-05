@@ -1,6 +1,7 @@
 #include <SOIL/SOIL.h>
 #include <glad/gl.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "custom_string.h"
 #include "resources/base_resource.h"
@@ -22,6 +23,24 @@ static void delete(struct BaseResource **resourcePtr) {
     if (!isResourceTypeTexture((*resourcePtr))) return;
 
     deleteTexture((struct Texture **) resourcePtr);
+}
+
+static GLenum convertParamName(const char *pName) {
+    if (strcmp(pName, "GL_TEXTURE_MIN_FILTER") == 0) return GL_TEXTURE_MIN_FILTER;
+    if (strcmp(pName, "GL_TEXTURE_MAG_FILTER") == 0) return GL_TEXTURE_MAG_FILTER;
+    if (strcmp(pName, "GL_TEXTURE_WRAP_T") == 0) return GL_TEXTURE_WRAP_T;
+    if (strcmp(pName, "GL_TEXTURE_WRAP_S") == 0) return GL_TEXTURE_WRAP_S;
+
+    return GL_INVALID_ENUM;
+}
+
+static GLint convertParamValue(const char *pVal) {
+    if (strcmp(pVal, "GL_NEAREST") == 0) return GL_NEAREST;
+    if (strcmp(pVal, "GL_LINEAR") == 0) return GL_LINEAR;
+    if (strcmp(pVal, "GL_REPEAT") == 0) return GL_REPEAT;
+    if (strcmp(pVal, "GL_MIRRORED_REPEAT") == 0) return GL_MIRRORED_REPEAT;
+
+    return GL_INVALID_VALUE;
 }
 
 bool isResourceTypeTexture(struct BaseResource *resource) {
@@ -71,4 +90,22 @@ void initTexture(struct Texture *texture, const char *fileName) {
 
     deleteTextureId(texture);
     texture->_id = newId;
+}
+
+void setTextureParam(struct Texture *texture, const char *paramName, const char *paramValue) {
+    if (texture == NULL || texture->_id == 0 || paramName == NULL || paramValue == NULL) return;
+
+    GLenum pName = convertParamName(paramName);
+    if (pName == GL_INVALID_ENUM) {
+        error_log("[Texture]: Cannot set texture parameter \"%s\". Unsupported parameter", paramName);
+        return;
+    }
+
+    GLint pVal = convertParamValue(paramValue);
+    if (pVal == GL_INVALID_VALUE) {
+        error_log("[Texture]: Cannot set value \"%s\". Unsupported value", paramValue);
+        return;
+    }
+
+    glTextureParameteri(texture->_id, pName, pVal);
 }
