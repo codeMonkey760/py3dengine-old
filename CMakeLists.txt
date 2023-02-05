@@ -106,6 +106,7 @@ add_executable(
     src/source/python/py3dmodelrenderer.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
+    src/source/importers/texture.c
 )
 
 find_library(MATH_LIBRARY m)
