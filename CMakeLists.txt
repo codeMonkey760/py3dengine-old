@@ -110,6 +110,7 @@ add_executable(
     src/source/math/quaternion.c
     src/source/importers/texture.c
     src/source/importers/shader.c
+    src/source/importers/component.c
 )
 
 find_library(MATH_LIBRARY m)

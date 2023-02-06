@@ -9,47 +9,9 @@
 #include "resources/shader.h"
 #include "resources/python_script.h"
 #include "resource_manager.h"
-#include "python/python_util.h"
-#include "python/py3denginemodule.h"
 #include "importers/texture.h"
 #include "importers/shader.h"
-
-static void importTestScript(struct PythonScript **scriptPtr, const char *name) {
-    if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
-
-    PyObject *componentModule = PyImport_ImportModule(name);
-    if (componentModule == NULL) {
-        handleException();
-        return;
-    }
-
-    struct PythonScript *newScript = NULL;
-    allocPythonScript(&newScript);
-    if (newScript == NULL) return;
-
-    initPythonScript(newScript, componentModule, name);
-    setResourceName((struct BaseResource *) newScript, name);
-
-    (*scriptPtr) = newScript;
-    newScript = NULL;
-}
-
-static void importBuiltinComponent(struct PythonScript **scriptPtr, const char *name) {
-    if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
-
-    PyObject *py3dEngineModule = getPy3dEngineModule();
-    if (py3dEngineModule == NULL) return;
-
-    struct PythonScript *newScript = NULL;
-    allocPythonScript(&newScript);
-    if (newScript == NULL) return;
-
-    initPythonScript(newScript, py3dEngineModule, name);
-    setResourceName((struct BaseResource *) newScript, name);
-
-    (*scriptPtr) = newScript;
-    newScript = NULL;
-}
+#include "importers/component.h"
 
 void allocSceneImporter(struct SceneImporter **importerPtr) {
     if (importerPtr == NULL || (*importerPtr) != NULL) return;
@@ -134,14 +96,14 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     storeResource(importer->manager, (struct BaseResource *) script);
     script = NULL;
 
-    importTestScript(&script, "RotationComponent");
+    importComponent(&script, "RotationComponent");
     if (script == NULL) {
         error_log("%s", "[SceneImporter]: Unable to load RotationComponent python script");
     }
     storeResource(importer->manager, (struct BaseResource *) script);
     script = NULL;
 
-    importTestScript(&script, "CameraComponent");
+    importComponent(&script, "CameraComponent");
     if (script == NULL) {
         error_log("%s", "[SceneImporter]: Unable to load CameraComponent python script");
     }
