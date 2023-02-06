@@ -109,6 +109,7 @@ add_executable(
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
+    src/source/importers/shader.c
 )
 
 find_library(MATH_LIBRARY m)
