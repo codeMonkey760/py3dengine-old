@@ -8,7 +8,7 @@
 #include "util.h"
 #include "python/python_wrapper.h"
 #include "engine.h"
-#include "scene_importer.h"
+#include "importers/scene.h"
 #include "game_object.h"
 #include "rendering_context.h"
 #include "resource_manager.h"

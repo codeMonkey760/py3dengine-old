@@ -2,7 +2,6 @@
 
 #include "logger.h"
 #include "wfo_parser/wfo_parser.h"
-#include "scene_importer.h"
 #include "game_object.h"
 #include "json_parser.h"
 #include "resources/shader.h"
@@ -11,6 +10,7 @@
 #include "importers/texture.h"
 #include "importers/shader.h"
 #include "importers/component.h"
+#include "importers/scene.h"
 
 // TODO: make this not hard coded
 void importScene(struct ResourceManager *manager, struct GameObject **rootPtr, FILE *sceneDescriptor) {
