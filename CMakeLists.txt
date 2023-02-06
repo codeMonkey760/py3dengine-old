@@ -85,7 +85,6 @@ add_executable(
     src/source/custom_path.c
     src/source/game_object.c
     src/source/resource_manager.c
-    src/source/scene_importer.c
     src/source/rendering_context.c
     src/source/config.c
     src/source/json_parser.c
@@ -109,6 +108,9 @@ add_executable(
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
+    src/source/importers/shader.c
+    src/source/importers/component.c
+    src/source/importers/scene.c
 )
 
 find_library(MATH_LIBRARY m)

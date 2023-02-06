@@ -1,5 +1,5 @@
-#ifndef PY3DENGINE_SHADER_H
-#define PY3DENGINE_SHADER_H
+#ifndef PY3DENGINE_RESOURCES_SHADER_H
+#define PY3DENGINE_RESOURCES_SHADER_H
 
 #include "resources/base_resource.h"
 
