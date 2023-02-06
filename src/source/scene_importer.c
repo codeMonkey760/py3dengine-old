@@ -11,6 +11,7 @@
 #include "resource_manager.h"
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
+#include "importers/texture.h"
 
 static void importShader(struct Shader **shaderPtr, const char *fileName) {
     if (shaderPtr == NULL || (*shaderPtr) != NULL || fileName == NULL) return;
@@ -133,9 +134,26 @@ void initSceneImporter(struct SceneImporter *importer, struct ResourceManager *n
 void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     if (importer == NULL || importer->manager == NULL || sceneDescriptor == NULL) return;
 
+    struct Texture *curTexture = NULL;
+    importTexture(&curTexture, "resources/test_pattern_point.json");
+    if (curTexture == NULL) {
+        error_log("%s", "[SceneImporter]: Could not load \"test_pattern_point\" as texture. Material parsing will fail.");
+    } else {
+        storeResource(importer->manager, (struct BaseResource *) curTexture);
+        curTexture = NULL;
+    }
+
+    importTexture(&curTexture, "resources/test_pattern_linear.json");
+    if (curTexture == NULL) {
+        error_log("%s", "[SceneImporter]: Could not load \"test_pattern_linear\" as texture. Material parsing will fail.");
+    } else {
+        storeResource(importer->manager, (struct BaseResource *) curTexture);
+        curTexture = NULL;
+    }
+
     FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
     if (wfoFile == NULL) {
-        error_log("%s", "[Scene Importer]: Could not open \"solid_objs.obj\" wfo file");
+        error_log("%s", "[SceneImporter]: Could not open \"solid_objs.obj\" wfo file");
         return;
     } else {
         parseWaveFrontFile(importer->manager, wfoFile);
@@ -144,7 +162,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
 
     FILE *mtlFile = fopen("resources/solid_objs.mtl", "r");
     if (mtlFile == NULL) {
-        error_log("%s", "[SceneImporter]: Could not open \"solid_objs.mtl\". Material parsing will fail.");
+        error_log("%s", "[SceneImporter]: Could not open \"solid_objs.mtl\". Material parsing has failed.");
     } else {
         parseMaterialFile(importer->manager, mtlFile);
     }
@@ -153,7 +171,7 @@ void importScene(struct SceneImporter *importer, FILE *sceneDescriptor) {
     struct Shader *curShader = NULL;
     importShader(&curShader, "resources/general_pnt.json");
     if (curShader == NULL) {
-        error_log("%s", "[Scene Importer]: Unable to load \"general_pnt\" shader");
+        error_log("%s", "[SceneImporter]: Unable to load \"general_pnt\" shader");
     }
     storeResource(importer->manager, (struct BaseResource *) curShader);
     curShader = NULL;
