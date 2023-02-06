@@ -1,5 +1,14 @@
 {
   "active_camera": "Camera",
+  "resources": [
+    "resources/CameraComponent.json",
+    "resources/RotationComponent.json",
+    "resources/general_pnt.json",
+    "resources/test_pattern_linear.json",
+    "resources/test_pattern_point.json",
+    "resources/solid_objs.obj",
+    "resources/solid_objs.mtl"
+  ],
   "scene_root": {
     "name": "root",
     "transform": {

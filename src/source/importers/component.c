@@ -1,14 +1,25 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdlib.h>
+#include <json.h>
 
+#include "logger.h"
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
 #include "resources/python_script.h"
 #include "importers/component.h"
 
-void importComponent(struct PythonScript **scriptPtr, const char *name) {
-    if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
+void importComponent(struct PythonScript **scriptPtr, json_object *componentDesc) {
+    if (scriptPtr == NULL || (*scriptPtr) != NULL || componentDesc == NULL) return;
+
+    json_object *json_name = json_object_object_get(componentDesc, "name");
+    if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
+        error_log("%s", "[ComponentImporter]: Component descriptor must have a \"name\" field of type string");
+        return;
+    }
+    const char *name = json_object_get_string(json_name);
+
+    // TODO: append importPath so that imports work
 
     PyObject *componentModule = PyImport_ImportModule(name);
     if (componentModule == NULL) {

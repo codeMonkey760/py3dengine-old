@@ -1,10 +1,15 @@
-#include <stdlib.h>
 #include <string.h>
 
 #ifndef _WIN32
 #include <unistd.h>
 #else
 #include <windows.h>
+#endif
+
+#ifndef _WIN32
+static const char sep[] = {'/', 0};
+#else
+static const char sep[] = {'\\', 0};
 #endif
 
 #include "custom_string.h"
@@ -15,19 +20,11 @@
 static void getWorkingDir(char *buffer) {
     if (buffer == NULL) return;
 
-#ifdef _WIN32
-    char sep[] = {'\\', 0};
-#else
-    char sep[] = {'/', 0};
-#endif
-
 #ifndef _WIN32
     getcwd(buffer, MAX_PATH_PART_SIZE);
 #else
     GetCurrentDirectoryA(MAX_PATH_PART_SIZE, buffer);
 #endif
-
-    strcat(buffer, sep);
 }
 
 static void correctPathSeparators(char *path) {
@@ -67,4 +64,18 @@ void createAbsolutePath(struct String **stringPtr, const char *relativePath) {
     stringConcatenate(stringPtr, basePathStr, relPathStr);
     deleteString(&basePathStr);
     deleteString(&relPathStr);
+}
+
+void pathConcatenate(struct String **pathResultPtr, struct String *p1, struct String *p2) {
+    if (pathResultPtr == NULL || (*pathResultPtr) != NULL || p1 == NULL || p2 == NULL) return;
+
+    struct String *fsSep = NULL;
+    allocString(&fsSep, sep);
+
+    struct String *step1 = NULL;
+    stringConcatenate(&step1, p1, fsSep);
+
+    stringConcatenate(pathResultPtr, step1, p2);
+    deleteString(&fsSep);
+    deleteString(&step1);
 }

@@ -12,51 +12,92 @@
 #include "importers/component.h"
 #include "importers/scene.h"
 
-// TODO: make this not hard coded
+static const char *getResourceExt(const char *resourcePath) {
+    if (resourcePath == NULL || (*resourcePath) == 0) return NULL;
+
+    const char *curPos = resourcePath;
+    while ((*curPos) != 0) curPos++;
+
+    while (curPos != resourcePath && (*curPos) != '.') curPos--;
+
+    return ((*curPos) == '.') ? curPos : NULL;
+}
+
+static void importResourceByDescriptor(struct BaseResource **resourcePtr, const char *resourcePath) {
+    json_object *resourceDescriptor = json_object_from_file(resourcePath);
+    if (resourceDescriptor == NULL) {
+        error_log("[SceneImporter]: Could not parse json from \"%s\"", resourcePath);
+        return;
+    }
+
+    json_object *json_type = json_object_object_get(resourceDescriptor, "type");
+    if (json_type == NULL || !json_object_is_type(json_type, json_type_string)) {
+        error_log("[SceneImporter]: Resource descriptor must have a \"type\" field of type string");
+        json_object_put(resourceDescriptor);
+        resourceDescriptor = NULL;
+        return;
+    }
+
+    const char *typeName = json_object_get_string(json_type);
+    if (strcmp(typeName, "Texture") == 0) {
+        importTexture((struct Texture **) resourcePtr, resourceDescriptor);
+    } else if (strcmp(typeName, "Shader") == 0) {
+        importShader((struct Shader **) resourcePtr, resourceDescriptor);
+    } else if (strcmp(typeName, "Component") == 0) {
+        importComponent((struct PythonScript **) resourcePtr, resourceDescriptor);
+    } else {
+        error_log("[SceneImporter]: Could not identity resource type \"%s\"", typeName);
+    }
+
+    json_object_put(resourceDescriptor);
+    resourceDescriptor = NULL;
+}
+
+static void importResourceByPath(struct ResourceManager *manager, const char *resourcePath) {
+    const char *ext = getResourceExt(resourcePath);
+    if (ext == NULL) return;
+
+    if (strcmp(ext, ".obj") == 0) {
+        importWaveFrontFile(manager, resourcePath);
+    } else if (strcmp(ext, ".mtl") == 0) {
+        importMaterialFile(manager, resourcePath);
+    } else if (strcmp(ext, ".json") == 0) {
+        struct BaseResource *resource = NULL;
+        importResourceByDescriptor(&resource, resourcePath);
+        storeResource(manager, resource);
+    } else {
+        error_log("[SceneImporter]: Unable to determine resource type \"%s\"", resourcePath);
+    }
+}
+
+static void importResources(struct ResourceManager *manager, json_object *resourceArray) {
+    if (manager == NULL || resourceArray == NULL) return;
+
+    if (!json_object_is_type(resourceArray, json_type_array)) {
+        error_log("%s", "[SceneImporter]: \"resources\" field must be of type array");
+        return;
+    }
+
+    size_t resourceCount = json_object_array_length(resourceArray);
+    for (size_t i = 0; i < resourceCount; ++i) {
+        json_object *curResourceName = json_object_array_get_idx(resourceArray, i);
+        if (curResourceName == NULL || !json_object_is_type(curResourceName, json_type_string)) {
+            error_log("%s", "[SceneImporter]: Resources names must be of type string");
+            continue;
+        }
+
+        importResourceByPath(manager, json_object_get_string(curResourceName));
+    }
+}
+
 void importScene(struct ResourceManager *manager, struct GameObject **rootPtr, FILE *sceneDescriptor) {
     if (manager == NULL || rootPtr == NULL || (*rootPtr) != NULL || sceneDescriptor == NULL) return;
 
-    struct Texture *curTexture = NULL;
-    importTexture(&curTexture, "resources/test_pattern_point.json");
-    if (curTexture == NULL) {
-        error_log("%s", "[SceneImporter]: Could not load \"test_pattern_point\" as texture. Material parsing will fail.");
-    } else {
-        storeResource(manager, (struct BaseResource *) curTexture);
-        curTexture = NULL;
-    }
-
-    importTexture(&curTexture, "resources/test_pattern_linear.json");
-    if (curTexture == NULL) {
-        error_log("%s", "[SceneImporter]: Could not load \"test_pattern_linear\" as texture. Material parsing will fail.");
-    } else {
-        storeResource(manager, (struct BaseResource *) curTexture);
-        curTexture = NULL;
-    }
-
-    FILE *wfoFile = fopen("resources/solid_objs.obj", "r");
-    if (wfoFile == NULL) {
-        error_log("%s", "[SceneImporter]: Could not open \"solid_objs.obj\" wfo file");
+    json_object *json_root = json_object_from_fd(fileno(sceneDescriptor));
+    if (json_root == NULL) {
+        critical_log("%s", "[SceneImporter]: Could not parse scene descriptor");
         return;
-    } else {
-        parseWaveFrontFile(manager, wfoFile);
     }
-    fclose(wfoFile);
-
-    FILE *mtlFile = fopen("resources/solid_objs.mtl", "r");
-    if (mtlFile == NULL) {
-        error_log("%s", "[SceneImporter]: Could not open \"solid_objs.mtl\". Material parsing has failed.");
-    } else {
-        parseMaterialFile(manager, mtlFile);
-    }
-    fclose(mtlFile);
-
-    struct Shader *curShader = NULL;
-    importShader(&curShader, "resources/general_pnt.json");
-    if (curShader == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load \"general_pnt\" shader");
-    }
-    storeResource(manager, (struct BaseResource *) curShader);
-    curShader = NULL;
 
     struct PythonScript *script = NULL;
     importBuiltinComponent(&script, "ModelRendererComponent");
@@ -66,25 +107,8 @@ void importScene(struct ResourceManager *manager, struct GameObject **rootPtr, F
     storeResource(manager, (struct BaseResource *) script);
     script = NULL;
 
-    importComponent(&script, "RotationComponent");
-    if (script == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load RotationComponent python script");
-    }
-    storeResource(manager, (struct BaseResource *) script);
-    script = NULL;
-
-    importComponent(&script, "CameraComponent");
-    if (script == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load CameraComponent python script");
-    }
-    storeResource(manager, (struct BaseResource *) script);
-    script = NULL;
-
-    json_object *json_root = json_object_from_fd(fileno(sceneDescriptor));
-    if (json_root == NULL) {
-        critical_log("%s", "[SceneImporter]: Could not parse the contents of \"default.json\" as json. Scene loading will fail.");
-        return;
-    }
+    json_object *resourceArray = json_object_object_get(json_root, "resources");
+    importResources(manager, resourceArray);
 
     json_object *scene_root = json_object_object_get(json_root, "scene_root");
     if (scene_root == NULL || !json_object_is_type(scene_root, json_type_object)) {

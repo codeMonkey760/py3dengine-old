@@ -2,6 +2,6 @@
 #define PY3DENGINE_IMPORTERS_SHADER_H
 
 struct Shader;
-extern void importShader(struct Shader **shaderPtr, const char *fileName);
+extern void importShader(struct Shader **shaderPtr, json_object *shaderDesc);
 
 #endif

@@ -201,6 +201,18 @@ static void generateVertexBuffer(
     (*dstSize) = vbSizeInVertices;
 }
 
+void importWaveFrontFile(struct ResourceManager *manager, const char *filePath) {
+    FILE *wfoFile = fopen(filePath, "r");
+    if (wfoFile == NULL) {
+        error_log("[WfoParser]: Could not open \"%s\" for reading", filePath);
+        return;
+    }
+
+    parseWaveFrontFile(manager, wfoFile);
+    fclose(wfoFile);
+    wfoFile = NULL;
+}
+
 void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo) {
     if (manager == NULL || wfo == NULL) return;
 
@@ -319,6 +331,18 @@ void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo) {
     texCoordBufferSize = 0;
 
     deleteObjectListNode(&objectList);
+}
+
+void importMaterialFile(struct ResourceManager *manager, const char *filePath) {
+    FILE *mtlFile = fopen(filePath, "r");
+    if (mtlFile == NULL) {
+        error_log("[WfoParser]: Could not open \"%s\" for reading", filePath);
+        return;
+    }
+
+    parseMaterialFile(manager, mtlFile);
+    fclose(mtlFile);
+    mtlFile = NULL;
 }
 
 void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
