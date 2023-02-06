@@ -18,5 +18,6 @@ extern void allocTexture(struct Texture **texturePtr);
 extern void deleteTexture(struct Texture **texturePtr);
 
 extern void initTexture(struct Texture *texture, const char *fileName);
+extern void setTextureParam(struct Texture *texture, const char *paramName, const char *paramValue);
 
 #endif

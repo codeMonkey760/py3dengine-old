@@ -65,7 +65,9 @@ configure_file(src/resources/solid_objs.obj ${CMAKE_CURRENT_BINARY_DIR}/resource
 configure_file(src/resources/solid_objs.mtl ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.mtl COPYONLY)
 configure_file(src/resources/RotationComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/RotationComponent.py COPYONLY)
 configure_file(src/resources/CameraComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/CameraComponent.py COPYONLY)
-configure_file(src/resources/TestPattern.png ${CMAKE_CURRENT_BINARY_DIR}/resources/TestPattern.png COPYONLY)
+configure_file(src/resources/test_pattern.png ${CMAKE_CURRENT_BINARY_DIR}/resources/test_pattern.png COPYONLY)
+configure_file(src/resources/test_pattern_point.json ${CMAKE_CURRENT_BINARY_DIR}/resources/test_pattern_point.json COPYONLY)
+configure_file(src/resources/test_pattern_linear.json ${CMAKE_CURRENT_BINARY_DIR}/resources/test_pattern_linear.json COPYONLY)
 configure_file(src/resources/general_pnt.json ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.json COPYONLY)
 configure_file(src/resources/general_pnt.vs ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.vs COPYONLY)
 configure_file(src/resources/general_pnt.frag ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.frag COPYONLY)
@@ -106,6 +108,7 @@ add_executable(
     src/source/python/py3dmodelrenderer.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
+    src/source/importers/texture.c
 )
 
 find_library(MATH_LIBRARY m)
