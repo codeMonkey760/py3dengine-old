@@ -56,25 +56,22 @@ if(NOT soil_POPULATED)
     )
 endif()
 
+if (NOT PY3D_TEST_PROJECT_LOCATION)
+    set(PY3D_TEST_PROJECT_LOCATION https://github.com/codemonkey760/py3dengine-test.git)
+endif()
+FetchContent_Declare(
+    test_project
+    GIT_REPOSITORY ${PY3D_TEST_PROJECT_LOCATION}
+    GIT_TAG master
+)
+FetchContent_GetProperties(test_project)
+if(NOT test_project_POPULATED)
+    FetchContent_Populate(test_project)
+endif()
+
 find_package(Python COMPONENTS Development)
 
 include_directories(src/headers)
-
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources)
-configure_file(src/resources/solid_objs.obj ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.obj COPYONLY)
-configure_file(src/resources/solid_objs.mtl ${CMAKE_CURRENT_BINARY_DIR}/resources/solid_objs.mtl COPYONLY)
-configure_file(src/resources/RotationComponent.json ${CMAKE_CURRENT_BINARY_DIR}/resources/RotationComponent.json COPYONLY)
-configure_file(src/resources/CameraComponent.json ${CMAKE_CURRENT_BINARY_DIR}/resources/CameraComponent.json COPYONLY)
-configure_file(src/resources/RotationComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/RotationComponent.py COPYONLY)
-configure_file(src/resources/CameraComponent.py ${CMAKE_CURRENT_BINARY_DIR}/resources/CameraComponent.py COPYONLY)
-configure_file(src/resources/test_pattern.png ${CMAKE_CURRENT_BINARY_DIR}/resources/test_pattern.png COPYONLY)
-configure_file(src/resources/test_pattern_point.json ${CMAKE_CURRENT_BINARY_DIR}/resources/test_pattern_point.json COPYONLY)
-configure_file(src/resources/test_pattern_linear.json ${CMAKE_CURRENT_BINARY_DIR}/resources/test_pattern_linear.json COPYONLY)
-configure_file(src/resources/general_pnt.json ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.json COPYONLY)
-configure_file(src/resources/general_pnt.vs ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.vs COPYONLY)
-configure_file(src/resources/general_pnt.frag ${CMAKE_CURRENT_BINARY_DIR}/resources/general_pnt.frag COPYONLY)
-configure_file(config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
-configure_file(default.json ${CMAKE_CURRENT_BINARY_DIR}/default.json COPYONLY)
 
 add_executable(
     py3dengine
@@ -123,3 +120,10 @@ target_include_directories(py3dengine PRIVATE ${json-c_SOURCE_DIR})
 target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python json-c soil)
+
+add_custom_command(
+    TARGET
+    py3dengine
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${test_project_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+)

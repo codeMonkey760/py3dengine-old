@@ -1,6 +1,0 @@
-{
-  "name": "general_pnt",
-  "type": "Shader",
-  "vertex_shader_source_file": "resources/general_pnt.vs",
-  "fragment_shader_source_file": "resources/general_pnt.frag"
-}
