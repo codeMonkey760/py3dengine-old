@@ -135,20 +135,13 @@ void initializeEngine(int argc, char **argv){
         critical_log("%s", "[Engine]: Unable to allocate resource manager. Resource importing will fail");
     }
 
-    struct SceneImporter *importer = NULL;
-    allocSceneImporter(&importer);
-    if (importer == NULL) {
-        critical_log("%s", "[Engine]: Unable to allocate scene importer. Scene parsing will fail");
-    }
-
     const char *startingScenePath = getConfigStartingScene();
     FILE *startingScene = fopen(startingScenePath, "r");
     if (startingScene == NULL) {
         critical_log("[Engine]: Unable to open \"%s\" as scene descriptor for parsing. Cannot initialize", startingScenePath);
     }
 
-    initSceneImporter(importer, resourceManager, &root);
-    importScene(importer, startingScene);
+    importScene(resourceManager, &root, startingScene);
 
     if (startingScene != NULL) {
         fclose(startingScene);
@@ -159,8 +152,6 @@ void initializeEngine(int argc, char **argv){
     if (activeCamera == NULL) {
         warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
     }
-
-    deleteSceneImporter(&importer);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);

@@ -5,16 +5,12 @@
 
 struct GameObject;
 struct ResourceManager;
+struct FILE;
 
-struct SceneImporter {
-    struct ResourceManager *manager;
-    struct GameObject **sceneRootPtr;
-};
-
-extern void allocSceneImporter(struct SceneImporter **importerPtr);
-extern void deleteSceneImporter(struct SceneImporter **importerPtr);
-
-extern void initSceneImporter(struct SceneImporter *importer, struct ResourceManager *newManager, struct GameObject **rootPtr);
-extern void importScene(struct SceneImporter *importer, FILE *sceneDescriptor);
+extern void importScene(
+    struct ResourceManager *newManager,
+    struct GameObject **rootPtr,
+    FILE *sceneDescriptor
+);
 
 #endif
