@@ -378,15 +378,15 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
             clearCharBuffer(fileNameBuffer, FILE_NAME_BUFFER_SIZE_IN_ELEMENTS+1);
             readStringFromLine(curPos, fileNameBuffer, FILE_NAME_BUFFER_SIZE_IN_ELEMENTS);
 
-            trace_log("[WfoParser]: Allocating texture for \"%s\"", fileNameBuffer);
+            struct BaseResource *diffuse_map = getResource(manager, fileNameBuffer);
+            if (!isResourceTypeTexture(diffuse_map)) {
+                error_log("[WfoParser]: Material specifies non existent texture named \"%s\" as a diffuse map", fileNameBuffer);
+            } else {
+                trace_log("[WfoParser]: Setting \"%s\" as a diffuse map", fileNameBuffer);
+                setMaterialDiffuseMap((struct Material *) curMaterial, (struct Texture *) diffuse_map);
+                diffuse_map = NULL;
+            }
 
-            struct Texture *newTexture = NULL;
-            allocTexture(&newTexture);
-            initTexture(newTexture, fileNameBuffer);
-            setMaterialDiffuseMap((struct Material *) curMaterial, newTexture);
-            newTexture = NULL;
-
-            trace_log("%s", "[WfoParser]: Storing texture to material");
         } else {
             debug_log("[WfoParser]: Ignoring line #%d, unsupported type %s", lineNumber, typeBuffer);
         }
