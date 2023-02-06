@@ -1,4 +1,5 @@
 #include <json.h>
+#include <string.h>
 
 #include "logger.h"
 #include "resources/texture.h"
@@ -12,6 +13,20 @@ void importTexture(struct Texture **texturePtr, const char *descriptorPath) {
     json_object *json_type = json_object_object_get(texture_desc, "type");
     if (json_type == NULL || !json_object_is_type(json_type, json_type_string)) {
         error_log("%s", "[TextureImporter]: Texture descriptor must contain a \"type\" field of type string");
+        json_object_put(texture_desc);
+        texture_desc = NULL;
+        return;
+    }
+    if (strcmp(json_object_get_string(json_type), "Texture") != 0) {
+        error_log("%s", "[TextureImporter]: Texture descriptor \"type\" field must be set to \"Texture\"");
+        json_object_put(texture_desc);
+        texture_desc = NULL;
+        return;
+    }
+
+    json_object *json_name = json_object_object_get(texture_desc, "name");
+    if (json_name == NULL || !json_object_is_type(json_name, json_type_string)) {
+        error_log("%s", "[TextureImporter]: Texture descriptor must contain a \"name\" field of type string");
         json_object_put(texture_desc);
         texture_desc = NULL;
         return;
@@ -33,6 +48,7 @@ void importTexture(struct Texture **texturePtr, const char *descriptorPath) {
         return;
     }
 
+    setResourceName((struct BaseResource *) newTexture, json_object_get_string(json_name));
     initTexture(newTexture, json_object_get_string(json_texture_path));
 
     json_object *json_tex_param_map = json_object_object_get(texture_desc, "texture_parameters");
