@@ -71,7 +71,8 @@ static void addResourcesPath() {
         return;
     }
 
-    PyObject *res = PyUnicode_FromString("/resources");
+    // TODO: replace this ... Component importer should be appending imports paths
+    PyObject *res = PyUnicode_FromString("/Components");
     PyObject *fullPath = PyNumber_Add(cwd, res);
     Py_CLEAR(cwd);
     Py_CLEAR(res);
