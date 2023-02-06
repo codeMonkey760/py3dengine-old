@@ -1,8 +1,8 @@
 {
   "active_camera": "Camera",
   "resources": [
-    "resources/CameraComponent.py",
-    "resources/RotationComponent.py",
+    "resources/CameraComponent.json",
+    "resources/RotationComponent.json",
     "resources/general_pnt.json",
     "resources/test_pattern_linear.json",
     "resources/test_pattern_point.json",
