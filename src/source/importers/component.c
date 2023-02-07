@@ -5,6 +5,7 @@
 
 #include "logger.h"
 #include "python/python_util.h"
+#include "python/python_wrapper.h"
 #include "python/py3denginemodule.h"
 #include "resources/python_script.h"
 #include "importers/component.h"
@@ -19,7 +20,14 @@ void importComponent(struct PythonScript **scriptPtr, json_object *componentDesc
     }
     const char *name = json_object_get_string(json_name);
 
-    // TODO: append importPath so that imports work
+    json_object *json_import_path = json_object_object_get(componentDesc, "importPath");
+    if (json_import_path == NULL || !json_object_is_type(json_import_path, json_type_string)) {
+        error_log("%s", "[ComponentImporter]: Component descriptor must have an \"importPath\" field of type string");
+        return;
+    }
+    const char *importPath = json_object_get_string(json_import_path);
+
+    appendImportPath(importPath);
 
     PyObject *componentModule = PyImport_ImportModule(name);
     if (componentModule == NULL) {
