@@ -61,7 +61,7 @@ void createAbsolutePath(struct String **stringPtr, const char *relativePath) {
     allocString(&relPathStr, relativePath);
     correctPathSeparators(relPathStr->_c_str);
 
-    stringConcatenate(stringPtr, basePathStr, relPathStr);
+    pathConcatenate(stringPtr, basePathStr, relPathStr);
     deleteString(&basePathStr);
     deleteString(&relPathStr);
 }
