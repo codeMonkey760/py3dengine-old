@@ -4,44 +4,15 @@
 #include <stdbool.h>
 
 #include "logger.h"
+#include "custom_string.h"
+#include "custom_path.h"
 #include "python/python_wrapper.h"
 #include "python/py3denginemodule.h"
 #include "python/py3dmathmodule.h"
 #include "python/py3dloggermodule.h"
 #include "python/python_util.h"
 
-static PyObject *getCwd() {
-    PyObject *osMod = PyImport_ImportModule("os");
-    if (osMod == NULL) return NULL;
-
-    PyObject *getcwd = PyObject_GetAttrString(osMod, "getcwd");
-    if (getcwd == NULL) {
-        Py_CLEAR(osMod);
-        return NULL;
-    }
-
-    PyObject *getcwdret = PyObject_CallNoArgs(getcwd);
-    if (getcwdret == NULL) {
-        Py_CLEAR(getcwd);
-        Py_CLEAR(osMod);
-        return NULL;
-    }
-
-    if (PyUnicode_Check(getcwdret) != 1) {
-        PyErr_SetString(PyExc_ValueError, "os.getcwd() did not return PyUnicode Object");
-        Py_CLEAR(getcwdret);
-        Py_CLEAR(getcwd);
-        Py_CLEAR(osMod);
-        return NULL;
-    }
-
-    Py_CLEAR(getcwd);
-    Py_CLEAR(osMod);
-
-    return getcwdret;
-}
-
-static void addResourcesPath() {
+void appendImportPath(const char *relPath) {
     PyObject *sysMod = PyImport_ImportModule("sys");
     if (sysMod == NULL) {
         critical_log("[Python]: Could not import \"sys\" module");
@@ -63,26 +34,21 @@ static void addResourcesPath() {
         return;
     }
 
-    PyObject *cwd = getCwd();
-    if (cwd == NULL) {
-        critical_log("[Python]: Could not query current working directory");
-        Py_CLEAR(path);
-        Py_CLEAR(sysMod);
-        return;
+    struct String *fullPath = NULL;
+    createAbsolutePath(&fullPath, relPath);
+    PyObject *fullPathObj = PyUnicode_FromString(getChars(fullPath));
+    deleteString(&fullPath);
+
+    int containsRet = PySequence_Contains(path, fullPathObj);
+    if (containsRet == -1) {
+        handleException();
+    } else if (containsRet == 0) {
+        if (PyList_Append(path, fullPathObj) != 0) {
+            critical_log("[Python]: Modifying the import path failed");
+        }
     }
 
-    // TODO: replace this ... Component importer should be appending imports paths
-    PyObject *res = PyUnicode_FromString("/Components");
-    PyObject *fullPath = PyNumber_Add(cwd, res);
-    Py_CLEAR(cwd);
-    Py_CLEAR(res);
-
-
-    if (PyList_Append(path, fullPath) != 0) {
-        critical_log("[Python]: Modifying the import path failed");
-    }
-
-    Py_CLEAR(fullPath);
+    Py_CLEAR(fullPathObj);
     Py_CLEAR(path);
     Py_CLEAR(sysMod);
 }
@@ -118,8 +84,6 @@ bool initializePython(int argc, char **argv) {
 
     if (!initPy3dEngineObjects()) return false;
     if (!initPy3dMathObjects()) return false;
-
-    addResourcesPath();
 
     trace_log(
         "[Python]: Initialization successful: %s\n"
