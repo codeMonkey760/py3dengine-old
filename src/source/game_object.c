@@ -10,60 +10,49 @@
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 
-struct ComponentListNode {
-    struct Py3dComponent *pyComponent;
-    struct ComponentListNode *next;
-};
-
-struct ChildListNode {
-    struct GameObject *child;
-    struct ChildListNode *next;
-};
-
 struct Py3dGameObject {
     PyObject_HEAD
-    struct GameObject *gameObject;
+    PyObject *componentsList;
+    PyObject *childrenList;
+    PyObject *parent;
+    PyObject *name;
+    PyObject *transform;
 };
 
 static PyObject *py3dGameObjectCtor = NULL;
 
 static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
+    Py_CLEAR(self->transform);
+    Py_CLEAR(self->name);
+    Py_CLEAR(self->parent);
+    Py_CLEAR(self->childrenList);
+    Py_CLEAR(self->componentsList);
+
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
-    self->gameObject = NULL;
+    self->componentsList = PyList_New(0);
+    self->childrenList = PyList_New(0);
+    self->parent = Py_None;
+    Py_INCREF(Py_None);
+    self->name = Py_None;
+    Py_INCREF(Py_None);
+    self->transform = (PyObject *) Py3dTransform_New();
 
     return 0;
 }
 
 static PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
-    if (self == NULL || self->gameObject == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
-        return NULL;
-    }
+    Py_INCREF(self->name);
 
-    return PyUnicode_FromString(getChars(getGameObjectName(self->gameObject)));
+    return self->name;
 }
 
 PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
-    if (self->gameObject == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
-        return NULL;
-    }
+    Py_INCREF(self->transform);
 
-    if (self->gameObject->transform == NULL) {
-        // Should I set an exception here instead?
-        Py_RETURN_NONE;
-    }
-
-    if (Py3dTransform_Check((PyObject *) self->gameObject->transform) == 0) {
-        PyErr_SetString(PyExc_AssertionError, "Python GameObject's transform is not of type Py3dTransform");
-        return NULL;
-    }
-
-    Py_INCREF(self->gameObject->transform);
-    return (PyObject *) self->gameObject->transform;
+    return (PyObject *) self->transform;
 }
 
 PyMethodDef Py3dGameObject_Methods[] = {
@@ -102,72 +91,6 @@ static PyObject *Py3dGameObject_New() {
     return py3dGameObject;
 }
 
-static void allocComponentListNode(struct ComponentListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
-
-    struct ComponentListNode *newNode = calloc(1, sizeof(struct ComponentListNode));
-    if (newNode == NULL) return;
-
-    newNode->pyComponent = NULL;
-    newNode->next = NULL;
-
-    (*listNodePtr) = newNode;
-    newNode = NULL;
-}
-
-static void deleteComponentListNode(struct ComponentListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
-
-    struct ComponentListNode *node = (*listNodePtr);
-    Py_CLEAR(node->pyComponent);
-
-    deleteComponentListNode(&node->next);
-
-    free(node);
-    node = NULL;
-    (*listNodePtr) = NULL;
-}
-
-static void allocChildListNode(struct ChildListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
-
-    struct ChildListNode *newNode = calloc(1, sizeof(struct ChildListNode));
-    if (newNode == NULL) return;
-
-    newNode->child = NULL;
-    newNode->next = NULL;
-
-    (*listNodePtr) = newNode;
-    newNode = NULL;
-}
-
-static void deleteChildListNode(struct ChildListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
-
-    struct ChildListNode *node = (*listNodePtr);
-    deleteGameObject(&node->child);
-
-    deleteChildListNode(&node->next);
-
-    free(node);
-    node = NULL;
-    (*listNodePtr) = NULL;
-}
-
-static void initializePyGameObject(struct GameObject *gameObject) {
-    if (gameObject == NULL || gameObject->pyGameObject != NULL) return;
-
-    struct Py3dGameObject *newPyGameObject = (struct Py3dGameObject *) Py3dGameObject_New();
-    if (newPyGameObject == NULL) {
-        critical_log("%s", "[GameObject]: Could not instantiate new PyGameObject");
-
-        return;
-    }
-
-    gameObject->pyGameObject = newPyGameObject;
-    newPyGameObject->gameObject = gameObject;
-}
-
 bool PyInit_Py3dGameObject(PyObject *module) {
     if (PyType_Ready(&Py3dGameObjectType) == -1) return false;
 
@@ -198,40 +121,13 @@ int Py3dGameObject_Check(PyObject *obj) {
     return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType);
 }
 
-void allocGameObject(struct GameObject **gameObjectPtr) {
-    if (gameObjectPtr == NULL || (*gameObjectPtr) != NULL) return;
+static PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyArg_UnpackTuple(args, )
 
-    struct GameObject *gameObject = NULL;
-    gameObject = calloc(1, sizeof(struct GameObject));
-    if (gameObject == NULL) return;
+    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
+    for (Py_ssize_t i = 0; i < componentCount; ++i) {
 
-    gameObject->components = NULL;
-    gameObject->children = NULL;
-    gameObject->parent = NULL;
-    gameObject->name = NULL;
-    gameObject->transform = Py3dTransform_New();
-    gameObject->pyGameObject = NULL;
-    initializePyGameObject(gameObject);
-
-    (*gameObjectPtr) = gameObject;
-    gameObject = NULL;
-}
-
-void deleteGameObject(struct GameObject **gameObjectPtr) {
-    if (gameObjectPtr == NULL || (*gameObjectPtr) == NULL) return;
-
-    struct GameObject *gameObject = (*gameObjectPtr);
-    deleteComponentListNode(&gameObject->components);
-    deleteChildListNode(&gameObject->children);
-    gameObject->parent = NULL;
-
-    deleteString(&gameObject->name);
-    Py_CLEAR(gameObject->transform);
-    Py_CLEAR(gameObject->pyGameObject);
-
-    free(gameObject);
-    gameObject = NULL;
-    (*gameObjectPtr) = NULL;
+    }
 }
 
 void updateGameObject(struct GameObject *gameObject, float dt) {
