@@ -122,11 +122,30 @@ int Py3dGameObject_Check(PyObject *obj) {
 }
 
 static PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
-    PyArg_UnpackTuple(args, )
+    float dt = 0.0f;
+    if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
 
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
+        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
+        if (!Py3dComponent_IsComponent(curComponent)) {
+            warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
+            continue;
+        }
 
+        Py3dComponent_CallUpdate((struct Py3dComponent *) curComponent, dt);
+    }
+
+    Py_ssize_t childCount = PySequence_Size(self->childrenList);
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (!Py3dGameObject_Check(curChild)) {
+            warning_log("[GameObject]: Child list has non Game Object child. Will not pass update message.");
+            continue;
+        }
+
+        PyObject *updateCallable = PyObject_GetAttrString(curChild, "Update");
+        if
     }
 }
 
