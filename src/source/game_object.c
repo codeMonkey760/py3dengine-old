@@ -64,6 +64,7 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
     {"attach_component", (PyCFunction) Py3dGameObject_AttachComponent, METH_VARARGS, "Attach a Component to a GameObject"},
     {"get_component_by_type", (PyCFunction) Py3dGameObject_GetComponentByType, METH_VARARGS, "Get a ref to the first Component of the specified type"},
+    {"get_child_by_name", (PyCFunction) Py3dGameObject_GetChildByName, METH_VARARGS, "Get a ref to the first child with the specified name"},
     {NULL}
 };
 
@@ -213,8 +214,37 @@ PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args
     }
 
     // TODO: this introduces a reference cycle and likely breaks garbage collection
+    Py_IncRef((PyObject *) self);
     ((struct Py3dGameObject *) newChild)->parent = (PyObject *) self;
     Py_RETURN_NONE;
+}
+
+PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *name = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyUnicode_Type, &name) != 1) return NULL;
+
+    PyObject *ret = Py_None;
+
+    Py_ssize_t childCount = PySequence_Size(self->childrenList);
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (Py3dGameObject_Check(curChild) != 1) {
+            warning_log("%s", "[GameObject]: Child list contains non GameObject entry");
+            continue;
+        }
+        PyObject *curChildName = Py3dGameObject_GetName((struct Py3dGameObject *) curChild, NULL);
+        int cmpResult = PyObject_RichCompareBool(name, curChildName, Py_EQ);
+        if (cmpResult == -1) {
+            handleException();
+        } else if (cmpResult == 1) {
+            ret = curChild;
+        }
+
+        Py_CLEAR(curChildName);
+    }
+
+    Py_INCREF(ret);
+    return ret;
 }
 
 PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -250,27 +280,6 @@ PyObject *Py3dGameObject_GetComponentByType(struct Py3dGameObject *self, PyObjec
 
     // TODO: return new reference?
     Py_INCREF(ret);
-    return ret;
-}
-
-struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name) {
-    if (gameObject == NULL || name == NULL) return NULL;
-
-    if (stringEqualsCStr(gameObject->name, name)) {
-        return gameObject;
-    }
-
-    struct ChildListNode *curNode = gameObject->children;
-    struct GameObject *ret = NULL;
-    while (curNode != NULL) {
-        ret = findGameObjectByName(curNode->child, name);
-        if (ret != NULL) {
-            return ret;
-        }
-
-        curNode = curNode->next;
-    }
-
     return ret;
 }
 
