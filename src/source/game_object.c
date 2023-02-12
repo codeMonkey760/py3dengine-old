@@ -235,6 +235,15 @@ PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *a
     return ret;
 }
 
+PyObject *Py3dGameObject_GetChildByNameCStr(struct Py3dGameObject *self, const char *name) {
+    PyObject *args = Py_BuildValue("(s)", name);
+
+    PyObject *ret = Py3dGameObject_GetChildByName(self, args, NULL);
+
+    Py_CLEAR(args);
+    return ret;
+}
+
 PyObject *Py3dGameObject_GetChildByIndex(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *indexAsObj = NULL;
     if (PyArg_ParseTuple(args, "O", &indexAsObj) != 1) return NULL;
