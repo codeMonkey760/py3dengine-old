@@ -65,6 +65,7 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"attach_component", (PyCFunction) Py3dGameObject_AttachComponent, METH_VARARGS, "Attach a Component to a GameObject"},
     {"get_component_by_type", (PyCFunction) Py3dGameObject_GetComponentByType, METH_VARARGS, "Get a ref to the first Component of the specified type"},
     {"get_child_by_name", (PyCFunction) Py3dGameObject_GetChildByName, METH_VARARGS, "Get a ref to the first child with the specified name"},
+    {"get_child_count", (PyCFunction) Py3dGameObject_GetChildCount, METH_NOARGS, "Get the number of children this GameObject has"},
     {NULL}
 };
 
@@ -245,6 +246,14 @@ PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *a
 
     Py_INCREF(ret);
     return ret;
+}
+
+PyObject *Py3dGameObject_GetChildCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return PyLong_FromSsize_t(Py3dGameObject_GetChildCountInt(self));
+}
+
+Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self) {
+    return PySequence_Size(self->childrenList);
 }
 
 PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
