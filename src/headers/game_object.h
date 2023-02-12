@@ -29,6 +29,8 @@ extern bool Py3dGameObject_FindCtor(PyObject *module);
 extern void Py3dGameObject_FinalizeCtor();
 extern int Py3dGameObject_Check(PyObject *obj);
 extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
+extern PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 
 extern void allocGameObject(struct GameObject **gameObjectPtr);
 extern void deleteGameObject(struct GameObject **gameObjectPtr);

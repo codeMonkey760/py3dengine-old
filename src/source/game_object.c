@@ -59,6 +59,8 @@ PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_
 PyMethodDef Py3dGameObject_Methods[] = {
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
+    {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
+    {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
     {NULL}
 };
 
@@ -154,6 +156,7 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
             handleException();
         }
         Py_CLEAR(ret);
+        Py_CLEAR(messageHandler);
     }
 
     Py_ssize_t childCount = PySequence_Size(self->childrenList);
@@ -164,116 +167,37 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
             continue;
         }
 
-        PyObject *updateCallable = PyObject_GetAttrString(curChild, "Update");
-        if (updateCallable == NULL || PyCallable_Check(updateCallable) != 1) {
-            warning_log("[GameObject]: Child has no Update callable. Will not pass update message");
+        PyObject *messageHandler = getCallable((PyObject *) self, messageName);
+        if (messageHandler == NULL) {
+            warning_log("[GameObject]: Could not pass \"%s\" message to child", messageName);
             handleException();
-            Py_CLEAR(updateCallable);
             continue;
         }
 
-        PyObject *updateRet = PyObject_CallOneArg(updateCallable, PyFloat_FromDouble(dt));
-        if (updateRet == NULL) {
-            warning_log("[GameObject]: Child raised exception while updating");
+        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+        if (ret == NULL) {
             handleException();
         }
 
-        Py_CLEAR(updateRet);
-        Py_CLEAR(updateCallable);
-    }
-}
-
-// TODO: these update and render function are rife with duplication ... refactor please
-static PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
-    float dt = 0.0f;
-    if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
-
-    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
-    for (Py_ssize_t i = 0; i < componentCount; ++i) {
-        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
-        if (!Py3dComponent_IsComponent(curComponent)) {
-            warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
-            continue;
-        }
-
-        Py3dComponent_CallUpdate((struct Py3dComponent *) curComponent, dt);
-    }
-
-    Py_ssize_t childCount = PySequence_Size(self->childrenList);
-    for (Py_ssize_t i = 0; i < childCount; ++i) {
-        PyObject *curChild = PyList_GetItem(self->childrenList, i);
-        if (!Py3dGameObject_Check(curChild)) {
-            warning_log("[GameObject]: Child list has non Game Object child. Will not pass update message.");
-            continue;
-        }
-
-        PyObject *updateCallable = PyObject_GetAttrString(curChild, "Update");
-        if (updateCallable == NULL || PyCallable_Check(updateCallable) != 1) {
-            warning_log("[GameObject]: Child has no Update callable. Will not pass update message");
-            handleException();
-            Py_CLEAR(updateCallable);
-            continue;
-        }
-
-        PyObject *updateRet = PyObject_CallOneArg(updateCallable, PyFloat_FromDouble(dt));
-        if (updateRet == NULL) {
-            warning_log("[GameObject]: Child raised exception while updating");
-            handleException();
-        }
-
-        Py_CLEAR(updateRet);
-        Py_CLEAR(updateCallable);
+        Py_CLEAR(ret);
+        Py_CLEAR(messageHandler);
     }
 
     Py_RETURN_NONE;
 }
 
-static PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    float dt = 0.0f;
+    if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
+
+    return passMessage(self, "update", args);
+}
+
+PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *renderingContext = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext)) return NULL;
 
-    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
-    for (Py_ssize_t i = 0; i < componentCount; ++i) {
-        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
-        if (!Py3dComponent_IsComponent(curComponent)) {
-            warning_log("[GameObject]: Component list has non component item. Will not pass render message.");
-            continue;
-        }
-
-        Py3dComponent_CallRender(
-            (struct Py3dComponent *) curComponent,
-            ((struct Py3dRenderingContext *) renderingContext)->renderingContext
-        );
-    }
-
-    Py_ssize_t childCount = PySequence_Size(self->childrenList);
-    for (Py_ssize_t i = 0; i < childCount; ++i) {
-        PyObject *curChild = PyList_GetItem(self->childrenList, i);
-        if (!Py3dGameObject_Check(curChild)) {
-            warning_log("[GameObject]: Child list has non Game Object child. Will not pass render message.");
-            continue;
-        }
-
-
-    }
-}
-
-void renderGameObject(struct GameObject *gameObject, struct RenderingContext *renderingContext) {
-    if (gameObject == NULL || renderingContext == NULL) return;
-
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        Py3dComponent_CallRender(curNode->pyComponent, renderingContext);
-
-        curNode = curNode->next;
-    }
-
-    struct ChildListNode *curChild = gameObject->children;
-    while (curChild != NULL) {
-        renderGameObject(curChild->child, renderingContext);
-
-        curChild = curChild->next;
-    }
+    return passMessage(self, "render", args);
 }
 
 void attachChild(struct GameObject *parent, struct GameObject *newChild) {
