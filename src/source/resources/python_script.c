@@ -83,7 +83,7 @@ void createPythonComponent(struct PythonScript *resource, struct Py3dComponent *
         return;
     }
 
-    if (!Py3dComponent_IsComponent(newComponent)) {
+    if (!Py3dComponent_Check(newComponent)) {
         error_log("[PythonScript]: Custom python components must be sub class of \"py3dengine.Component\"");
         Py_CLEAR(newComponent);
 

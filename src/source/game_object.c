@@ -352,7 +352,7 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
         PyObject *curComponent = PyList_GetItem(self->componentsList, i);
-        if (!Py3dComponent_IsComponent(curComponent)) {
+        if (!Py3dComponent_Check(curComponent)) {
             warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
             continue;
         }
