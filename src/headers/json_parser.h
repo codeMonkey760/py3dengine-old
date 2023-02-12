@@ -1,17 +1,20 @@
 #ifndef PY3DENGINE_JSON_PARSER_H
 #define PY3DENGINE_JSON_PARSER_H
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <stdbool.h>
 
-struct GameObject;
+struct Py3dGameObject;
 struct ResourceManager;
 
 typedef struct json_object json_object;
 
 extern bool parseGameObject(
     json_object *jsonGameObject,
-    struct GameObject *parent,
-    struct GameObject **root,
+    struct Py3dGameObject *parent,
+    struct Py3dGameObject **root,
     struct ResourceManager *resourceManager
 );
 

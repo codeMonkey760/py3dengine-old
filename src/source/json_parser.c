@@ -157,8 +157,8 @@ static bool parsePythonComponent(
 
 bool parseGameObject(
     json_object *json,
-    struct GameObject *parent,
-    struct GameObject **rootPtr,
+    struct Py3dGameObject *parent,
+    struct Py3dGameObject **rootPtr,
     struct ResourceManager *resourceManager
 ) {
     if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return false;
@@ -175,11 +175,11 @@ bool parseGameObject(
     json_object *json_children_array = fetchProperty(json, "children", json_type_array);
     if (json_children_array == NULL) return false;
 
-    struct GameObject *newGO = NULL;
-    allocGameObject(&newGO);
+    struct Py3dGameObject *newGO = NULL;
+    newGO = (struct Py3dGameObject *) Py3dGameObject_New();
     if (newGO == NULL) return false;
 
-    setGameObjectName(newGO, json_object_get_string(json_name));
+    Py3dGameObject_SetNameCStr(newGO, json_object_get_string(json_name));
     parseTransformComponent(json_transform, getGameObjectTransform(newGO));
 
     size_t json_components_array_length = json_object_array_length(json_components_array);
