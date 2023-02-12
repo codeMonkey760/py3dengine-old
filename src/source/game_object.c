@@ -190,6 +190,7 @@ PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args
     Py_RETURN_NONE;
 }
 
+// TODO: Returns borrowed reference?
 PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *name = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyUnicode_Type, &name) != 1) return NULL;
@@ -214,7 +215,23 @@ PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *a
         Py_CLEAR(curChildName);
     }
 
-    Py_INCREF(ret);
+    if (!Py_IsNone(ret)) return ret;
+
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (Py3dGameObject_Check(curChild) != 1) {
+            warning_log("%s", "[GameObject]: Child list contains non GameObject entry");
+            continue;
+        }
+
+        if (Py_EnterRecursiveCall(" in Py3dGameObject_GetChildByName") != 0) return NULL;
+        ret = Py3dGameObject_GetChildByName((struct Py3dGameObject *) curChild, args, kwds);
+        Py_LeaveRecursiveCall();
+
+        if (ret == NULL) return NULL;
+        if (!Py_IsNone(ret)) break;
+    }
+
     return ret;
 }
 
