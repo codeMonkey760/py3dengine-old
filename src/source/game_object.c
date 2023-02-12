@@ -122,6 +122,67 @@ int Py3dGameObject_Check(PyObject *obj) {
     return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType);
 }
 
+static PyObject *getCallable(PyObject *obj, const char *callableName) {
+    PyObject *callable = PyObject_GetAttrString(obj, callableName);
+    if (callable == NULL) return NULL;
+    if (!PyCallable_Check(callable)) {
+        PyErr_Format(PyExc_TypeError, "[GameObject]: Object must have a callable attribute called \"%s\"", callableName);
+        return NULL;
+    }
+
+    return callable;
+}
+
+static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args) {
+    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
+    for (Py_ssize_t i = 0; i < componentCount; ++i) {
+        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
+        if (!Py3dComponent_IsComponent(curComponent)) {
+            warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
+            continue;
+        }
+
+        PyObject *messageHandler = getCallable((PyObject *) self, messageName);
+        if (messageHandler == NULL) {
+            warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
+            handleException();
+            continue;
+        }
+
+        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+        if (ret == NULL) {
+            handleException();
+        }
+        Py_CLEAR(ret);
+    }
+
+    Py_ssize_t childCount = PySequence_Size(self->childrenList);
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (!Py3dGameObject_Check(curChild)) {
+            warning_log("[GameObject]: Child list has non Game Object child. Will not pass update message.");
+            continue;
+        }
+
+        PyObject *updateCallable = PyObject_GetAttrString(curChild, "Update");
+        if (updateCallable == NULL || PyCallable_Check(updateCallable) != 1) {
+            warning_log("[GameObject]: Child has no Update callable. Will not pass update message");
+            handleException();
+            Py_CLEAR(updateCallable);
+            continue;
+        }
+
+        PyObject *updateRet = PyObject_CallOneArg(updateCallable, PyFloat_FromDouble(dt));
+        if (updateRet == NULL) {
+            warning_log("[GameObject]: Child raised exception while updating");
+            handleException();
+        }
+
+        Py_CLEAR(updateRet);
+        Py_CLEAR(updateCallable);
+    }
+}
+
 // TODO: these update and render function are rife with duplication ... refactor please
 static PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     float dt = 0.0f;
