@@ -213,18 +213,6 @@ PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args
     }
 }
 
-void removeChild(struct GameObject *gameObject, struct GameObject *target) {
-    critical_log("%s", "GameObject::removeChild is not yet implemented");
-
-    // TODO: implement GameObject::removeChild
-}
-
-void removeChildByName(struct GameObject *gameObject, const char* name) {
-    critical_log("%s", "GameObject::removeChildByName is not yet implemented");
-
-    // TODO: implement GameObject::removeChildByName
-}
-
 struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name) {
     if (gameObject == NULL || name == NULL) return NULL;
 
