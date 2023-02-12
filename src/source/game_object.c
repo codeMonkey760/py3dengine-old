@@ -61,10 +61,11 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
     {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
     {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
+    {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
     {NULL}
 };
 
-PyTypeObject Py3dGameObjectType = {
+PyTypeObject Py3dGameObject_Type = {
     PyObject_HEAD_INIT(NULL)
     .tp_name = "py3dengine.GameObject",
     .tp_basicsize = sizeof(struct Py3dGameObject),
@@ -95,11 +96,11 @@ static PyObject *Py3dGameObject_New() {
 }
 
 bool PyInit_Py3dGameObject(PyObject *module) {
-    if (PyType_Ready(&Py3dGameObjectType) == -1) return false;
+    if (PyType_Ready(&Py3dGameObject_Type) == -1) return false;
 
-    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObjectType) == -1) return false;
+    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObject_Type) == -1) return false;
 
-    Py_INCREF(&Py3dGameObjectType);
+    Py_INCREF(&Py3dGameObject_Type);
 
     return true;
 }
@@ -121,7 +122,7 @@ void Py3dGameObject_FinalizeCtor() {
 }
 
 int Py3dGameObject_Check(PyObject *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType);
+    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
 }
 
 static PyObject *getCallable(PyObject *obj, const char *callableName) {
@@ -195,42 +196,21 @@ PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyO
 
 PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *renderingContext = NULL;
-    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext)) return NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
     return passMessage(self, "render", args);
 }
 
-void attachChild(struct GameObject *parent, struct GameObject *newChild) {
-    if (parent == NULL || newChild == NULL) return;
+PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *newChild = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &newChild) != 1) return NULL;
 
-    struct String *newChildName = getGameObjectName(newChild);
-    if (newChildName == NULL) {
-        error_log("%s", "Cannot attach child game object unless it has a name");
-        return;
-    }
-
-    struct ChildListNode *prevNode = NULL, *curNode = parent->children;
-    while (curNode != NULL) {
-        if (stringEquals(getGameObjectName(curNode->child), newChildName)) {
-            error_log("%s", "Cannot attach child game object unless its name is unique");
-            return;
-        }
-
-        prevNode = curNode;
-        curNode = curNode->next;
-    }
-
-    struct ChildListNode *newNode = NULL;
-    allocChildListNode(&newNode);
-    if (newNode == NULL) return;
-    newNode->child = newChild;
-
-    if (prevNode == NULL) {
-        parent->children = newNode;
+    // TODO: figure out if I need to decref here
+    if (PyList_Append(self->childrenList, newChild) != 0) {
+        return NULL;
     } else {
-        prevNode->next = newNode;
+        Py_RETURN_NONE;
     }
-    newChild->parent = parent;
 }
 
 void removeChild(struct GameObject *gameObject, struct GameObject *target) {

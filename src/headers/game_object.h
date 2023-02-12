@@ -31,6 +31,7 @@ extern int Py3dGameObject_Check(PyObject *obj);
 extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 
 extern void allocGameObject(struct GameObject **gameObjectPtr);
 extern void deleteGameObject(struct GameObject **gameObjectPtr);
@@ -38,7 +39,6 @@ extern void deleteGameObject(struct GameObject **gameObjectPtr);
 extern void updateGameObject(struct GameObject *gameObject, float dt);
 extern void renderGameObject(struct GameObject *gameObject, struct RenderingContext *renderingContext);
 
-extern void attachChild(struct GameObject *parent, struct GameObject *newChild);
 extern void removeChild(struct GameObject *gameObject, struct GameObject *target);
 extern void removeChildByName(struct GameObject *gameObject, const char* name);
 
