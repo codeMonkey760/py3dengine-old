@@ -6,7 +6,6 @@
 #include <structmember.h>
 #include <stdbool.h>
 
-struct GameObject;
 struct Py3dGameObject;
 struct RenderingContext;
 struct ResourceManager;
@@ -14,7 +13,7 @@ struct ResourceManager;
 struct Py3dComponent {
     PyObject_HEAD
     PyObject *name;
-    struct GameObject *owner;
+    struct Py3dGameObject *owner;
 };
 
 extern PyTypeObject Py3dComponent_Type;
@@ -24,8 +23,6 @@ extern bool Py3dComponent_IsComponent(PyObject *pyObj);
 extern PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 extern PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 
-extern void Py3dComponent_CallUpdate(struct Py3dComponent *component, float dt);
-extern void Py3dComponent_CallRender(struct Py3dComponent *component, struct RenderingContext *renderingContext);
 extern bool Py3dComponent_CallParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm);
 
 #endif

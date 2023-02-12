@@ -15,7 +15,7 @@ struct Py3dGameObject {
     PyObject_HEAD
     PyObject *componentsList;
     PyObject *childrenList;
-    PyObject *parent;
+    struct Py3dGameObject *parent;
     PyObject *name;
     PyObject *transform;
 };
@@ -62,6 +62,7 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
     {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
     {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
+    {"attach_component", (PyCFunction) Py3dGameObject_AttachComponent, METH_VARARGS, "Attach a Component to a GameObject"},
     {NULL}
 };
 
@@ -208,9 +209,24 @@ PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args
     // TODO: figure out if I need to decref here
     if (PyList_Append(self->childrenList, newChild) != 0) {
         return NULL;
-    } else {
-        Py_RETURN_NONE;
     }
+
+    // TODO: this introduces a reference cycle and likely breaks garbage collection
+    ((struct Py3dGameObject *) newChild)->parent = self;
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *newComponent = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
+
+    // TODO: figure out if I need to decref here
+    if (PyList_Append(self->componentsList, newComponent) != 0) {
+        return NULL;
+    }
+
+    // TODO: this introduces a reference cycle and likely breaks garbage collection
+    ((struct Py3dComponent *) newComponent)->owner = self;
 }
 
 struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name) {
@@ -232,51 +248,6 @@ struct GameObject *findGameObjectByName(struct GameObject *gameObject, const cha
     }
 
     return ret;
-}
-
-void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent) {
-    if (gameObject == NULL || newPyComponent == NULL) return;
-
-    PyObject *newComponentName = Py3dComponent_GetName(newPyComponent, NULL);
-    if (newComponentName == NULL) {
-        error_log("%s", "[GameObject]: Component threw exception while trying to get its name");
-        handleException();
-        return;
-    }
-
-    struct ComponentListNode *prevNode = NULL, *curNode = gameObject->components;
-    while (curNode != NULL) {
-        if (curNode->pyComponent == NULL) {
-            critical_log("[GameObject]: Sanity check failure. NULL pyComponent found while iterating components list");
-            continue;
-        }
-
-        PyObject *curComponentName = Py3dComponent_GetName(curNode->pyComponent, NULL);
-        if (PyObject_RichCompareBool(newComponentName, curComponentName, Py_EQ) == 1) {
-            error_log("%s", "[GameObject]: Component names must be unique. Rejecting attachment request");
-            Py_CLEAR(newComponentName);
-            Py_CLEAR(curComponentName);
-            return;
-        }
-        Py_CLEAR(curComponentName);
-
-        prevNode = curNode;
-        curNode = curNode->next;
-    }
-
-    Py_CLEAR(newComponentName);
-
-    struct ComponentListNode *newNode = NULL;
-    allocComponentListNode(&newNode);
-    if (newNode == NULL) return;
-
-    newNode->pyComponent = newPyComponent;
-    if (prevNode == NULL) {
-        gameObject->components = newNode;
-    } else {
-        prevNode->next = newNode;
-    }
-    newPyComponent->owner = gameObject;
 }
 
 size_t getGameObjectComponentsLength(struct GameObject *gameObject) {

@@ -32,10 +32,10 @@ extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObje
 extern PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 
 extern struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name);
 
-extern void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent);
 extern struct BaseComponent *getGameObjectComponentByType(struct GameObject *gameObject, const char *typeName);
 extern size_t getGameObjectComponentsLength(struct GameObject *gameObject);
 extern struct Py3dComponent *getGameObjectComponentByIndex(struct GameObject *gameObject, size_t index);
