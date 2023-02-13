@@ -209,15 +209,23 @@ void deleteRenderingContext(struct RenderingContext **contextPtr) {
     (*contextPtr) = NULL;
 }
 
-void initRenderingContext(struct RenderingContext *context, struct GameObject *activeCamera) {
+void initRenderingContext(struct RenderingContext *context, PyObject *activeCamera) {
     if (context == NULL || activeCamera == NULL) return;
 
-    struct Py3dTransform *transform = getGameObjectTransform(activeCamera);
-    if (transform == NULL) {
-        critical_log("%s", "[RenderingContext]: Could not query Transform Component from the active camera game object. It's probably malformed.");
+    if (!Py3dGameObject_Check(activeCamera)) {
+        critical_log("%s", "[RenderingContext]: Active camera must be a Game Object");
         return;
     }
+    struct Py3dGameObject *activeCameraGO = (struct Py3dGameObject *) activeCamera;
 
+    PyObject *getTransformRet = Py3dGameObject_GetTransform(activeCameraGO, NULL);
+    if (getTransformRet == NULL || !Py3dTransform_Check(getTransformRet)) {
+        critical_log("%s", "[RenderingContext]: Could not query Transform Component from the active camera game object");
+        handleException();
+        Py_CLEAR(getTransformRet);
+        return;
+    }
+    struct Py3dTransform *transform = (struct Py3dTransform *) getTransformRet;
 
     struct PerspectiveCamera *camera = NULL;
     size_t numComponents = 0;

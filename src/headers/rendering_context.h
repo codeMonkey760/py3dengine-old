@@ -6,7 +6,6 @@
 #include <structmember.h>
 #include <stdbool.h>
 
-struct GameObject;
 struct Py3dRenderingContext;
 
 struct RenderingContext {
@@ -29,6 +28,6 @@ extern struct Py3dRenderingContext *Py3dRenderingContext_New();
 
 extern void allocRenderingContext(struct RenderingContext **contextPtr);
 extern void deleteRenderingContext(struct RenderingContext **contextPtr);
-extern void initRenderingContext(struct RenderingContext *context, struct GameObject *activeCamera);
+extern void initRenderingContext(struct RenderingContext *context, PyObject *activeCamera);
 
 #endif
