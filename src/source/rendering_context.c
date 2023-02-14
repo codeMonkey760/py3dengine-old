@@ -228,17 +228,24 @@ void initRenderingContext(struct RenderingContext *context, PyObject *activeCame
     struct Py3dTransform *transform = (struct Py3dTransform *) getTransformRet;
 
     struct PerspectiveCamera *camera = NULL;
-    size_t numComponents = 0;
-    numComponents = getGameObjectComponentsLength(activeCamera);
-    for (size_t i = 0; i < numComponents; ++i) {
-        struct Py3dComponent *curComponent = getGameObjectComponentByIndex(activeCamera, i);
-        extractCameraFromComponent((PyObject *) curComponent, &camera);
+    Py_ssize_t componentCount = Py3dGameObject_GetComponentCountInt(activeCameraGO);
+    for (Py_ssize_t i = 0; i < componentCount; ++i) {
+        PyObject *getComponentRet = Py3dGameObject_GetComponentByIndexInt(activeCameraGO, i);
+        if (getComponentRet == NULL || !Py3dComponent_Check(getComponentRet)) {
+            Py_CLEAR(getComponentRet);
+            critical_log("%s", "[RenderingContext]: Encountered malformed component while parsing for camera");
+            handleException();
+            continue;
+        }
+        extractCameraFromComponent(getComponentRet, &camera);
+        Py_CLEAR(getComponentRet);
 
         if (camera != NULL) break;
     }
 
     if (camera == NULL) {
         error_log("%s", "[RenderingContext]: Could not query Camera Component from the active camera game object. It's probably malformed.");
+        Py_CLEAR(transform);
         return;
     }
 
@@ -252,9 +259,10 @@ void initRenderingContext(struct RenderingContext *context, PyObject *activeCame
 
     Mat4Mult(
         context->vpMtx,
-        getTransformViewMtx(getGameObjectTransform(activeCamera)),
+        getTransformViewMtx(transform),
         pMtx
     );
 
     Vec3Copy(context->cameraPositionW, transform->position);
+    Py_CLEAR(transform);
 }

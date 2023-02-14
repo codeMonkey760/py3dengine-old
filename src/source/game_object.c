@@ -281,7 +281,7 @@ PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *
     }
 
     // TODO: this introduces a reference cycle and likely breaks garbage collection
-    ((struct Py3dComponent *) newComponent)->owner = self;
+    ((struct Py3dComponent *) newComponent)->owner = (PyObject *) self;
     Py_INCREF(self);
 
     Py_RETURN_NONE;
