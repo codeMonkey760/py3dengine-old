@@ -386,17 +386,24 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
             continue;
         }
 
-        PyObject *messageHandler = getCallable((PyObject *) self, messageName);
+        PyObject *messageHandler = getCallable((PyObject *) curChild, messageName);
         if (messageHandler == NULL) {
             warning_log("[GameObject]: Could not pass \"%s\" message to child", messageName);
             handleException();
             continue;
         }
 
+        if (Py_EnterRecursiveCall(" in GameObject::passMessage") != 0) {
+            critical_log("[GameObject]: Hit max recursion depth while passing message \"%s\" to children", messageName);
+            handleException();
+            Py_CLEAR(messageHandler);
+            continue;
+        }
         PyObject *ret = PyObject_Call(messageHandler, args, NULL);
         if (ret == NULL) {
             handleException();
         }
+        Py_LeaveRecursiveCall();
 
         Py_CLEAR(ret);
         Py_CLEAR(messageHandler);
