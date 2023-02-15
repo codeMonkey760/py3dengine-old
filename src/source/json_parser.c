@@ -6,9 +6,7 @@
 #include "json_parser.h"
 #include "game_object.h"
 #include "resource_manager.h"
-#include "resources/model.h"
 #include "resources/shader.h"
-#include "resources/material.h"
 #include "resources/python_script.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
@@ -74,17 +72,14 @@ static PyObject *createPyDictFromJsonObject(json_object *root) {
                 value = PyUnicode_FromString(json_object_get_string(val));
                 break;
             case json_type_boolean:
-                // TODO: double check this
                 value = PyBool_FromLong(json_object_get_boolean(val));
                 break;
             case json_type_null:
-                Py_INCREF(Py_None);
-                value = Py_None;
+                value = Py_NewRef(Py_None);
                 break;
             case json_type_array:
                 // TODO: implement this
-                Py_INCREF(Py_None);
-                value = Py_None;
+                value = Py_NewRef(Py_None);
                 break;
             case json_type_object:
                 value = createPyDictFromJsonObject(val);
@@ -98,23 +93,25 @@ static PyObject *createPyDictFromJsonObject(json_object *root) {
     return ret;
 }
 
-bool parseTransformComponent(json_object *json, struct Py3dTransform *component) {
-    if (json == NULL || component == NULL) return false;
+bool parseTransformComponent(json_object *json, PyObject *component) {
+    if (json == NULL || component == NULL || Py3dTransform_Check(component) != 1) return false;
+
+    struct Py3dTransform *transform = (struct Py3dTransform *) component;
 
     float dataBuffer[4];
     memset(dataBuffer, 0, sizeof(float) * 4);
 
     if (parseVec(json, "position", dataBuffer, 3) == false) return false;
-    Vec3Copy(component->position, dataBuffer);
+    Vec3Copy(transform->position, dataBuffer);
 
     if (parseVec(json, "orientation", dataBuffer, 4) == false) return false;
-    QuaternionCopy(component->orientation, dataBuffer);
+    QuaternionCopy(transform->orientation, dataBuffer);
 
     if (parseVec(json, "scale", dataBuffer, 3) == false) return false;
-    Vec3Copy(component->scale, dataBuffer);
+    Vec3Copy(transform->scale, dataBuffer);
 
-    component->matrixCacheDirty = true;
-    component->viewMatrixCacheDirty = true;
+    transform->matrixCacheDirty = true;
+    transform->viewMatrixCacheDirty = true;
 
     return true;
 }
@@ -157,8 +154,8 @@ static bool parsePythonComponent(
 
 bool parseGameObject(
     json_object *json,
-    struct GameObject *parent,
-    struct GameObject **rootPtr,
+    struct Py3dGameObject *parent,
+    struct Py3dGameObject **rootPtr,
     struct ResourceManager *resourceManager
 ) {
     if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return false;
@@ -175,12 +172,15 @@ bool parseGameObject(
     json_object *json_children_array = fetchProperty(json, "children", json_type_array);
     if (json_children_array == NULL) return false;
 
-    struct GameObject *newGO = NULL;
-    allocGameObject(&newGO);
+    struct Py3dGameObject *newGO = NULL;
+    newGO = (struct Py3dGameObject *) Py3dGameObject_New();
     if (newGO == NULL) return false;
 
-    setGameObjectName(newGO, json_object_get_string(json_name));
-    parseTransformComponent(json_transform, getGameObjectTransform(newGO));
+    const char *gameObjectName = json_object_get_string(json_name);
+    Py3dGameObject_SetNameCStr(newGO, gameObjectName);
+    PyObject *transform = Py3dGameObject_GetTransform(newGO, NULL);
+    parseTransformComponent(json_transform, transform);
+    Py_CLEAR(transform);
 
     size_t json_components_array_length = json_object_array_length(json_components_array);
     for (size_t i = 0; i < json_components_array_length; ++i) {
@@ -188,7 +188,7 @@ bool parseGameObject(
         if (cur_component_json == NULL || !json_object_is_type(cur_component_json, json_type_object)) {
             error_log(
                     "[JsonParser]: Could not parse component of Game Object with name \"%s\"",
-                    getGameObjectName(newGO)
+                    gameObjectName
             );
 
             continue;
@@ -210,8 +210,16 @@ bool parseGameObject(
             continue;
         }
 
-        attachPyComponent(newGO, pyComponent);
-        pyComponent = NULL;
+        PyObject *attachComponentArgs = Py_BuildValue("(O)", pyComponent);
+        PyObject *attachComponentRet = Py3dGameObject_AttachComponent(newGO, attachComponentArgs, NULL);
+        if (attachComponentRet == NULL) {
+            error_log("%s", "[JsonParser]: Component failed to attach. Discarding it.");
+            handleException();
+        }
+
+        Py_CLEAR(attachComponentRet);
+        Py_CLEAR(attachComponentArgs);
+        Py_CLEAR(pyComponent);
     }
 
     size_t json_children_array_length = json_object_array_length(json_children_array);
@@ -220,7 +228,7 @@ bool parseGameObject(
         if (cur_child_json == NULL || !json_object_is_type(cur_child_json, json_type_object)) {
             error_log(
                     "[JsonParser]: Could not parse child of Game Object with name \"%s\"",
-                    getGameObjectName(newGO)
+                    gameObjectName
             );
 
             continue;
@@ -230,11 +238,19 @@ bool parseGameObject(
     }
 
     if (parent != NULL) {
-        attachChild(parent, newGO);
+        PyObject *attachChildArgs = Py_BuildValue("(O)", newGO);
+        PyObject *attachChildRet = Py3dGameObject_AttachChild(parent, attachChildArgs, NULL);
+        if (attachChildRet == NULL) {
+            error_log("%s", "[JsonParser]: Game Object failed to attach to its parent. Discarding it");
+            handleException();
+        }
+        Py_CLEAR(attachChildRet);
+        Py_CLEAR(attachChildArgs);
+        Py_CLEAR(newGO);
     } else {
         (*rootPtr) = newGO;
+        newGO = NULL;
     }
-    newGO = NULL;
 
     return true;
 }

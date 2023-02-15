@@ -1,4 +1,5 @@
-#include <stdlib.h>
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -6,6 +7,7 @@
 #include "logger.h"
 #include "config.h"
 #include "util.h"
+#include "python/python_util.h"
 #include "python/python_wrapper.h"
 #include "engine.h"
 #include "importers/scene.h"
@@ -23,8 +25,8 @@ static GLFWwindow *glfwWindow = NULL;
 
 struct ResourceManager *resourceManager = NULL;
 
-struct GameObject *root = NULL;
-struct GameObject *activeCamera = NULL;
+struct Py3dGameObject *root = NULL;
+struct Py3dGameObject *activeCamera = NULL;
 
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
@@ -44,7 +46,7 @@ static void updateStats(float dt) {
     frame_count++;
     since_last_calc += dt;
 
-    if (print_report == true && since_last_calc >= 1.0f) {
+    if (print_report && since_last_calc >= 1.0f) {
         float _ms = (since_last_calc / (float) frame_count) * 1000.0f;
         float _fps = (float) frame_count;
 
@@ -63,7 +65,7 @@ static void printStats(float dt) {
     if (time_since_last_report >= 1.0f) {
         time_since_last_report = clampValue(time_since_last_report, 1.0f);
 
-        if (print_report == true) {
+        if (print_report) {
             trace_log("UP_TIME: %.2f FPS %.2f MS %.2f", elapsed_time, fps, mpf);
         }
     }
@@ -73,15 +75,45 @@ static void updateEngine(float dt) {
     updateStats(dt);
     printStats(dt);
 
-    updateGameObject(root, dt);
+    if (root == NULL) return;
+
+    PyObject *args = Py_BuildValue("(f)", dt);
+    if (args == NULL) {
+        handleException();
+        return;
+    }
+
+    PyObject *ret = Py3dGameObject_Update(root, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
 }
 
 static void renderEngine() {
+    if (root == NULL) return;
+
     struct RenderingContext *renderingContext = NULL;
     allocRenderingContext(&renderingContext);
+    if (renderingContext == NULL) return;
     initRenderingContext(renderingContext, activeCamera);
 
-    renderGameObject(root, renderingContext);
+    PyObject *args = Py_BuildValue("(O)", renderingContext->py3dRenderingContext);
+    if (args == NULL) {
+        deleteRenderingContext(&renderingContext);
+        handleException();
+        return;
+    }
+
+    PyObject *ret = Py3dGameObject_Render(root, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
     deleteRenderingContext(&renderingContext);
 }
 
@@ -148,8 +180,11 @@ void initializeEngine(int argc, char **argv){
         startingScene = NULL;
     }
 
-    activeCamera = findGameObjectByName(root, "Camera");
+    activeCamera = (struct Py3dGameObject *) Py3dGameObject_GetChildByNameCStr(root, "Camera");
     if (activeCamera == NULL) {
+        handleException();
+        warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
+    } else if (Py_IsNone((PyObject *) activeCamera)) {
         warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
     }
 
@@ -178,8 +213,8 @@ void finalizeEngine() {
     glfwDestroyWindow(glfwWindow);
     deleteResourceManager(&resourceManager);
 
-    deleteGameObject(&root);
-    activeCamera = NULL;
+    Py_CLEAR(activeCamera);
+    Py_CLEAR(root);
 
     glfwTerminate();
 

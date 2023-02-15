@@ -1,90 +1,125 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <stdlib.h>
 
-#include "custom_string.h"
 #include "logger.h"
 #include "game_object.h"
+#include "rendering_context.h"
 #include "python/python_util.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 
-struct ComponentListNode {
-    struct Py3dComponent *pyComponent;
-    struct ComponentListNode *next;
-};
-
-struct ChildListNode {
-    struct GameObject *child;
-    struct ChildListNode *next;
-};
-
 struct Py3dGameObject {
     PyObject_HEAD
-    struct GameObject *gameObject;
+    PyObject *componentsList;
+    PyObject *childrenList;
+    PyObject *parent;
+    PyObject *name;
+    PyObject *transform;
 };
 
 static PyObject *py3dGameObjectCtor = NULL;
+static PyObject *getCallable(PyObject *obj, const char *callableName);
+static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args);
+
+static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit, void *arg) {
+    Py_VISIT(self->componentsList);
+    Py_VISIT(self->childrenList);
+    Py_VISIT(self->parent);
+    Py_VISIT(self->name);
+    Py_VISIT(self->transform);
+    return 0;
+}
+
+static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
+    Py_CLEAR(self->transform);
+    Py_CLEAR(self->name);
+    Py_CLEAR(self->parent);
+    Py_CLEAR(self->childrenList);
+    Py_CLEAR(self->componentsList);
+    return 0;
+}
 
 static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
+    trace_log("%s", "[GameObject]: Deallocating GameObject");
+
+    PyObject_GC_UnTrack(self);
+    Py3dGameObject_Clear(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
-    self->gameObject = NULL;
+    self->componentsList = PyList_New(0);
+    self->childrenList = PyList_New(0);
+    self->parent = Py_NewRef(Py_None);
+    self->name = Py_NewRef(Py_None);
+    self->transform = (PyObject *) Py3dTransform_New();
 
     return 0;
 }
 
-static PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
-    if (self == NULL || self->gameObject == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
-        return NULL;
-    }
-
-    return PyUnicode_FromString(getChars(getGameObjectName(self->gameObject)));
-}
-
-PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
-    if (self->gameObject == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Python GameObject is detached from C GameObject");
-        return NULL;
-    }
-
-    if (self->gameObject->transform == NULL) {
-        // Should I set an exception here instead?
-        Py_RETURN_NONE;
-    }
-
-    if (Py3dTransform_Check((PyObject *) self->gameObject->transform) == 0) {
-        PyErr_SetString(PyExc_AssertionError, "Python GameObject's transform is not of type Py3dTransform");
-        return NULL;
-    }
-
-    Py_INCREF(self->gameObject->transform);
-    return (PyObject *) self->gameObject->transform;
-}
-
 PyMethodDef Py3dGameObject_Methods[] = {
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
+    {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
+    {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
+    {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
+    {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
+    {"get_child_by_name", (PyCFunction) Py3dGameObject_GetChildByName, METH_VARARGS, "Get a ref to the first child with the specified name"},
+    {"get_child_by_index", (PyCFunction) Py3dGameObject_GetChildByIndex, METH_VARARGS, "Get a ref to the child at the specified index"},
+    {"get_child_count", (PyCFunction) Py3dGameObject_GetChildCount, METH_NOARGS, "Get the number of children this GameObject has"},
+    {"attach_component", (PyCFunction) Py3dGameObject_AttachComponent, METH_VARARGS, "Attach a Component to a GameObject"},
+    {"get_component_by_type", (PyCFunction) Py3dGameObject_GetComponentByType, METH_VARARGS, "Get a ref to the first Component of the specified type"},
+    {"get_component_by_index", (PyCFunction) Py3dGameObject_GetComponentByIndex, METH_VARARGS, "Get a ref to the component at the specified index"},
+    {"get_component_count", (PyCFunction) Py3dGameObject_GetComponentCount, METH_NOARGS, "Get the number of components this GameObject has"},
     {NULL}
 };
 
-PyTypeObject Py3dGameObjectType = {
+PyTypeObject Py3dGameObject_Type = {
     PyObject_HEAD_INIT(NULL)
     .tp_name = "py3dengine.GameObject",
     .tp_basicsize = sizeof(struct Py3dGameObject),
     .tp_dealloc = (destructor) Py3dGameObject_Dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .tp_doc = "Class for manipulating Game Objects",
     .tp_methods = Py3dGameObject_Methods,
     .tp_init = (initproc) Py3dGameObject_Init,
-    .tp_new = PyType_GenericNew
+    .tp_new = PyType_GenericNew,
+    .tp_traverse = (traverseproc) Py3dGameObject_Traverse,
+    .tp_clear = (inquiry) Py3dGameObject_Clear
 };
 
-static PyObject *Py3dGameObject_New() {
+int PyInit_Py3dGameObject(PyObject *module) {
+    if (PyType_Ready(&Py3dGameObject_Type) == -1) return 0;
+
+    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObject_Type) == -1) return 0;
+
+    Py_INCREF(&Py3dGameObject_Type);
+
+    return 1;
+}
+
+int Py3dGameObject_FindCtor(PyObject *module) {
+    if (PyObject_HasAttrString(module, "GameObject") == 0) {
+        critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
+
+        return 0;
+    }
+
+    py3dGameObjectCtor = PyObject_GetAttrString(module, "GameObject");
+
+    return 1;
+}
+
+void Py3dGameObject_FinalizeCtor() {
+    Py_CLEAR(py3dGameObjectCtor);
+}
+
+int Py3dGameObject_Check(PyObject *obj) {
+    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
+}
+
+PyObject *Py3dGameObject_New() {
     if (py3dGameObjectCtor == NULL) {
         critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
 
@@ -102,334 +137,293 @@ static PyObject *Py3dGameObject_New() {
     return py3dGameObject;
 }
 
-static void allocComponentListNode(struct ComponentListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
+PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    PyObject *ret = self->name;
 
-    struct ComponentListNode *newNode = calloc(1, sizeof(struct ComponentListNode));
-    if (newNode == NULL) return;
-
-    newNode->pyComponent = NULL;
-    newNode->next = NULL;
-
-    (*listNodePtr) = newNode;
-    newNode = NULL;
+    Py_INCREF(ret);
+    return ret;
 }
 
-static void deleteComponentListNode(struct ComponentListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
-
-    struct ComponentListNode *node = (*listNodePtr);
-    Py_CLEAR(node->pyComponent);
-
-    deleteComponentListNode(&node->next);
-
-    free(node);
-    node = NULL;
-    (*listNodePtr) = NULL;
-}
-
-static void allocChildListNode(struct ChildListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) != NULL) return;
-
-    struct ChildListNode *newNode = calloc(1, sizeof(struct ChildListNode));
-    if (newNode == NULL) return;
-
-    newNode->child = NULL;
-    newNode->next = NULL;
-
-    (*listNodePtr) = newNode;
-    newNode = NULL;
-}
-
-static void deleteChildListNode(struct ChildListNode **listNodePtr) {
-    if (listNodePtr == NULL || (*listNodePtr) == NULL) return;
-
-    struct ChildListNode *node = (*listNodePtr);
-    deleteGameObject(&node->child);
-
-    deleteChildListNode(&node->next);
-
-    free(node);
-    node = NULL;
-    (*listNodePtr) = NULL;
-}
-
-static void initializePyGameObject(struct GameObject *gameObject) {
-    if (gameObject == NULL || gameObject->pyGameObject != NULL) return;
-
-    struct Py3dGameObject *newPyGameObject = (struct Py3dGameObject *) Py3dGameObject_New();
-    if (newPyGameObject == NULL) {
-        critical_log("%s", "[GameObject]: Could not instantiate new PyGameObject");
-
-        return;
+const char *Py3dGameObject_GetNameCStr(struct Py3dGameObject *self) {
+    if (Py_IsNone(self->name)) {
+        return NULL;
     }
 
-    gameObject->pyGameObject = newPyGameObject;
-    newPyGameObject->gameObject = gameObject;
+    return PyUnicode_AsUTF8(self->name);
 }
 
-bool PyInit_Py3dGameObject(PyObject *module) {
-    if (PyType_Ready(&Py3dGameObjectType) == -1) return false;
+extern PyObject *Py3dGameObject_SetName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *newName = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyUnicode_Type, &newName) != 1) return NULL;
 
-    if (PyModule_AddObject(module, "GameObject", (PyObject *) &Py3dGameObjectType) == -1) return false;
+    Py_DECREF(self->name);
+    Py_INCREF(newName);
+    self->name = newName;
 
-    Py_INCREF(&Py3dGameObjectType);
-
-    return true;
+    Py_RETURN_NONE;
 }
 
-bool Py3dGameObject_FindCtor(PyObject *module) {
-    if (PyObject_HasAttrString(module, "GameObject") == 0) {
-        critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
+extern void Py3dGameObject_SetNameCStr(struct Py3dGameObject *self, const char *newName) {
+    if (newName == NULL) return;
 
-        return false;
+    PyObject *newNameObj = PyUnicode_FromString(newName);
+
+    Py_DECREF(self->name);
+    self->name = newNameObj;
+}
+
+PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    Py_INCREF(self->transform);
+
+    return (PyObject *) self->transform;
+}
+
+PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    float dt = 0.0f;
+    if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
+
+    return passMessage(self, "update", args);
+}
+
+PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *renderingContext = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
+
+    return passMessage(self, "render", args);
+}
+
+PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *newChild = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &newChild) != 1) return NULL;
+
+    // TODO: figure out if I need to decref here
+    if (PyList_Append(self->childrenList, newChild) != 0) {
+        return NULL;
     }
 
-    py3dGameObjectCtor = PyObject_GetAttrString(module, "GameObject");
+    ((struct Py3dGameObject *) newChild)->parent = (PyObject *) self;
+    Py_INCREF(self);
 
-    return true;
+    Py_RETURN_NONE;
 }
 
-void Py3dGameObject_FinalizeCtor() {
-    Py_CLEAR(py3dGameObjectCtor);
-}
+static PyObject *do_GetChildByName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *name = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyUnicode_Type, &name) != 1) return NULL;
 
-int Py3dGameObject_Check(PyObject *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObjectType);
-}
+    PyObject *ret = Py_None;
 
-void allocGameObject(struct GameObject **gameObjectPtr) {
-    if (gameObjectPtr == NULL || (*gameObjectPtr) != NULL) return;
-
-    struct GameObject *gameObject = NULL;
-    gameObject = calloc(1, sizeof(struct GameObject));
-    if (gameObject == NULL) return;
-
-    gameObject->components = NULL;
-    gameObject->children = NULL;
-    gameObject->parent = NULL;
-    gameObject->name = NULL;
-    gameObject->transform = Py3dTransform_New();
-    gameObject->pyGameObject = NULL;
-    initializePyGameObject(gameObject);
-
-    (*gameObjectPtr) = gameObject;
-    gameObject = NULL;
-}
-
-void deleteGameObject(struct GameObject **gameObjectPtr) {
-    if (gameObjectPtr == NULL || (*gameObjectPtr) == NULL) return;
-
-    struct GameObject *gameObject = (*gameObjectPtr);
-    deleteComponentListNode(&gameObject->components);
-    deleteChildListNode(&gameObject->children);
-    gameObject->parent = NULL;
-
-    deleteString(&gameObject->name);
-    Py_CLEAR(gameObject->transform);
-    Py_CLEAR(gameObject->pyGameObject);
-
-    free(gameObject);
-    gameObject = NULL;
-    (*gameObjectPtr) = NULL;
-}
-
-void updateGameObject(struct GameObject *gameObject, float dt) {
-    if (gameObject == NULL) return;
-
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        Py3dComponent_CallUpdate(curNode->pyComponent, dt);
-
-        curNode = curNode->next;
-    }
-
-    struct ChildListNode *curChild = gameObject->children;
-    while (curChild != NULL) {
-        updateGameObject(curChild->child, dt);
-
-        curChild = curChild->next;
-    }
-}
-
-void renderGameObject(struct GameObject *gameObject, struct RenderingContext *renderingContext) {
-    if (gameObject == NULL || renderingContext == NULL) return;
-
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        Py3dComponent_CallRender(curNode->pyComponent, renderingContext);
-
-        curNode = curNode->next;
-    }
-
-    struct ChildListNode *curChild = gameObject->children;
-    while (curChild != NULL) {
-        renderGameObject(curChild->child, renderingContext);
-
-        curChild = curChild->next;
-    }
-}
-
-void attachChild(struct GameObject *parent, struct GameObject *newChild) {
-    if (parent == NULL || newChild == NULL) return;
-
-    struct String *newChildName = getGameObjectName(newChild);
-    if (newChildName == NULL) {
-        error_log("%s", "Cannot attach child game object unless it has a name");
-        return;
-    }
-
-    struct ChildListNode *prevNode = NULL, *curNode = parent->children;
-    while (curNode != NULL) {
-        if (stringEquals(getGameObjectName(curNode->child), newChildName)) {
-            error_log("%s", "Cannot attach child game object unless its name is unique");
-            return;
+    Py_ssize_t childCount = PySequence_Size(self->childrenList);
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (Py3dGameObject_Check(curChild) != 1) {
+            warning_log("%s", "[GameObject]: Child list contains non GameObject entry");
+            continue;
+        }
+        PyObject *curChildName = Py3dGameObject_GetName((struct Py3dGameObject *) curChild, NULL);
+        int cmpResult = PyObject_RichCompareBool(name, curChildName, Py_EQ);
+        if (cmpResult == -1) {
+            handleException();
+        } else if (cmpResult == 1) {
+            ret = curChild;
         }
 
-        prevNode = curNode;
-        curNode = curNode->next;
+        Py_CLEAR(curChildName);
     }
 
-    struct ChildListNode *newNode = NULL;
-    allocChildListNode(&newNode);
-    if (newNode == NULL) return;
-    newNode->child = newChild;
+    if (!Py_IsNone(ret)) return ret;
 
-    if (prevNode == NULL) {
-        parent->children = newNode;
-    } else {
-        prevNode->next = newNode;
-    }
-    newChild->parent = parent;
-}
-
-void removeChild(struct GameObject *gameObject, struct GameObject *target) {
-    critical_log("%s", "GameObject::removeChild is not yet implemented");
-
-    // TODO: implement GameObject::removeChild
-}
-
-void removeChildByName(struct GameObject *gameObject, const char* name) {
-    critical_log("%s", "GameObject::removeChildByName is not yet implemented");
-
-    // TODO: implement GameObject::removeChildByName
-}
-
-struct GameObject *findGameObjectByName(struct GameObject *gameObject, const char *name) {
-    if (gameObject == NULL || name == NULL) return NULL;
-
-    if (stringEqualsCStr(gameObject->name, name)) {
-        return gameObject;
-    }
-
-    struct ChildListNode *curNode = gameObject->children;
-    struct GameObject *ret = NULL;
-    while (curNode != NULL) {
-        ret = findGameObjectByName(curNode->child, name);
-        if (ret != NULL) {
-            return ret;
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (Py3dGameObject_Check(curChild) != 1) {
+            warning_log("%s", "[GameObject]: Child list contains non GameObject entry");
+            continue;
         }
 
-        curNode = curNode->next;
+        if (Py_EnterRecursiveCall(" in Py3dGameObject_GetChildByName") != 0) return NULL;
+        ret = Py3dGameObject_GetChildByName((struct Py3dGameObject *) curChild, args, kwds);
+        Py_LeaveRecursiveCall();
+
+        if (ret == NULL) return NULL;
+        if (!Py_IsNone(ret)) break;
     }
 
     return ret;
 }
 
-void attachPyComponent(struct GameObject *gameObject, struct Py3dComponent *newPyComponent) {
-    if (gameObject == NULL || newPyComponent == NULL) return;
+PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *ret = do_GetChildByName(self, args, kwds);
+    Py_XINCREF(ret);
 
-    PyObject *newComponentName = Py3dComponent_GetName(newPyComponent, NULL);
-    if (newComponentName == NULL) {
-        error_log("%s", "[GameObject]: Component threw exception while trying to get its name");
-        handleException();
-        return;
+    return ret;
+}
+
+PyObject *Py3dGameObject_GetChildByNameCStr(struct Py3dGameObject *self, const char *name) {
+    PyObject *args = Py_BuildValue("(s)", name);
+
+    PyObject *ret = Py3dGameObject_GetChildByName(self, args, NULL);
+
+    Py_CLEAR(args);
+    return ret;
+}
+
+PyObject *Py3dGameObject_GetChildByIndex(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *indexAsObj = NULL;
+    if (PyArg_ParseTuple(args, "O", &indexAsObj) != 1) return NULL;
+
+    Py_ssize_t index;
+    index = PyNumber_AsSsize_t(indexAsObj, PyExc_IndexError);
+    if (index == -1) return NULL;
+
+    PyObject *ret = Py3dGameObject_GetChildByIndexInt(self, index);
+    if (ret == NULL) return NULL;
+
+    Py_INCREF(ret);
+    return ret;
+}
+
+PyObject *Py3dGameObject_GetChildByIndexInt(struct Py3dGameObject *self, Py_ssize_t index) {
+    return PyList_GetItem(self->childrenList, index);
+}
+
+PyObject *Py3dGameObject_GetChildCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return PyLong_FromSsize_t(Py3dGameObject_GetChildCountInt(self));
+}
+
+Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self) {
+    return PySequence_Size(self->childrenList);
+}
+
+PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *newComponent = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
+
+    // TODO: figure out if I need to decref here
+    if (PyList_Append(self->componentsList, newComponent) != 0) {
+        return NULL;
     }
 
-    struct ComponentListNode *prevNode = NULL, *curNode = gameObject->components;
-    while (curNode != NULL) {
-        if (curNode->pyComponent == NULL) {
-            critical_log("[GameObject]: Sanity check failure. NULL pyComponent found while iterating components list");
+    // TODO: this introduces a reference cycle and likely breaks garbage collection
+    ((struct Py3dComponent *) newComponent)->owner = (PyObject *) self;
+    Py_INCREF(self);
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dGameObject_GetComponentByType(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *typeObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyType_Type, &typeObj) != 1) return NULL;
+
+    PyObject *ret = Py_None;
+
+    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
+    for (Py_ssize_t i = 0; i < componentCount; ++i) {
+        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
+        int isInstance = PyObject_IsInstance(curComponent, typeObj);
+        if (isInstance == -1) {
+            handleException();
+        } else if (isInstance == 1) {
+            ret = curComponent;
+            break;
+        }
+    }
+
+    // TODO: return new reference?
+    Py_INCREF(ret);
+    return ret;
+}
+
+PyObject *Py3dGameObject_GetComponentByIndex(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *indexAsObj = NULL;
+    if (PyArg_ParseTuple(args, "O", &indexAsObj) == -1) return NULL;
+
+    Py_ssize_t index;
+    index = PyNumber_AsSsize_t(indexAsObj, PyExc_IndexError);
+    if (index == -1) return NULL;
+
+   return Py3dGameObject_GetChildByIndexInt(self, index);
+}
+
+PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *self, Py_ssize_t index) {
+    PyObject *ret = PyList_GetItem(self->componentsList, index);
+
+    Py_XINCREF(ret);
+    return ret;
+}
+
+PyObject *Py3dGameObject_GetComponentCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return PyLong_FromSsize_t(Py3dGameObject_GetChildCountInt(self));
+}
+
+Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self) {
+    return PySequence_Size(self->componentsList);
+}
+
+static PyObject *getCallable(PyObject *obj, const char *callableName) {
+    PyObject *callable = PyObject_GetAttrString(obj, callableName);
+    if (callable == NULL) return NULL;
+    if (!PyCallable_Check(callable)) {
+        PyErr_Format(PyExc_TypeError, "[GameObject]: Object must have a callable attribute called \"%s\"", callableName);
+        return NULL;
+    }
+
+    return callable;
+}
+
+static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args) {
+    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
+    for (Py_ssize_t i = 0; i < componentCount; ++i) {
+        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
+        if (!Py3dComponent_Check(curComponent)) {
+            warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
             continue;
         }
 
-        PyObject *curComponentName = Py3dComponent_GetName(curNode->pyComponent, NULL);
-        if (PyObject_RichCompareBool(newComponentName, curComponentName, Py_EQ) == 1) {
-            error_log("%s", "[GameObject]: Component names must be unique. Rejecting attachment request");
-            Py_CLEAR(newComponentName);
-            Py_CLEAR(curComponentName);
-            return;
+        PyObject *messageHandler = getCallable((PyObject *) curComponent, messageName);
+        if (messageHandler == NULL) {
+            warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
+            handleException();
+            continue;
         }
-        Py_CLEAR(curComponentName);
 
-        prevNode = curNode;
-        curNode = curNode->next;
+        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+        if (ret == NULL) {
+            handleException();
+        }
+        Py_CLEAR(ret);
+        Py_CLEAR(messageHandler);
     }
 
-    Py_CLEAR(newComponentName);
+    Py_ssize_t childCount = PySequence_Size(self->childrenList);
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (!Py3dGameObject_Check(curChild)) {
+            warning_log("[GameObject]: Child list has non Game Object child. Will not pass update message.");
+            continue;
+        }
 
-    struct ComponentListNode *newNode = NULL;
-    allocComponentListNode(&newNode);
-    if (newNode == NULL) return;
+        PyObject *messageHandler = getCallable((PyObject *) curChild, messageName);
+        if (messageHandler == NULL) {
+            warning_log("[GameObject]: Could not pass \"%s\" message to child", messageName);
+            handleException();
+            continue;
+        }
 
-    newNode->pyComponent = newPyComponent;
-    if (prevNode == NULL) {
-        gameObject->components = newNode;
-    } else {
-        prevNode->next = newNode;
-    }
-    newPyComponent->owner = gameObject;
-}
+        if (Py_EnterRecursiveCall(" in GameObject::passMessage") != 0) {
+            critical_log("[GameObject]: Hit max recursion depth while passing message \"%s\" to children", messageName);
+            handleException();
+            Py_CLEAR(messageHandler);
+            continue;
+        }
+        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+        if (ret == NULL) {
+            handleException();
+        }
+        Py_LeaveRecursiveCall();
 
-size_t getGameObjectComponentsLength(struct GameObject *gameObject) {
-    if (gameObject == NULL) return -1;
-
-    size_t count = 0;
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        count++;
-        curNode = curNode->next;
-    }
-
-    return count;
-}
-
-struct Py3dComponent *getGameObjectComponentByIndex(struct GameObject *gameObject, size_t index) {
-    if (gameObject == NULL) return NULL;
-
-    size_t count = 0;
-    struct ComponentListNode *curNode = gameObject->components;
-    while (curNode != NULL) {
-        if (count == index) break;
-
-        curNode = curNode->next;
+        Py_CLEAR(ret);
+        Py_CLEAR(messageHandler);
     }
 
-    if (curNode == NULL) return NULL;
-
-    if (curNode->pyComponent == NULL) return NULL;
-
-    return curNode->pyComponent;
-}
-
-struct String *getGameObjectName(struct GameObject *gameObject) {
-    if (gameObject == NULL) return NULL;
-
-    return gameObject->name;
-}
-
-void setGameObjectName(struct GameObject *gameObject, const char *newName) {
-    if (gameObject == NULL) return;
-
-    if (gameObject->name == NULL) {
-        allocString(&(gameObject->name), newName);
-    } else {
-        setChars(gameObject->name, newName);
-    }
-}
-
-struct Py3dTransform *getGameObjectTransform(struct GameObject *gameObject) {
-    if (gameObject == NULL) return NULL;
-
-    return gameObject->transform;
+    Py_RETURN_NONE;
 }

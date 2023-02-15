@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct ResourceManager;
-struct GameObject;
-extern void importScene(struct ResourceManager *manager, struct GameObject **rootPtr, FILE *sceneDescriptor);
+struct Py3dGameObject;
+extern void importScene(struct ResourceManager *manager, struct Py3dGameObject **rootPtr, FILE *sceneDescriptor);
 
 #endif

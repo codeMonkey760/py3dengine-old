@@ -90,7 +90,7 @@ static void importResources(struct ResourceManager *manager, json_object *resour
     }
 }
 
-void importScene(struct ResourceManager *manager, struct GameObject **rootPtr, FILE *sceneDescriptor) {
+void importScene(struct ResourceManager *manager, struct Py3dGameObject **rootPtr, FILE *sceneDescriptor) {
     if (manager == NULL || rootPtr == NULL || (*rootPtr) != NULL || sceneDescriptor == NULL) return;
 
     json_object *json_root = json_object_from_fd(fileno(sceneDescriptor));
@@ -117,7 +117,7 @@ void importScene(struct ResourceManager *manager, struct GameObject **rootPtr, F
         return;
     }
 
-    struct GameObject *rootGO = NULL;
+    struct Py3dGameObject *rootGO = NULL;
     parseGameObject(scene_root, NULL, &rootGO, manager);
 
     (*rootPtr) = rootGO;
