@@ -68,13 +68,33 @@ PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(
 
 PyObject *Py3dComponent_SetName(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     PyObject *newNameObj = NULL;
-    if (PyArg_ParseTuple(args, "O!", PyUnicode_Type, &newNameObj) != 1) return NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyUnicode_Type, &newNameObj) != 1) return NULL;
 
     PyObject *oldName = self->name;
-    self->name = Py_NewRef(newNameObj);
+    self->name = newNameObj;
     Py_CLEAR(oldName);
 
     Py_RETURN_NONE;
+}
+
+void Py3dComponent_SetNameCStr(struct Py3dComponent *self, const char *newName) {
+    PyObject *newNameObject = PyUnicode_FromString(newName);
+    if (newNameObject == NULL) {
+        handleException();
+        return;
+    }
+
+    PyObject *setNameArgs = Py_BuildValue("(O)", newNameObject);
+    PyObject *setNameRet = Py3dComponent_SetName(self, setNameArgs, NULL);
+    if (setNameRet == NULL) {
+        Py_CLEAR(setNameArgs);
+        Py_CLEAR(newNameObject);
+        handleException();
+        return;
+    }
+
+    Py_CLEAR(setNameRet);
+    Py_CLEAR(setNameArgs);
 }
 
 PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {

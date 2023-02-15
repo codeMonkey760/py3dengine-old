@@ -126,12 +126,7 @@ static bool parsePythonComponent(
     json_object *json_name = fetchProperty(json, "name", json_type_string);
     if (json_name == NULL) return false;
 
-    PyObject *pyName = PyUnicode_FromString(json_object_get_string(json_name));
-    if (pyName == NULL) return false;
-
-    // TODO: the previous value of pyComponent->name is probably leaked here
-    // AVOID direct parameter assignments like this!!!!
-    ((struct Py3dComponent *) pyComponent)->name = pyName;
+    Py3dComponent_SetNameCStr(pyComponent, json_object_get_string(json_name));
 
     PyObject *parsedData = createPyDictFromJsonObject(json);
     if (parsedData == NULL) {
