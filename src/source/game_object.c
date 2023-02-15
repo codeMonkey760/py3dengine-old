@@ -1,7 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <stdbool.h>
 
 #include "logger.h"
 #include "game_object.h"
@@ -158,7 +157,7 @@ bool Py3dGameObject_IsEnabledBool(struct Py3dGameObject *self) {
 
 PyObject *Py3dGameObject_Enable(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *enableObj = NULL;
-    if (PyArg_ParseTuple(args, "(O!)", &PyBool_Type, &enableObj) != 1) return NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
 
     bool enable = Py_IsTrue(enableObj);
     Py3dGameObject_EnableBool(self, enable);
@@ -180,7 +179,7 @@ bool Py3dGameObject_IsVisibleBool(struct Py3dGameObject *self) {
 
 PyObject *Py3dGameObject_MakeVisible(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *makeVisibleObj = NULL;
-    if (PyArg_ParseTuple(args, "(O!)", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
 
     bool make_visible = Py_IsTrue(makeVisibleObj);
     Py3dGameObject_MakeVisibleBool(self, make_visible);

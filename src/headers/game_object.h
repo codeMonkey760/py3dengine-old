@@ -4,6 +4,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <stdbool.h>
+
 struct Py3dGameObject;
 extern PyTypeObject Py3dGameObject_Type;
 
