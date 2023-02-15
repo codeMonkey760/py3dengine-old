@@ -124,14 +124,16 @@ static int Py3dComponent_Clear(struct Py3dComponent *self) {
 }
 
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    trace_log("[Component]: Initializing Component of type \"%s\"", Py_TYPE(self)->tp_name);
+
     self->name = Py_NewRef(Py_None);
     self->owner = Py_NewRef(Py_None);
 
     return 0;
 }
 
-static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
-    trace_log("%s", "[Component]: Deallocating Component");
+void Py3dComponent_Dealloc(struct Py3dComponent *self) {
+    trace_log("[Component]: Deallocating Component of type \"%s\"", Py_TYPE(self)->tp_name);
 
     PyObject_GC_UnTrack(self);
     Py3dComponent_Clear(self);
