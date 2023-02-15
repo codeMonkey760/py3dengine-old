@@ -10,7 +10,6 @@
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
-static void Py3dComponent_Dealloc(struct Py3dComponent *self);
 static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));

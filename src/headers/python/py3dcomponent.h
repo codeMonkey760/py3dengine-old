@@ -19,6 +19,7 @@ extern PyTypeObject Py3dComponent_Type;
 
 extern int PyInit_Py3dComponent(PyObject *module);
 extern int Py3dComponent_Check(PyObject *pyObj);
+extern void Py3dComponent_Dealloc(struct Py3dComponent *self);
 extern PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 extern PyObject *Py3dComponent_SetName(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
