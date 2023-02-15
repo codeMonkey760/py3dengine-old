@@ -234,6 +234,8 @@ PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_
 }
 
 PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    if (self->enabled == false) Py_RETURN_NONE;
+
     float dt = 0.0f;
     if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
 
@@ -241,6 +243,8 @@ PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyO
 }
 
 PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    if (self->visible == false) Py_RETURN_NONE;
+
     PyObject *renderingContext = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
@@ -251,7 +255,6 @@ PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args
     PyObject *newChild = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &newChild) != 1) return NULL;
 
-    // TODO: figure out if I need to decref here
     if (PyList_Append(self->childrenList, newChild) != 0) {
         return NULL;
     }
@@ -353,12 +356,10 @@ PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *
     PyObject *newComponent = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
 
-    // TODO: figure out if I need to decref here
     if (PyList_Append(self->componentsList, newComponent) != 0) {
         return NULL;
     }
 
-    // TODO: this introduces a reference cycle and likely breaks garbage collection
     ((struct Py3dComponent *) newComponent)->owner = (PyObject *) self;
     Py_INCREF(self);
 
@@ -383,7 +384,6 @@ PyObject *Py3dGameObject_GetComponentByType(struct Py3dGameObject *self, PyObjec
         }
     }
 
-    // TODO: return new reference?
     Py_INCREF(ret);
     return ret;
 }
