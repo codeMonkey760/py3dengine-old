@@ -1,11 +1,14 @@
 #include "python/py3dcomponent.h"
 
+#include "logger.h"
 #include "custom_string.h"
 #include "game_object.h"
 
 #include "python/python_util.h"
 #include "resource_manager.h"
 
+static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
+static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static void Py3dComponent_Dealloc(struct Py3dComponent *self);
 static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
@@ -23,16 +26,18 @@ static PyMethodDef py3d_component_methods[] = {
 };
 
 PyTypeObject Py3dComponent_Type = {
-        PyObject_HEAD_INIT(NULL)
-        .tp_name = "py3dengine.Component",
-        .tp_basicsize = sizeof(struct Py3dComponent),
-        .tp_dealloc = (destructor) Py3dComponent_Dealloc,
-        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-        .tp_doc = "Base class for writing components",
-        .tp_methods = py3d_component_methods,
-        .tp_members = py3d_component_members,
-        .tp_init = (initproc) Py3dComponent_Init,
-        .tp_new = PyType_GenericNew
+    PyObject_HEAD_INIT(NULL)
+    .tp_name = "py3dengine.Component",
+    .tp_basicsize = sizeof(struct Py3dComponent),
+    .tp_dealloc = (destructor) Py3dComponent_Dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_doc = "Base class for writing components",
+    .tp_methods = py3d_component_methods,
+    .tp_members = py3d_component_members,
+    .tp_init = (initproc) Py3dComponent_Init,
+    .tp_new = PyType_GenericNew,
+    .tp_traverse = (traverseproc) Py3dComponent_Traverse,
+    .tp_clear = (inquiry) Py3dComponent_Clear
 };
 
 int PyInit_Py3dComponent(PyObject *module) {
@@ -105,6 +110,19 @@ bool Py3dComponent_CallParse(struct Py3dComponent *component, PyObject *data, st
     return true;
 }
 
+static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg) {
+    Py_VISIT(self->name);
+    Py_VISIT(self->owner);
+
+    return 0;
+}
+
+static int Py3dComponent_Clear(struct Py3dComponent *self) {
+    Py_CLEAR(self->name);
+    Py_CLEAR(self->owner);
+    return 0;
+}
+
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     self->name = Py_NewRef(Py_None);
     self->owner = Py_NewRef(Py_None);
@@ -113,8 +131,10 @@ static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObje
 }
 
 static void Py3dComponent_Dealloc(struct Py3dComponent *self) {
-    Py_CLEAR(self->name);
-    Py_CLEAR(self->owner);
+    trace_log("%s", "[Component]: Deallocating Component");
+
+    PyObject_GC_UnTrack(self);
+    Py3dComponent_Clear(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 

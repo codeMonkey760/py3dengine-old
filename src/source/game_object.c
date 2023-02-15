@@ -22,13 +22,29 @@ static PyObject *py3dGameObjectCtor = NULL;
 static PyObject *getCallable(PyObject *obj, const char *callableName);
 static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args);
 
-static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
+static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit, void *arg) {
+    Py_VISIT(self->componentsList);
+    Py_VISIT(self->childrenList);
+    Py_VISIT(self->parent);
+    Py_VISIT(self->name);
+    Py_VISIT(self->transform);
+    return 0;
+}
+
+static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
     Py_CLEAR(self->transform);
     Py_CLEAR(self->name);
     Py_CLEAR(self->parent);
     Py_CLEAR(self->childrenList);
     Py_CLEAR(self->componentsList);
+    return 0;
+}
 
+static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
+    trace_log("%s", "[GameObject]: Deallocating GameObject");
+
+    PyObject_GC_UnTrack(self);
+    Py3dGameObject_Clear(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -64,11 +80,13 @@ PyTypeObject Py3dGameObject_Type = {
     .tp_name = "py3dengine.GameObject",
     .tp_basicsize = sizeof(struct Py3dGameObject),
     .tp_dealloc = (destructor) Py3dGameObject_Dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .tp_doc = "Class for manipulating Game Objects",
     .tp_methods = Py3dGameObject_Methods,
     .tp_init = (initproc) Py3dGameObject_Init,
-    .tp_new = PyType_GenericNew
+    .tp_new = PyType_GenericNew,
+    .tp_traverse = (traverseproc) Py3dGameObject_Traverse,
+    .tp_clear = (inquiry) Py3dGameObject_Clear
 };
 
 int PyInit_Py3dGameObject(PyObject *module) {
@@ -183,7 +201,6 @@ PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args
         return NULL;
     }
 
-    // TODO: this introduces a reference cycle and likely breaks garbage collection
     ((struct Py3dGameObject *) newChild)->parent = (PyObject *) self;
     Py_INCREF(self);
 
@@ -324,15 +341,14 @@ PyObject *Py3dGameObject_GetComponentByIndex(struct Py3dGameObject *self, PyObje
     index = PyNumber_AsSsize_t(indexAsObj, PyExc_IndexError);
     if (index == -1) return NULL;
 
-    PyObject *ret = Py3dGameObject_GetChildByIndexInt(self, index);
-    if (ret == NULL) return NULL;
-
-    Py_INCREF(ret);
-    return ret;
+   return Py3dGameObject_GetChildByIndexInt(self, index);
 }
 
 PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *self, Py_ssize_t index) {
-    return PyList_GetItem(self->componentsList, index);
+    PyObject *ret = PyList_GetItem(self->componentsList, index);
+
+    Py_XINCREF(ret);
+    return ret;
 }
 
 PyObject *Py3dGameObject_GetComponentCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
@@ -363,7 +379,7 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
             continue;
         }
 
-        PyObject *messageHandler = getCallable((PyObject *) self, messageName);
+        PyObject *messageHandler = getCallable((PyObject *) curComponent, messageName);
         if (messageHandler == NULL) {
             warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
             handleException();
