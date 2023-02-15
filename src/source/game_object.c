@@ -49,6 +49,8 @@ static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
 }
 
 static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    trace_log("%s", "[GameObject]: Initializing Game Object");
+
     self->componentsList = PyList_New(0);
     self->childrenList = PyList_New(0);
     self->parent = Py_NewRef(Py_None);
