@@ -71,6 +71,8 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
 
     disableShader(self->shader);
 
+    Py_CLEAR(transform);
+
     Py_RETURN_NONE;
 }
 
