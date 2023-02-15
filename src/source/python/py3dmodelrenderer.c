@@ -149,7 +149,10 @@ static PyMethodDef Py3dModelRenderer_Methods[] = {
 };
 
 static void Py3dModelRenderer_Dealloc(struct Py3dModelRenderer *self) {
-    Py_TYPE(self)->tp_free((PyObject *) self);
+    // TODO: its not particularly clear if I should do this
+    Py3dComponent_Dealloc((struct Py3dComponent *) self);
+
+    //Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static int Py3dModelRenderer_Init(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
@@ -172,7 +175,6 @@ static PyTypeObject Py3dModelRenderer_Type = {
     .tp_init = (initproc) Py3dModelRenderer_Init,
     .tp_methods = Py3dModelRenderer_Methods,
     .tp_dealloc = (destructor) Py3dModelRenderer_Dealloc,
-    .tp_new = PyType_GenericNew
 };
 
 bool PyInit_Py3dModelRenderer(PyObject *module) {
