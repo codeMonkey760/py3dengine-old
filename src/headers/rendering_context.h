@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 struct Py3dRenderingContext;
+struct Py3dGameObject;
 
 struct RenderingContext {
     float vpMtx[16];
@@ -28,6 +29,6 @@ extern struct Py3dRenderingContext *Py3dRenderingContext_New();
 
 extern void allocRenderingContext(struct RenderingContext **contextPtr);
 extern void deleteRenderingContext(struct RenderingContext **contextPtr);
-extern void initRenderingContext(struct RenderingContext *context, PyObject *activeCamera);
+extern void initRenderingContext(struct RenderingContext *context, struct Py3dGameObject *activeCamera);
 
 #endif

@@ -26,6 +26,8 @@ static void Py3dRenderingContext_Dealloc(struct RenderingContext *self) {
 }
 
 static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject *args, PyObject *kwds) {
+    self->renderingContext = NULL;
+
     return 0;
 }
 
@@ -209,10 +211,10 @@ void deleteRenderingContext(struct RenderingContext **contextPtr) {
     (*contextPtr) = NULL;
 }
 
-void initRenderingContext(struct RenderingContext *context, PyObject *activeCamera) {
+void initRenderingContext(struct RenderingContext *context, struct Py3dGameObject *activeCamera) {
     if (context == NULL || activeCamera == NULL) return;
 
-    if (!Py3dGameObject_Check(activeCamera)) {
+    if (!Py3dGameObject_Check((PyObject *) activeCamera)) {
         critical_log("%s", "[RenderingContext]: Active camera must be a Game Object");
         return;
     }
