@@ -22,7 +22,7 @@ struct Py3dGameObject {
 
 static PyObject *py3dGameObjectCtor = NULL;
 static PyObject *getCallable(PyObject *obj, const char *callableName);
-static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args);
+static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args);
 
 static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit, void *arg) {
     Py_VISIT(self->componentsList);
@@ -238,7 +238,7 @@ PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyO
     float dt = 0.0f;
     if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
 
-    return passMessage(self, "update", args);
+    return passMessage(self, Py3dComponent_IsEnabledBool, "update", args);
 }
 
 PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -247,7 +247,7 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
     PyObject *renderingContext = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
-    return passMessage(self, "render", args);
+    return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
 }
 
 PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -424,7 +424,7 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     return callable;
 }
 
-static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args) {
+static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
         PyObject *curComponent = PyList_GetItem(self->componentsList, i);
@@ -432,6 +432,8 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
             warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
             continue;
         }
+
+        if (!acceptMessage((struct Py3dComponent *) curComponent)) continue;
 
         PyObject *messageHandler = getCallable((PyObject *) curComponent, messageName);
         if (messageHandler == NULL) {
