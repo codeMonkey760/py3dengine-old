@@ -4,6 +4,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <stdbool.h>
+
 struct Py3dGameObject;
 extern PyTypeObject Py3dGameObject_Type;
 
@@ -12,6 +14,14 @@ extern int Py3dGameObject_FindCtor(PyObject *module);
 extern void Py3dGameObject_FinalizeCtor();
 extern int Py3dGameObject_Check(PyObject *obj);
 extern PyObject *Py3dGameObject_New();
+extern PyObject *Py3dGameObject_IsEnabled(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
+extern bool Py3dGameObject_IsEnabledBool(struct Py3dGameObject *self);
+extern PyObject *Py3dGameObject_Enable(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern void Py3dGameObject_EnableBool(struct Py3dGameObject *self, bool enable);
+extern PyObject *Py3dGameObject_IsVisible(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
+extern bool Py3dGameObject_IsVisibleBool(struct Py3dGameObject *self);
+extern PyObject *Py3dGameObject_MakeVisible(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern void Py3dGameObject_MakeVisibleBool(struct Py3dGameObject *self, bool make_visible);
 extern PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern const char *Py3dGameObject_GetNameCStr(struct Py3dGameObject *self);
 extern PyObject *Py3dGameObject_SetName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);

@@ -11,6 +11,8 @@
 
 struct Py3dGameObject {
     PyObject_HEAD
+    bool enabled;
+    bool visible;
     PyObject *componentsList;
     PyObject *childrenList;
     PyObject *parent;
@@ -20,7 +22,7 @@ struct Py3dGameObject {
 
 static PyObject *py3dGameObjectCtor = NULL;
 static PyObject *getCallable(PyObject *obj, const char *callableName);
-static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args);
+static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args);
 
 static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit, void *arg) {
     Py_VISIT(self->componentsList);
@@ -51,6 +53,8 @@ static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
 static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     trace_log("%s", "[GameObject]: Initializing Game Object");
 
+    self->enabled = true;
+    self->visible = true;
     self->componentsList = PyList_New(0);
     self->childrenList = PyList_New(0);
     self->parent = Py_NewRef(Py_None);
@@ -61,6 +65,10 @@ static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyOb
 }
 
 PyMethodDef Py3dGameObject_Methods[] = {
+    {"enabled", (PyCFunction) Py3dGameObject_IsEnabled, METH_NOARGS, "Determine if a Game Object is enabled"},
+    {"enable", (PyCFunction) Py3dGameObject_Enable, METH_VARARGS, "Enable or disable a Game Object"},
+    {"visible", (PyCFunction) Py3dGameObject_IsVisible, METH_NOARGS, "Determine if a Game Object is visible"},
+    {"make_visible", (PyCFunction) Py3dGameObject_MakeVisible, METH_VARARGS, "Make a Game Object visible or invisible"},
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
     {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
@@ -139,6 +147,50 @@ PyObject *Py3dGameObject_New() {
     return py3dGameObject;
 }
 
+PyObject *Py3dGameObject_IsEnabled(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return PyBool_FromLong(Py3dGameObject_IsEnabledBool(self));
+}
+
+bool Py3dGameObject_IsEnabledBool(struct Py3dGameObject *self) {
+    return self->enabled;
+}
+
+PyObject *Py3dGameObject_Enable(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *enableObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
+
+    bool enable = Py_IsTrue(enableObj);
+    Py3dGameObject_EnableBool(self, enable);
+
+    Py_RETURN_NONE;
+}
+
+void Py3dGameObject_EnableBool(struct Py3dGameObject *self, bool enable) {
+    self->enabled = enable;
+}
+
+PyObject *Py3dGameObject_IsVisible(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return PyBool_FromLong(Py3dGameObject_IsVisibleBool(self));
+}
+
+bool Py3dGameObject_IsVisibleBool(struct Py3dGameObject *self) {
+    return self->visible;
+}
+
+PyObject *Py3dGameObject_MakeVisible(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *makeVisibleObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
+
+    bool make_visible = Py_IsTrue(makeVisibleObj);
+    Py3dGameObject_MakeVisibleBool(self, make_visible);
+
+    Py_RETURN_NONE;
+}
+
+void Py3dGameObject_MakeVisibleBool(struct Py3dGameObject *self, bool make_visible) {
+    self->visible = make_visible;
+}
+
 PyObject *Py3dGameObject_GetName(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
     PyObject *ret = self->name;
 
@@ -181,24 +233,27 @@ PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_
 }
 
 PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    if (self->enabled == false) Py_RETURN_NONE;
+
     float dt = 0.0f;
     if (PyArg_ParseTuple(args, "f", &dt) != 1) return NULL;
 
-    return passMessage(self, "update", args);
+    return passMessage(self, Py3dComponent_IsEnabledBool, "update", args);
 }
 
 PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    if (self->visible == false) Py_RETURN_NONE;
+
     PyObject *renderingContext = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
-    return passMessage(self, "render", args);
+    return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
 }
 
 PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     PyObject *newChild = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &newChild) != 1) return NULL;
 
-    // TODO: figure out if I need to decref here
     if (PyList_Append(self->childrenList, newChild) != 0) {
         return NULL;
     }
@@ -300,12 +355,10 @@ PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *
     PyObject *newComponent = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
 
-    // TODO: figure out if I need to decref here
     if (PyList_Append(self->componentsList, newComponent) != 0) {
         return NULL;
     }
 
-    // TODO: this introduces a reference cycle and likely breaks garbage collection
     ((struct Py3dComponent *) newComponent)->owner = (PyObject *) self;
     Py_INCREF(self);
 
@@ -330,7 +383,6 @@ PyObject *Py3dGameObject_GetComponentByType(struct Py3dGameObject *self, PyObjec
         }
     }
 
-    // TODO: return new reference?
     Py_INCREF(ret);
     return ret;
 }
@@ -372,7 +424,7 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     return callable;
 }
 
-static PyObject *passMessage(struct Py3dGameObject *self, const char *messageName, PyObject *args) {
+static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
         PyObject *curComponent = PyList_GetItem(self->componentsList, i);
@@ -380,6 +432,8 @@ static PyObject *passMessage(struct Py3dGameObject *self, const char *messageNam
             warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
             continue;
         }
+
+        if (!acceptMessage((struct Py3dComponent *) curComponent)) continue;
 
         PyObject *messageHandler = getCallable((PyObject *) curComponent, messageName);
         if (messageHandler == NULL) {
