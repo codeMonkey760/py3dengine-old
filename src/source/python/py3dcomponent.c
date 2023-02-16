@@ -16,6 +16,10 @@ static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UN
 
 static PyMemberDef py3d_component_members[] = { {NULL} };
 static PyMethodDef py3d_component_methods[] = {
+        {"enabled", (PyCFunction) Py3dComponent_IsEnabled, METH_NOARGS, "Determine if a Component is enabled"},
+        {"enable", (PyCFunction) Py3dComponent_Enable, METH_VARARGS, "Enable or disable a Component"},
+        {"visible", (PyCFunction) Py3dComponent_IsVisible, METH_NOARGS, "Determine if a Component is visible"},
+        {"make_visible", (PyCFunction) Py3dComponent_MakeVisible, METH_VARARGS, "Make a Component visible or invisible"},
         {"update", (PyCFunction) Py3dComponent_Update, METH_VARARGS, "Update event handler"},
         {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
         {"get_name", (PyCFunction) Py3dComponent_GetName, METH_NOARGS, "Get component name"},
@@ -59,6 +63,50 @@ int Py3dComponent_Check(PyObject *pyObj) {
     }
 
     return res;
+}
+
+PyObject *Py3dComponent_IsEnabled(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+    PyBool_FromLong(Py3dComponent_IsEnabledBool(self));
+}
+
+bool Py3dComponent_IsEnabledBool(struct Py3dComponent *self) {
+    return self->enabled;
+}
+
+PyObject *Py3dComponent_Enable(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    PyObject *enableObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
+
+    bool enable = Py_IsTrue(enableObj);
+    Py3dComponent_EnableBool(self, enable);
+
+    Py_RETURN_NONE;
+}
+
+void Py3dComponent_EnableBool(struct Py3dComponent *self, bool enable) {
+    self->enabled = enable;
+}
+
+PyObject *Py3dComponent_IsVisible(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+    PyBool_FromLong(Py3dComponent_IsVisibleBool(self));
+}
+
+bool Py3dComponent_IsVisibleBool(struct Py3dComponent *self) {
+    return self->visible;
+}
+
+PyObject *Py3dComponent_MakeVisible(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    PyObject *makeVisibleObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
+
+    bool make_visible = Py_IsTrue(makeVisibleObj);
+    Py3dComponent_EnableBool(self, make_visible);
+
+    Py_RETURN_NONE;
+}
+
+void Py3dComponent_MakeVisibleBool(struct Py3dComponent *self, bool make_visible) {
+    self->visible = make_visible;
 }
 
 PyObject *Py3dComponent_GetName(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
@@ -147,6 +195,8 @@ static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObje
 
     self->name = Py_NewRef(Py_None);
     self->owner = Py_NewRef(Py_None);
+    self->enabled = true;
+    self->visible = true;
 
     return 0;
 }
