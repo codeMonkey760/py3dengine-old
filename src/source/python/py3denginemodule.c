@@ -4,7 +4,7 @@
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 #include "python/py3dmodelrenderer.h"
-#include "rendering_context.h"
+#include "python/py3drenderingcontext.h"
 #include "resource_manager.h"
 #include "game_object.h"
 

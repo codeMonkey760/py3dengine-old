@@ -7,12 +7,12 @@
 #include "logger.h"
 #include "config.h"
 #include "util.h"
+#include "python/py3drenderingcontext.h"
 #include "python/python_util.h"
 #include "python/python_wrapper.h"
 #include "engine.h"
 #include "importers/scene.h"
 #include "game_object.h"
-#include "rendering_context.h"
 #include "resource_manager.h"
 
 static float elapsed_time = 0.0f;
@@ -95,17 +95,12 @@ static void updateEngine(float dt) {
 static void renderEngine() {
     if (root == NULL) return;
 
-    struct RenderingContext *renderingContext = NULL;
-    allocRenderingContext(&renderingContext);
-    if (renderingContext == NULL) return;
-    initRenderingContext(renderingContext, activeCamera);
-
-    PyObject *args = Py_BuildValue("(O)", renderingContext->py3dRenderingContext);
-    if (args == NULL) {
-        deleteRenderingContext(&renderingContext);
+    struct Py3dRenderingContext *rc = Py3dRenderingContext_New(activeCamera);
+    if (rc == NULL) {
         handleException();
         return;
     }
+    PyObject *args = Py_BuildValue("(O)", rc);
 
     PyObject *ret = Py3dGameObject_Render(root, args, NULL);
     if (ret == NULL) {
@@ -114,7 +109,7 @@ static void renderEngine() {
 
     Py_CLEAR(ret);
     Py_CLEAR(args);
-    deleteRenderingContext(&renderingContext);
+    Py_CLEAR(rc);
 }
 
 static void resizeEngine() {
