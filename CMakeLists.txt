@@ -82,7 +82,6 @@ add_executable(
     src/source/engine.c
     src/source/custom_string.c
     src/source/custom_path.c
-    src/source/game_object.c
     src/source/resource_manager.c
     src/source/config.c
     src/source/json_parser.c
@@ -101,6 +100,7 @@ add_executable(
     src/source/python/python_util.c
     src/source/python/python_wrapper.c
     src/source/python/py3dcomponent.c
+    src/source/python/py3dgameobject.c
     src/source/python/py3dtransform.c
     src/source/python/py3dmodelrenderer.c
     src/source/python/py3drenderingcontext.c

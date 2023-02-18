@@ -2,7 +2,7 @@
 
 #include "logger.h"
 #include "custom_string.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 
 #include "python/python_util.h"
 #include "resource_manager.h"

@@ -12,7 +12,7 @@
 #include "python/python_wrapper.h"
 #include "engine.h"
 #include "importers/scene.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 #include "resource_manager.h"
 
 static float elapsed_time = 0.0f;

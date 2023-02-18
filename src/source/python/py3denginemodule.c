@@ -6,7 +6,7 @@
 #include "python/py3dmodelrenderer.h"
 #include "python/py3drenderingcontext.h"
 #include "resource_manager.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 
 static struct PyModuleDef py3dengineModuleDef = {
     PyModuleDef_HEAD_INIT,

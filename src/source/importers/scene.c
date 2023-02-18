@@ -2,7 +2,7 @@
 
 #include "logger.h"
 #include "wfo_parser/wfo_parser.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 #include "json_parser.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"

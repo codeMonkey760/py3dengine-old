@@ -3,7 +3,7 @@
 #include <structmember.h>
 
 #include "logger.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 #include "python/python_util.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"

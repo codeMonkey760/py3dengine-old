@@ -3,7 +3,7 @@
 #include "python/python_util.h"
 #include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 #include "resources/shader.h"
 #include "resources/material.h"
 #include "resources/model.h"

@@ -2,7 +2,7 @@
 #include "python/py3dtransform.h"
 #include "python/python_util.h"
 #include "logger.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 #include "engine.h"
 #include "util.h"
 

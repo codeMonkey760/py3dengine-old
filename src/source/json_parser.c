@@ -4,7 +4,7 @@
 #include "logger.h"
 #include "util.h"
 #include "json_parser.h"
-#include "game_object.h"
+#include "python/py3dgameobject.h"
 #include "resource_manager.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"
