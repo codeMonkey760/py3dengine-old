@@ -2,12 +2,12 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3dtransform.h"
+#include "python/py3drenderingcontext.h"
 #include "game_object.h"
 #include "resources/shader.h"
 #include "resources/material.h"
 #include "resources/model.h"
 #include "util.h"
-#include "rendering_context.h"
 #include "resource_manager.h"
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
@@ -41,14 +41,8 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
         return NULL;
     }
 
-    struct Py3dRenderingContext *pyRenderingContext = NULL;
-    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &pyRenderingContext) != 1) return NULL;
-
-    struct RenderingContext *rc = pyRenderingContext->renderingContext;
-    if (rc == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Py3dRendering context has no rendering context object");
-        return NULL;
-    }
+    struct Py3dRenderingContext *rc = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
     struct Py3dTransform *transform = getTransform(self);
     if (transform == NULL) return NULL;

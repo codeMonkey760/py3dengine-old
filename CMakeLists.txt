@@ -84,7 +84,6 @@ add_executable(
     src/source/custom_path.c
     src/source/game_object.c
     src/source/resource_manager.c
-    src/source/rendering_context.c
     src/source/config.c
     src/source/json_parser.c
     src/source/wfo_parser/wfo_parser.c
@@ -104,6 +103,7 @@ add_executable(
     src/source/python/py3dcomponent.c
     src/source/python/py3dtransform.c
     src/source/python/py3dmodelrenderer.c
+    src/source/python/py3drenderingcontext.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c

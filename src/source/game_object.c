@@ -4,10 +4,10 @@
 
 #include "logger.h"
 #include "game_object.h"
-#include "rendering_context.h"
 #include "python/python_util.h"
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
+#include "python/py3drenderingcontext.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
