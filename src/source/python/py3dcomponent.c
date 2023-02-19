@@ -66,7 +66,7 @@ int Py3dComponent_Check(PyObject *pyObj) {
 }
 
 PyObject *Py3dComponent_IsEnabled(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
-    PyBool_FromLong(Py3dComponent_IsEnabledBool(self));
+    return PyBool_FromLong(Py3dComponent_IsEnabledBool(self));
 }
 
 bool Py3dComponent_IsEnabledBool(struct Py3dComponent *self) {
@@ -88,7 +88,7 @@ void Py3dComponent_EnableBool(struct Py3dComponent *self, bool enable) {
 }
 
 PyObject *Py3dComponent_IsVisible(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
-    PyBool_FromLong(Py3dComponent_IsVisibleBool(self));
+    return PyBool_FromLong(Py3dComponent_IsVisibleBool(self));
 }
 
 bool Py3dComponent_IsVisibleBool(struct Py3dComponent *self) {

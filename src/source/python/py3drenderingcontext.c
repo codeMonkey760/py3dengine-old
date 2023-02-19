@@ -9,7 +9,9 @@
 static PyObject *Py3dRenderingContext_Ctor = NULL;
 static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject *args, PyObject *kwds);
 static void Py3dRenderingContext_Dealloc(struct Py3dRenderingContext *self);
-static PyMethodDef Py3dRenderingContext_Methods[];
+static PyMethodDef Py3dRenderingContext_Methods[] = {
+        {NULL}
+};
 
 PyTypeObject Py3dRenderingContext_Type = {
         PyObject_HEAD_INIT(NULL)
@@ -202,7 +204,3 @@ static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject
 static void Py3dRenderingContext_Dealloc(struct Py3dRenderingContext *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
-
-static PyMethodDef Py3dRenderingContext_Methods[] = {
-    {NULL}
-};
