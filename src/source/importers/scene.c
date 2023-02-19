@@ -23,7 +23,9 @@ static const char *getResourceExt(const char *resourcePath) {
     return ((*curPos) == '.') ? curPos : NULL;
 }
 
-static void importResourceByDescriptor(struct BaseResource **resourcePtr, const char *resourcePath) {
+static void importResourceByDescriptor(struct ResourceManager *manager, const char *resourcePath) {
+    if (manager == NULL || resourcePath == NULL) return;
+
     json_object *resourceDescriptor = json_object_from_file(resourcePath);
     if (resourceDescriptor == NULL) {
         error_log("[SceneImporter]: Could not parse json from \"%s\"", resourcePath);
@@ -40,11 +42,20 @@ static void importResourceByDescriptor(struct BaseResource **resourcePtr, const 
 
     const char *typeName = json_object_get_string(json_type);
     if (strcmp(typeName, "Texture") == 0) {
-        importTexture((struct Texture **) resourcePtr, resourceDescriptor);
+        struct BaseResource *newTexture = NULL;
+        importTexture((struct Texture **) &newTexture, resourceDescriptor);
+        storeResource(manager, newTexture);
+        newTexture = NULL;
     } else if (strcmp(typeName, "Shader") == 0) {
-        importShader((struct Shader **) resourcePtr, resourceDescriptor);
+        struct BaseResource *newShader = NULL;
+        importShader((struct Shader **) &newShader, resourceDescriptor);
+        storeResource(manager, newShader);
+        newShader = NULL;
     } else if (strcmp(typeName, "Component") == 0) {
-        importComponent((struct PythonScript **) resourcePtr, resourceDescriptor);
+        struct BaseResource *newScript = NULL;
+        importComponent((struct PythonScript **) &newScript, resourceDescriptor);
+        storeResource(manager, newScript);
+        newScript = NULL;
     } else {
         error_log("[SceneImporter]: Could not identity resource type \"%s\"", typeName);
     }
@@ -62,9 +73,7 @@ static void importResourceByPath(struct ResourceManager *manager, const char *re
     } else if (strcmp(ext, ".mtl") == 0) {
         importMaterialFile(manager, resourcePath);
     } else if (strcmp(ext, ".json") == 0) {
-        struct BaseResource *resource = NULL;
-        importResourceByDescriptor(&resource, resourcePath);
-        storeResource(manager, resource);
+        importResourceByDescriptor(manager, resourcePath);
     } else {
         error_log("[SceneImporter]: Unable to determine resource type \"%s\"", resourcePath);
     }
