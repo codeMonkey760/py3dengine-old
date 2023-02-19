@@ -110,6 +110,7 @@ add_executable(
     src/source/importers/shader.c
     src/source/importers/component.c
     src/source/importers/scene.c
+    src/source/importers/sprite_sheet.c
 )
 
 find_library(MATH_LIBRARY m)

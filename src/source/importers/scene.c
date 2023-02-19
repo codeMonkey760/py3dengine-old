@@ -11,6 +11,7 @@
 #include "importers/shader.h"
 #include "importers/component.h"
 #include "importers/scene.h"
+#include "importers/sprite_sheet.h"
 
 static const char *getResourceExt(const char *resourcePath) {
     if (resourcePath == NULL || (*resourcePath) == 0) return NULL;
@@ -56,6 +57,8 @@ static void importResourceByDescriptor(struct ResourceManager *manager, const ch
         importComponent((struct PythonScript **) &newScript, resourceDescriptor);
         storeResource(manager, newScript);
         newScript = NULL;
+    } else if (strcmp(typeName, "SpriteSheet") == 0) {
+        importSprites(manager, resourceDescriptor);
     } else {
         error_log("[SceneImporter]: Could not identity resource type \"%s\"", typeName);
     }
