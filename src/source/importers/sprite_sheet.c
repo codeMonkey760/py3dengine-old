@@ -1,4 +1,6 @@
 #include "importers/sprite_sheet.h"
+#include "resources/texture.h"
+#include "importers/texture.h"
 #include "resource_manager.h"
 #include "logger.h"
 
@@ -15,16 +17,30 @@ static int getIntegerFromJsonArray(json_object *array, size_t index, int *dst) {
 void importSprites(struct ResourceManager *manager, json_object *resourceDescriptor) {
     if (manager == NULL || resourceDescriptor == NULL) return;
 
-    json_object *texture_name = json_object_object_get(resourceDescriptor, "file_name");
-    if (texture_name == NULL || !json_object_is_type(texture_name, json_type_string)) {
+    json_object *texture_name_json = json_object_object_get(resourceDescriptor, "file_name");
+    if (texture_name_json == NULL || !json_object_is_type(texture_name_json, json_type_string)) {
         error_log("%s", "[SpriteSheetImporter]: Resource descriptor must have a field named \"file_name\" of type string");
         return;
     }
+    const char *texture_name = json_object_get_string(texture_name_json);
 
     json_object *sprites_map = json_object_object_get(resourceDescriptor, "sprites");
     if (sprites_map == NULL || !json_object_is_type(sprites_map, json_type_object)) {
         error_log("%s", "[SpriteSheetImporter]: Resource descriptor must have a field named \"sprites\" of type object");
         return;
+    }
+
+    if (json_object_object_length(sprites_map) < 0) {
+        error_log("%s", "[SpriteSheetImporter]: \"sprites\" object must have sprites as fields");
+        return;
+    }
+
+    struct BaseResource *spriteSheetResource = getResource(manager, texture_name);
+    struct Texture *spriteSheetTexture = NULL;
+    if (!isResourceTypeTexture(spriteSheetResource)) {
+        // TODO: find a way to import the texture ... the current importer interface doesnt support this
+    } else {
+        spriteSheetTexture = (struct Texture *) spriteSheetResource;
     }
 
     json_object_object_foreach(sprites_map, sprite_name, dimensions) {
