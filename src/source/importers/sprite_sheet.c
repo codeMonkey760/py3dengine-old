@@ -1,5 +1,6 @@
 #include "importers/sprite_sheet.h"
 #include "resources/texture.h"
+#include "resources/sprite.h"
 #include "importers/texture.h"
 #include "resource_manager.h"
 #include "logger.h"
@@ -64,11 +65,13 @@ void importSprites(struct ResourceManager *manager, json_object *resourceDescrip
 
         if (importedBounds == 0) continue;
 
-        trace_log(
-            "[SpriteSheetImporter]: Imported sprite with name \"%s\" on sheet from \"%s\" with dimensions [%d,%d,%d,%d]",
-            sprite_name,
-            texture_name,
-            bounds[0], bounds[1], bounds[2], bounds[3]
-        );
+        struct Sprite *newSprite = NULL;
+        allocSprite(&newSprite);
+        if (newSprite == NULL) continue;
+        if (!initSprite(newSprite, spriteSheetTexture, bounds)) {
+            deleteSprite(&newSprite);
+        }
+        storeResource(manager, (struct BaseResource *) newSprite);
+        newSprite = NULL;
     }
 }
