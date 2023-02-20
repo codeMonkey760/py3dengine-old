@@ -94,6 +94,7 @@ add_executable(
     src/source/resources/material.c
     src/source/resources/texture.c
     src/source/resources/python_script.c
+    src/source/resources/sprite.c
     src/source/python/py3denginemodule.c
     src/source/python/py3dmathmodule.c
     src/source/python/py3dloggermodule.c
