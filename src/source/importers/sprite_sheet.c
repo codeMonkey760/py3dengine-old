@@ -38,10 +38,13 @@ void importSprites(struct ResourceManager *manager, json_object *resourceDescrip
     struct BaseResource *spriteSheetResource = getResource(manager, texture_name);
     struct Texture *spriteSheetTexture = NULL;
     if (!isResourceTypeTexture(spriteSheetResource)) {
-        // TODO: find a way to import the texture ... the current importer interface doesnt support this
+        // TODO: what happens if we have a resource with the same name that's not a texture? Nuthin good
+        importTexture(&spriteSheetTexture, resourceDescriptor);
+        storeResource(manager, (struct BaseResource *) spriteSheetTexture);
     } else {
         spriteSheetTexture = (struct Texture *) spriteSheetResource;
     }
+    spriteSheetResource = NULL;
 
     json_object_object_foreach(sprites_map, sprite_name, dimensions) {
         if (!json_object_is_type(dimensions, json_type_array) || json_object_array_length(dimensions) != 4) {
