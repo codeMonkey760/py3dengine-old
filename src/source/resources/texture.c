@@ -15,6 +15,8 @@ static void deleteTextureId(struct Texture *texture) {
 
     glDeleteTextures(1, &texture->_id);
     texture->_id = 0;
+    texture->_width = 0;
+    texture->_height = 0;
 }
 
 static void delete(struct BaseResource **resourcePtr) {
@@ -62,6 +64,8 @@ void allocTexture(struct Texture **texturePtr) {
     base = NULL;
 
     newTexture->_id = 0;
+    newTexture->_width = 0;
+    newTexture->_height = 0;
     (*texturePtr) = newTexture;
     newTexture = NULL;
 }
@@ -82,14 +86,40 @@ void deleteTexture(struct Texture **texturePtr) {
 void initTexture(struct Texture *texture, const char *fileName) {
     if (texture == NULL || fileName == NULL) return;
 
-    unsigned int newId = SOIL_load_OGL_texture(fileName, 4, 0, SOIL_FLAG_MIPMAPS);
-    if (newId == 0) {
-        error_log("[Texture]: SOIL returned error code when trying to load \"%s\"", fileName);
+    int newWidth = 0, newHeight = 0;
+    unsigned char *imageData = SOIL_load_image(fileName, &newWidth, &newHeight, NULL, SOIL_LOAD_RGBA);
+    if (imageData == NULL) {
+        error_log("[Texture]: SOIL failed to load image data from \"%s\"", fileName);
         return;
     }
 
+    GLuint newId = 0;
+    glGenTextures(1, &newId);
+    if (newId == 0) {
+        error_log("[Texture]: OpenGL could not allocate texture object", fileName);
+        free(imageData);
+        imageData = NULL;
+        return;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, newId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, newWidth, newHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+    free(imageData);
+    imageData = NULL;
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        error_log("[Texture]: OpenGL generated an error with code \"%d\" while trying to load \"%s\"", error, fileName);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDeleteTextures(1, &newId);
+        return;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     deleteTextureId(texture);
     texture->_id = newId;
+    texture->_width = newWidth;
+    texture->_height = newHeight;
 }
 
 void setTextureParam(struct Texture *texture, const char *paramName, const char *paramValue) {
@@ -108,4 +138,22 @@ void setTextureParam(struct Texture *texture, const char *paramName, const char 
     }
 
     glTextureParameteri(texture->_id, pName, pVal);
+}
+
+unsigned int getTextureId(struct Texture *texture) {
+    if (texture == NULL) return 0;
+
+    return texture->_id;
+}
+
+int getTextureWidth(struct Texture *texture) {
+    if (texture == NULL) return 0;
+
+    return texture->_width;
+}
+
+int getTextureHeight(struct Texture *texture) {
+    if (texture == NULL) return 0;
+
+    return texture->_height;
 }
