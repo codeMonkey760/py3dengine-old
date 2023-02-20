@@ -18,9 +18,9 @@ static int getIntegerFromJsonArray(json_object *array, size_t index, int *dst) {
 void importSprites(struct ResourceManager *manager, json_object *resourceDescriptor) {
     if (manager == NULL || resourceDescriptor == NULL) return;
 
-    json_object *texture_name_json = json_object_object_get(resourceDescriptor, "file_name");
+    json_object *texture_name_json = json_object_object_get(resourceDescriptor, "filename");
     if (texture_name_json == NULL || !json_object_is_type(texture_name_json, json_type_string)) {
-        error_log("%s", "[SpriteSheetImporter]: Resource descriptor must have a field named \"file_name\" of type string");
+        error_log("%s", "[SpriteSheetImporter]: Resource descriptor must have a field named \"filename\" of type string");
         return;
     }
     const char *texture_name = json_object_get_string(texture_name_json);
