@@ -112,9 +112,17 @@ void importScene(struct ResourceManager *manager, struct Py3dGameObject **rootPt
     }
 
     struct PythonScript *script = NULL;
+
     importBuiltinComponent(&script, "ModelRendererComponent");
     if (script == NULL) {
         error_log("%s", "[SceneImporter]: Unable to load ModelRendererComponent builtin");
+    }
+    storeResource(manager, (struct BaseResource *) script);
+    script = NULL;
+
+    importBuiltinComponent(&script, "SpriteRendererComponent");
+    if (script == NULL) {
+        error_log("%s", "[SceneImporter]: Unable to load SpriteRendererComponent builtin");
     }
     storeResource(manager, (struct BaseResource *) script);
     script = NULL;
