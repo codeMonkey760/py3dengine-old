@@ -1,4 +1,5 @@
 #include "python/py3dspriterenderer.h"
+#include "python/py3drenderingcontext.h"
 #include "resource_manager.h"
 #include "python/python_util.h"
 #include "resources/sprite.h"
@@ -100,6 +101,16 @@ struct Py3dSpriteRenderer *Py3dSpriteRenderer_Create() {
 }
 
 PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds) {
+    if (self->sprite == NULL) {
+        PyErr_SetString(PyExc_ValueError, "SpriteRendererComponent is not correctly configured");
+        return NULL;
+    }
+
+    struct Py3dRenderingContext *rc = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
+
+    // TODO: finish this
+
     Py_RETURN_NONE;
 }
 
