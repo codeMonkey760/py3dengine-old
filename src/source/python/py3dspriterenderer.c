@@ -1,5 +1,7 @@
 #include "python/py3dspriterenderer.h"
+#include "resource_manager.h"
 #include "python/python_util.h"
+#include "resources/sprite.h"
 
 #include "logger.h"
 
@@ -7,6 +9,26 @@ static PyObject *Py3dSpriteRenderer_Ctor = NULL;
 
 static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds);
 static void Py3dSpriteRenderer_Dealloc(struct Py3dSpriteRenderer *self);
+
+static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct ResourceManager *rm) {
+    PyObject *curAttr = NULL;
+    curAttr = PyDict_GetItemString(parseDataDict, name);
+    if (curAttr == NULL) return NULL;
+    // TODO: PyDict_GetItemString returns borrowed reference so this overwrite isnt a leak ... right?
+    curAttr = PyObject_Str(curAttr);
+    if (curAttr == NULL) return NULL;
+
+    const char *modelName = PyUnicode_AsUTF8(curAttr);
+    struct BaseResource *ret = getResource(rm, modelName);
+    Py_CLEAR(curAttr);
+
+    if (ret == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Resource not imported");
+        return NULL;
+    }
+
+    return ret;
+}
 
 static PyMethodDef Py3dSpriteRenderer_Methods[] = {
     {"render", (PyCFunction) Py3dSpriteRenderer_Render, METH_VARARGS, "Render function for SpriteRendererComponent"},
@@ -82,6 +104,27 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
 }
 
 PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds) {
+    PyObject *parseDataDict = NULL;
+    struct Py3dResourceManager *py3dResourceManager = NULL;
+    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3dResourceManager) != 1) return NULL;
+
+    struct ResourceManager *rm = py3dResourceManager->resourceManager;
+    if (rm == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Resource Manager argument is not well formed");
+        return NULL;
+    }
+
+    struct BaseResource *curRes = NULL;
+    curRes = lookupResource("sprite", parseDataDict, rm);
+    if (curRes == NULL) return NULL;
+    if (!isResourceTypeSprite(curRes)) {
+        PyErr_SetString(PyExc_ValueError, "Resource is not model");
+        return NULL;
+    } else {
+        self->sprite = (struct Sprite *) curRes;
+        curRes = NULL;
+    }
+
     Py_RETURN_NONE;
 }
 
