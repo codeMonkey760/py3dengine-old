@@ -26,6 +26,9 @@
 #define STARTING_SCENE_DEFAULT "default.json"
 #define STARTING_SCENE_CONFIG_NAME "starting_scene"
 
+#define WFO_REVERSE_POLYGONS_DEFAULT true
+#define WFO_REVERSE_POLYGONS_CONFIG_NAME "wfo_reverse_polygons"
+
 struct Configuration {
     int screen_width;
     int screen_height;
@@ -34,6 +37,7 @@ struct Configuration {
     bool full_screen;
     int swap_interval;
     struct String *startingScene;
+    bool wfo_reverse_polygons;
 } config = {
     .screen_width = SCREEN_WIDTH_DEFAULT,
     .screen_height = SCREEN_HEIGHT_DEFAULT,
@@ -41,7 +45,8 @@ struct Configuration {
     .screen_top = SCREEN_TOP_DEFAULT,
     .full_screen = FULL_SCREEN_DEFAULT,
     .swap_interval = SWAP_INTERVAL_DEFAULT,
-    .startingScene = NULL
+    .startingScene = NULL,
+    .wfo_reverse_polygons = WFO_REVERSE_POLYGONS_DEFAULT
 };
 
 static json_object *get_object(json_object *parent, const char *key_name) {
@@ -151,6 +156,8 @@ void parseConfig(FILE *configFile) {
     getIntFromObject(config_root, SWAP_INTERVAL_CONFIG_NAME, &config.swap_interval, SWAP_INTERVAL_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", STARTING_SCENE_CONFIG_NAME);
     getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
+    trace_log("[Config]: Attempting to set \"%s\" from config", WFO_REVERSE_POLYGONS_CONFIG_NAME);
+    getBoolFromObject(config_root, WFO_REVERSE_POLYGONS_CONFIG_NAME, &config.wfo_reverse_polygons, WFO_REVERSE_POLYGONS_DEFAULT);
 
     json_object_put(config_root);
     config_root = NULL;
