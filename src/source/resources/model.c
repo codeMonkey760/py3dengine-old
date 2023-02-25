@@ -4,12 +4,6 @@
 
 #define RESOURCE_TYPE_MODEL 2
 
-struct VertexPNT {
-    float position[3];
-    float normal[3];
-    float texCoord[2];
-};
-
 // TODO: these should be in a vertex format file / struct
 const GLuint positionShaderIndex = 0;
 const GLuint normalShaderIndex = 1;
