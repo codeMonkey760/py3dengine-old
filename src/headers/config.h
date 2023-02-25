@@ -15,5 +15,6 @@ extern int getConfigScreenTop();
 extern bool getConfigFullScreen();
 extern int getConfigSwapInterval();
 extern const char *getConfigStartingScene();
+extern bool getConfigWfoReversePolygons();
 
 #endif

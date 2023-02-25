@@ -214,3 +214,7 @@ const char *getConfigStartingScene() {
         return getChars(config.startingScene);
     }
 }
+
+bool getConfigWfoReversePolygons() {
+    return config.wfo_reverse_polygons;
+}
