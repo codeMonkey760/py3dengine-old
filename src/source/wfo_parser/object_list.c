@@ -1,7 +1,9 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "logger.h"
+#include "config.h"
 #include "wfo_parser/object_list.h"
 
 #define INDEX_BUFFER_SIZE_IN_ELEMENTS 9
@@ -185,12 +187,32 @@ void flattenObjectList(struct ObjectListNode *objectList) {
     int *newIndexBuffer = calloc(faceCount * INDEX_BUFFER_SIZE_IN_ELEMENTS, sizeof(int));
     if (newIndexBuffer == NULL) return;
 
+    bool reverse_winding_order = getConfigWfoReversePolygons();
     struct FaceListNode *curNode = objectList->faceList;
     int count = 0;
     while (curNode != NULL && count < faceCount) {
-        for (int i = 0; i < INDEX_BUFFER_SIZE_IN_ELEMENTS; ++i) {
-            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + i] = curNode->dataIndices[i];
+        newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 0] = curNode->dataIndices[0];
+        newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 1] = curNode->dataIndices[1];
+        newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 2] = curNode->dataIndices[2];
+
+        if (!reverse_winding_order) {
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 3] = curNode->dataIndices[3];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 4] = curNode->dataIndices[4];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 5] = curNode->dataIndices[5];
+
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 6] = curNode->dataIndices[6];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 7] = curNode->dataIndices[7];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 8] = curNode->dataIndices[8];
+        } else {
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 6] = curNode->dataIndices[3];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 7] = curNode->dataIndices[4];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 8] = curNode->dataIndices[5];
+
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 3] = curNode->dataIndices[6];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 4] = curNode->dataIndices[7];
+            newIndexBuffer[(count * INDEX_BUFFER_SIZE_IN_ELEMENTS) + 5] = curNode->dataIndices[8];
         }
+
         curNode = curNode->next;
         count++;
     }

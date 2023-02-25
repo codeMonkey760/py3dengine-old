@@ -184,7 +184,7 @@ void initializeEngine(int argc, char **argv){
     }
 
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
+    glCullFace(GL_BACK);
 }
 
 void runEngine() {
