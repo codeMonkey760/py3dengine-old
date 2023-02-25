@@ -12,6 +12,7 @@
 #include "importers/component.h"
 #include "importers/scene.h"
 #include "importers/sprite_sheet.h"
+#include "importers/builtins.h"
 
 static const char *getResourceExt(const char *resourcePath) {
     if (resourcePath == NULL || (*resourcePath) == 0) return NULL;
@@ -111,21 +112,7 @@ void importScene(struct ResourceManager *manager, struct Py3dGameObject **rootPt
         return;
     }
 
-    struct PythonScript *script = NULL;
-
-    importBuiltinComponent(&script, "ModelRendererComponent");
-    if (script == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load ModelRendererComponent builtin");
-    }
-    storeResource(manager, (struct BaseResource *) script);
-    script = NULL;
-
-    importBuiltinComponent(&script, "SpriteRendererComponent");
-    if (script == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load SpriteRendererComponent builtin");
-    }
-    storeResource(manager, (struct BaseResource *) script);
-    script = NULL;
+    importBuiltInResources(manager);
 
     json_object *resourceArray = json_object_object_get(json_root, "resources");
     importResources(manager, resourceArray);

@@ -7,7 +7,11 @@
 
 #define RESOURCE_TYPE_NAME_MODEL "Model"
 
-struct VertexPNT;
+struct VertexPNT {
+    float position[3];
+    float normal[3];
+    float texCoord[2];
+};
 
 struct Model {
     struct BaseResource _base;
