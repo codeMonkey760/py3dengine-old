@@ -3,6 +3,7 @@
 #include "resource_manager.h"
 #include "python/python_util.h"
 #include "resources/sprite.h"
+#include "resources/model.h"
 
 #include "logger.h"
 
@@ -136,6 +137,14 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
         curRes = NULL;
     }
 
+    curRes = getResource(rm, "QuadModelBuiltIn");
+    if (!isResourceTypeModel(curRes)) {
+        PyErr_SetString(PyExc_ValueError, "Could not find Quad Model Built In resource");
+        return NULL;
+    }
+    self->quad = (struct Model *) curRes;
+    curRes = NULL;
+
     Py_RETURN_NONE;
 }
 
@@ -143,11 +152,13 @@ static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *ar
     if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
 
     self->sprite = NULL;
+    self->quad = NULL;
 
     return 0;
 }
 
 static void Py3dSpriteRenderer_Dealloc(struct Py3dSpriteRenderer *self) {
     self->sprite = NULL;
+    self->quad = NULL;
     Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }

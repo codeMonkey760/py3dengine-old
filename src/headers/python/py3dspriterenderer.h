@@ -7,10 +7,12 @@
 #include "python/py3dcomponent.h"
 
 struct Sprite;
+struct Model;
 
 struct Py3dSpriteRenderer {
     struct Py3dComponent base;
     struct Sprite *sprite;
+    struct Model *quad;
 };
 extern PyTypeObject Py3dSpriteRenderer_Type;
 
