@@ -112,6 +112,7 @@ add_executable(
     src/source/importers/component.c
     src/source/importers/scene.c
     src/source/importers/sprite_sheet.c
+    src/source/importers/builtins.c
 )
 
 find_library(MATH_LIBRARY m)
