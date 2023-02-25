@@ -13,6 +13,7 @@ static void importQuadModel(struct ResourceManager *rm) {
         critical_log("%s", "[BuiltInImporter]: Unable to load Quad Model builtin");
         return;
     }
+    setResourceName((struct BaseResource *) quad, "QuadModelBuiltIn");
 
     struct VertexPNT vertices[] = {
         {-1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f},
@@ -43,7 +44,7 @@ void importBuiltInResources(struct ResourceManager *rm) {
 
     importBuiltinComponent(&script, "SpriteRendererComponent");
     if (script == NULL) {
-        error_log("%s", "[SceneImporter]: Unable to load SpriteRendererComponent builtin");
+        error_log("%s", "[BuiltInImporter]: Unable to load SpriteRendererComponent builtin");
     }
     storeResource(rm, (struct BaseResource *) script);
     script = NULL;
