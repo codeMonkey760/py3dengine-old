@@ -19,12 +19,6 @@
 #define INDEX_BUFFER_SIZE_IN_ELEMENTS 9
 #define FILE_NAME_BUFFER_SIZE_IN_ELEMENTS 256
 
-struct VertexPNT {
-    float position[3];
-    float normal[3];
-    float texCoord[2];
-};
-
 static void clearCharBuffer(char *lineBuffer, int sizeInElements) {
     memset(lineBuffer, 0, sizeInElements * sizeof(char));
 }
