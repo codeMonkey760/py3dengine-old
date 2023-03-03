@@ -98,4 +98,5 @@ void importBuiltInResources(struct ResourceManager *rm) {
     script = NULL;
 
     importQuadModel(rm);
+    importSpriteShader(rm);
 }
