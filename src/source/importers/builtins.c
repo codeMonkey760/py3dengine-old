@@ -5,28 +5,35 @@
 #include "resources/model.h"
 #include "resources/shader.h"
 
-// TODO: finish builtin sprite shader
 const char *spriteVertexShader =
 "#version 460 core\n"
 "\n"
 "layout(location = 0) in vec3 posL;\n"
+"layout(location = 2) in vec2 inTexC;\n"
 "\n"
 "uniform mat4 gWVPMtx;\n"
+"uniform mat3 gTexMtx;\n"
+"\n"
+"out vec2 texCoord;\n"
 "\n"
 "void main() {\n"
+"   texCoord = (vec3(inTexC, 1.0) * gTexMtx).xy;\n"
 "   gl_Position = (vec4(posL, 1.0) * gWVPMtx);\n"
 "}\n";
 
 const char *spriteFragShader =
 "#version 460 core\n"
 "\n"
+"in vec2 texCoord;\n"
+"\n"
 "uniform vec3 gMixColor;\n"
+"uniform sampler2D gSprite;\n"
 "\n"
 "layout(location = 0) out vec4 outputColor;\n"
 "\n"
 "void main() {\n"
-"   "
-;
+"   outputColor = vec4(texture(gSprite, texCoord).rgb * gMixColor, 1.0);"
+"}\n";
 
 static void importQuadModel(struct ResourceManager *rm) {
     if (rm == NULL) return;
