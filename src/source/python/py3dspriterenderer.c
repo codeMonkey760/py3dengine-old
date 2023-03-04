@@ -181,7 +181,7 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
     curRes = lookupResource("sprite", parseDataDict, rm);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeSprite(curRes)) {
-        PyErr_SetString(PyExc_ValueError, "Resource is not model");
+        PyErr_SetString(PyExc_ValueError, "Resource is not sprite");
         return NULL;
     } else {
         self->sprite = (struct Sprite *) curRes;
