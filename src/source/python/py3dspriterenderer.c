@@ -153,11 +153,8 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
     Py_CLEAR(transform);
     setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 
-    float texMtx[9] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
-    };
+    float texMtx[9] = {0.0f};
+    calcSpriteTextureMtx(self->sprite, texMtx);
     setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
 
     bindModel(self->quad);
