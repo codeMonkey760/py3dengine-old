@@ -21,7 +21,7 @@ static float mpf = 0.0f;
 static float time_since_last_report = 0.0f;
 static bool print_report = true;
 
-static GLFWwindow *glfwWindow = NULL;
+GLFWwindow *glfwWindow = NULL;
 
 struct ResourceManager *resourceManager = NULL;
 
