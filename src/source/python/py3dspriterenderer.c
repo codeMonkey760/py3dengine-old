@@ -4,6 +4,7 @@
 #include "python/python_util.h"
 #include "resources/sprite.h"
 #include "resources/model.h"
+#include "resources/shader.h"
 
 #include "logger.h"
 
@@ -145,6 +146,14 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
     self->quad = (struct Model *) curRes;
     curRes = NULL;
 
+    curRes = getResource(rm, "SpriteShaderBuiltIn");
+    if (!isResourceTypeShader(curRes)) {
+        PyErr_SetString(PyExc_ValueError, "Could not find Sprite Shader Built In resource");
+        return NULL;
+    }
+    self->shader = (struct Shader *) curRes;
+    curRes = NULL;
+
     Py_RETURN_NONE;
 }
 
@@ -153,6 +162,7 @@ static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *ar
 
     self->sprite = NULL;
     self->quad = NULL;
+    self->shader = NULL;
 
     return 0;
 }
@@ -160,5 +170,6 @@ static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *ar
 static void Py3dSpriteRenderer_Dealloc(struct Py3dSpriteRenderer *self) {
     self->sprite = NULL;
     self->quad = NULL;
+    self->shader = NULL;
     Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }

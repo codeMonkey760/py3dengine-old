@@ -72,7 +72,7 @@ static void importSpriteShader(struct ResourceManager *rm) {
         return;
     }
 
-    setResourceName((struct BaseResource *) shader, "SpriteShader");
+    setResourceName((struct BaseResource *) shader, "SpriteShaderBuiltIn");
     initShader(shader, spriteVertexShader, spriteFragShader);
 
     storeResource(rm, (struct BaseResource *) shader);
