@@ -22,7 +22,7 @@ bool isResourceTypeSprite(struct BaseResource *resource) {
 }
 
 void allocSprite(struct Sprite **spritePtr) {
-    if (spritePtr == NULL || (*spritePtr) == NULL) return;
+    if (spritePtr == NULL || (*spritePtr) != NULL) return;
 
     struct Sprite *newSprite = calloc(1, sizeof(struct Sprite));
     if (newSprite == NULL) return;
