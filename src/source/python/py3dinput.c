@@ -1,13 +1,35 @@
+#include <GLFW/glfw3.h>
 #include "python/py3dinput.h"
 
 #include "logger.h"
+#include "engine.h"
+
+static PyObject *queryKeyState(PyObject *args, int expected_state) {
+    PyObject *keyObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyUnicode_Type, &keyObj) == 0) return NULL;
+
+    if (PyUnicode_GetLength(keyObj) != 1) {
+        PyErr_SetString(PyExc_ValueError, "Expected string with length of 1");
+        return NULL;
+    }
+
+    char keycode = PyUnicode_AsUTF8(keyObj)[0];
+    keycode = (char) toupper(keycode);
+
+    int status = glfwGetKey(glfwWindow, keycode);
+    if (status == expected_state) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
+}
 
 static PyObject *Py3dInput_IsKeyPressed(PyObject *self, PyObject *args, PyObject *kwds) {
-    Py_RETURN_FALSE;
+    return queryKeyState(args, GLFW_PRESS);
 }
 
 static PyObject *Py3dInput_IsKeyReleased(PyObject *self, PyObject *args, PyObject *kwds) {
-    Py_RETURN_FALSE;
+    return queryKeyState(args, GLFW_RELEASE);
 }
 
 static PyMethodDef Py3dInput_Methods[] = {
