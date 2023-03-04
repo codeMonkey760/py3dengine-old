@@ -68,6 +68,7 @@ void importSprites(struct ResourceManager *manager, json_object *resourceDescrip
         struct Sprite *newSprite = NULL;
         allocSprite(&newSprite);
         if (newSprite == NULL) continue;
+        setResourceName((struct BaseResource *) newSprite, sprite_name);
         if (!initSprite(newSprite, spriteSheetTexture, bounds)) {
             deleteSprite(&newSprite);
         }
