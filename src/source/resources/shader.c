@@ -305,13 +305,19 @@ bool setShaderFloatArrayUniform(struct Shader *shader, const char *name, const f
     return true;
 }
 
-bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]) {
-    if (shader == NULL || name == NULL || matrix == NULL) return false;
+bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float *src, size_t dimensions) {
+    if (shader == NULL || name == NULL || src == NULL) return false;
 
     GLint loc = getUniformLocation(shader, name);
     if (loc == -1) return false;
 
-    glUniformMatrix4fv(loc, 1, GL_TRUE, matrix);
+    if (dimensions == 3) {
+        glUniformMatrix3fv(loc, 1, GL_TRUE, src);
+    } else if (dimensions == 4) {
+        glUniformMatrix4fv(loc, 1, GL_TRUE, src);
+    } else {
+        return false;
+    }
 
     return true;
 }

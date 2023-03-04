@@ -29,7 +29,7 @@ extern void enableShader(struct Shader *shader);
 extern void disableShader(struct Shader *shader);
 
 extern bool setShaderFloatArrayUniform(struct Shader *shader, const char *name, const float *src, size_t numElements);
-extern bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float matrix[16]);
+extern bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float *src, size_t dimensions);
 extern bool setShaderTextureUniform(struct Shader *shader, const char *name, struct Texture *texture);
 
 #endif
