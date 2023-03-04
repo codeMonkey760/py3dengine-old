@@ -18,6 +18,8 @@ extern void deleteSprite(struct Sprite **spritePtr);
 
 extern bool initSprite(struct Sprite *sprite, struct Texture *newSpriteSheet, int newBounds[4]);
 
+extern bool calcSpriteTextureMtx(struct Sprite *sprite, float dst[9]);
+
 extern struct Texture *getSpriteSheet(struct Sprite *sprite);
 extern const int *getSpriteBounds(struct Sprite *sprite);
 

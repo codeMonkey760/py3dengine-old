@@ -105,6 +105,7 @@ add_executable(
     src/source/python/py3dtransform.c
     src/source/python/py3dmodelrenderer.c
     src/source/python/py3drenderingcontext.c
+    src/source/python/py3dspriterenderer.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c

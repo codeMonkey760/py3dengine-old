@@ -3,6 +3,7 @@
 
 #include "custom_string.h"
 #include "resources/sprite.h"
+#include "resources/texture.h"
 
 #define RESOURCE_TYPE_SPRITE 6
 
@@ -21,7 +22,7 @@ bool isResourceTypeSprite(struct BaseResource *resource) {
 }
 
 void allocSprite(struct Sprite **spritePtr) {
-    if (spritePtr == NULL || (*spritePtr) == NULL) return;
+    if (spritePtr == NULL || (*spritePtr) != NULL) return;
 
     struct Sprite *newSprite = calloc(1, sizeof(struct Sprite));
     if (newSprite == NULL) return;
@@ -60,6 +61,27 @@ bool initSprite(struct Sprite *sprite, struct Texture *newSpriteSheet, int newBo
     for (int i = 0; i < 4; ++i) {
         sprite->_bounds[i] = newBounds[i];
     }
+
+    return true;
+}
+
+bool calcSpriteTextureMtx(struct Sprite *sprite, float dst[9]) {
+    if (sprite == NULL || dst == NULL || sprite->_spriteSheet == NULL) return false;
+
+    int width = getTextureWidth(sprite->_spriteSheet);
+    int height = getTextureHeight(sprite->_spriteSheet);
+
+    dst[0] = ((float) sprite->_bounds[2]) / ((float) width);
+    dst[1] = 0.0f;
+    dst[2] = 0.0f;
+
+    dst[3] = 0.0f;
+    dst[4] = ((float) sprite->_bounds[3]) / ((float) height);
+    dst[5] = 0.0f;
+
+    dst[6] = ((float) sprite->_bounds[0]) / ((float) width);
+    dst[7] = ((float) sprite->_bounds[1]) / ((float) height);
+    dst[8] = 1.0f;
 
     return true;
 }
