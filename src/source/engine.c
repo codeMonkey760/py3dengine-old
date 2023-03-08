@@ -14,6 +14,7 @@
 #include "importers/scene.h"
 #include "python/py3dgameobject.h"
 #include "resource_manager.h"
+#include "python/py3dinput.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -148,6 +149,7 @@ void initializeEngine(int argc, char **argv){
     }
 
     glfwSetWindowSizeCallback(glfwWindow, resize_window_callback);
+    glfwSetKeyCallback(glfwWindow, glfw_key_callback);
 
     glfwMakeContextCurrent(glfwWindow);
 
