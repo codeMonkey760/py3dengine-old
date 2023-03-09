@@ -1,74 +1,10 @@
 #include "python/py3dinput.h"
+#include "python/python_util.h"
 
 #include "logger.h"
 #include "engine.h"
 
-struct CallbackListNode {
-    int key;
-    int action;
-    int mods;
-
-    PyObject *callback;
-    struct CallbackListNode *next;
-};
-
-static struct CallbackListNode *callbackListRoot = NULL;
-
-static void allocCallbackListNode(struct CallbackListNode **callbackListNodePtr) {
-    if (callbackListNodePtr == NULL || (*callbackListNodePtr) != NULL) return;
-
-    struct CallbackListNode *callbackListNode = calloc(1, sizeof(struct CallbackListNode));
-    callbackListNode->key = GLFW_KEY_UNKNOWN;
-    callbackListNode->action = GLFW_PRESS;
-    callbackListNode->mods = 0;
-    callbackListNode->callback = NULL;
-    callbackListNode->next = NULL;
-
-    (*callbackListNodePtr) = callbackListNode;
-    callbackListNode = NULL;
-}
-
-static void deleteCallbackListNode(struct CallbackListNode **callbackListNodePtr) {
-    if (callbackListNodePtr == NULL || (*callbackListNodePtr) == NULL) return;
-
-    struct CallbackListNode *callbackListNode = (*callbackListNodePtr);
-
-    deleteCallbackListNode(&callbackListNode->next);
-    Py_CLEAR(callbackListNode->callback);
-
-    free(callbackListNode);
-    callbackListNode = NULL;
-    (*callbackListNodePtr) = NULL;
-}
-
-static struct CallbackListNode *getLastCallbackListNode(struct CallbackListNode *start) {
-    struct CallbackListNode *prevNode = NULL, *curNode = start;
-
-    while(curNode != NULL) {
-        prevNode = curNode;
-        curNode = curNode->next;
-    }
-
-    return prevNode;
-}
-
-static void appendCallback(int key, int action, int mods, PyObject *callback) {
-    struct CallbackListNode *newNode = NULL;
-    allocCallbackListNode(&newNode);
-
-    newNode->callback = callback;
-    Py_INCREF(callback);
-    newNode->key = key;
-    newNode->action = action;
-    newNode->mods = mods;
-
-    struct CallbackListNode *lastNode = getLastCallbackListNode(callbackListRoot);
-    if (lastNode == NULL) {
-        callbackListRoot = newNode;
-    } else {
-        lastNode->next = newNode;
-    }
-}
+PyObject *callbackTable[GLFW_KEY_MENU+1][GLFW_REPEAT+1][6] = {NULL};
 
 static PyObject *queryKeyState(PyObject *args, int expected_state) {
     PyObject *keyObj = NULL;
@@ -91,7 +27,16 @@ static PyObject *queryKeyState(PyObject *args, int expected_state) {
 }
 
 void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    PyObject *callback = callbackTable[key][action][mods];
+    if (callback == NULL) return;
 
+    PyObject *ret = PyObject_CallNoArgs(callback);
+    if (ret == NULL) {
+        error_log("[Input]: Key callback threw exception when handling key:%d action:%d mods:%d", key, action, mods);
+        handleException();
+    }
+
+    Py_CLEAR(ret);
 }
 
 static PyObject *Py3dInput_IsKeyPressed(PyObject *self, PyObject *args, PyObject *kwds) {
