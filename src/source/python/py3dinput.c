@@ -66,7 +66,7 @@ static PyObject *Py3dInput_IsKeyReleased(PyObject *self, PyObject *args, PyObjec
 static PyObject *Py3dInput_SetKeyCallback(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *callback = NULL, *keyObj = NULL, *actionObj = NULL, *modsObj = NULL;
 
-    PyArg_ParseTuple(args, "OO!O!O!", &callback, &PyLong_Type, &keyObj, &PyLong_Type, &actionObj, &PyLong_Type, modsObj);
+    PyArg_ParseTuple(args, "OO!O!O!", &callback, &PyLong_Type, &keyObj, &PyLong_Type, &actionObj, &PyLong_Type, &modsObj);
     if (!PyCallable_Check(callback)) {
         PyErr_SetString(PyExc_ValueError, "Param 1 must be callable callback");
         return NULL;
