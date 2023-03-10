@@ -207,6 +207,8 @@ void runEngine() {
 }
 
 void finalizeEngine() {
+    finalizeCallbackTable();
+
     glfwDestroyWindow(glfwWindow);
     deleteResourceManager(&resourceManager);
 

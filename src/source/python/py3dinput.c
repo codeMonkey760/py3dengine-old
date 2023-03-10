@@ -55,6 +55,16 @@ void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, in
     Py_CLEAR(ret);
 }
 
+void finalizeCallbackTable() {
+    for (int i = 0; i < GLFW_KEY_MENU+1; ++i) {
+        for (int j = 0; j < GLFW_REPEAT+1; ++j) {
+            for (int k = 0; k < 64; ++k) {
+                Py_CLEAR(callbackTable[i][j][k]);
+            }
+        }
+    }
+}
+
 static PyObject *Py3dInput_IsKeyPressed(PyObject *self, PyObject *args, PyObject *kwds) {
     return queryKeyState(args, GLFW_PRESS);
 }
