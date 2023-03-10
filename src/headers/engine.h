@@ -9,5 +9,6 @@ extern void initializeEngine(int argc, char **argv);
 extern void runEngine();
 extern void finalizeEngine();
 extern void getRenderingTargetDimensions(int *width, int *height);
+extern void markWindowShouldClose();
 
 #endif
