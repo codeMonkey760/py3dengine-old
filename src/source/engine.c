@@ -236,5 +236,5 @@ void getRenderingTargetDimensions(int *width, int *height) {
 }
 
 void markWindowShouldClose() {
-    glfwWindowShouldClose(glfwWindow);
+    glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
 }
