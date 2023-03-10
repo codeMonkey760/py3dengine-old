@@ -14,6 +14,7 @@
 #include "importers/scene.h"
 #include "python/py3dgameobject.h"
 #include "resource_manager.h"
+#include "python/py3dinput.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -21,7 +22,7 @@ static float mpf = 0.0f;
 static float time_since_last_report = 0.0f;
 static bool print_report = true;
 
-static GLFWwindow *glfwWindow = NULL;
+GLFWwindow *glfwWindow = NULL;
 
 struct ResourceManager *resourceManager = NULL;
 
@@ -148,6 +149,7 @@ void initializeEngine(int argc, char **argv){
     }
 
     glfwSetWindowSizeCallback(glfwWindow, resize_window_callback);
+    glfwSetKeyCallback(glfwWindow, glfw_key_callback);
 
     glfwMakeContextCurrent(glfwWindow);
 
@@ -205,6 +207,8 @@ void runEngine() {
 }
 
 void finalizeEngine() {
+    finalizeCallbackTable();
+
     glfwDestroyWindow(glfwWindow);
     deleteResourceManager(&resourceManager);
 
@@ -229,4 +233,8 @@ void getRenderingTargetDimensions(int *width, int *height) {
     if (height != NULL) {
         (*height) = h;
     }
+}
+
+void markWindowShouldClose() {
+    glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
 }

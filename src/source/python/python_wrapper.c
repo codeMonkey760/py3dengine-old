@@ -10,6 +10,7 @@
 #include "python/py3denginemodule.h"
 #include "python/py3dmathmodule.h"
 #include "python/py3dloggermodule.h"
+#include "python/py3dinput.h"
 #include "python/python_util.h"
 
 void appendImportPath(const char *relPath) {
@@ -57,6 +58,7 @@ bool initializePython(int argc, char **argv) {
     if (!appendPy3dEngineModule()) return false;
     if (!appendPy3dMathModule()) return false;
     if (!appendPy3dLoggerModule()) return false;
+    if (!appendPy3dInputModule()) return false;
 
     PyConfig config;
     PyConfig_InitPythonConfig(&config);

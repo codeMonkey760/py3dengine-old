@@ -8,12 +8,25 @@
 #include "python/py3drenderingcontext.h"
 #include "resource_manager.h"
 #include "python/py3dgameobject.h"
+#include "engine.h"
+
+static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
+    markWindowShouldClose();
+
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef Py3dEngine_Methods[] = {
+    {"quit", (PyCFunction) Py3dEngine_Quit, METH_NOARGS, "Stop the engine and begin tear down"},
+    {NULL}
+};
 
 static struct PyModuleDef py3dengineModuleDef = {
     PyModuleDef_HEAD_INIT,
     .m_name = "py3dengine",
     .m_doc = "Top level module containing interface to engine.",
     .m_size = -1,
+    .m_methods = Py3dEngine_Methods
 };
 
 static PyObject *module = NULL;
