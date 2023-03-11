@@ -1,6 +1,8 @@
 #include "math/vector3.h"
+#include "math/quaternion.h"
 #include "logger.h"
 #include "python/python_util.h"
+#include "util.h"
 
 static PyObject *py3dVector3Ctor = NULL;
 
@@ -87,7 +89,7 @@ static PyObject *Py3dVector3_Sub(struct Py3dVector3 *self, PyObject *other) {
     return (PyObject *) result;
 }
 
-static struct Py3dVector3 *do_PyVector3_Cross_Mult(struct Py3dVector3 *self, struct Py3dVector3 *other) {
+static struct Py3dVector3 *do_Vector3_Cross_Mult(struct Py3dVector3 *self, struct Py3dVector3 *other) {
     struct Py3dVector3 *result = Py3dVector3_New();
 
     result->elements[0] = (self->elements[1] * other->elements[2]) - (self->elements[2] * other->elements[1]);
@@ -97,7 +99,15 @@ static struct Py3dVector3 *do_PyVector3_Cross_Mult(struct Py3dVector3 *self, str
     return result;
 }
 
-static struct Py3dVector3 *do_PyVector3_Scalar_Mult(struct Py3dVector3 *self, float scalar) {
+static struct Py3dVector3 *do_Vector3_Quaternion_Mult(struct Py3dVector3 *self, struct Py3dQuaternion *other) {
+    struct Py3dVector3 *result = Py3dVector3_New();
+
+    QuaternionVec3Rotation(self->elements, other->elements, result->elements);
+
+    return result;
+}
+
+static struct Py3dVector3 *do_Vector3_Scalar_Mult(struct Py3dVector3 *self, float scalar) {
     struct Py3dVector3 *result = Py3dVector3_New();
 
     result->elements[0] = self->elements[0] * scalar;
@@ -108,11 +118,18 @@ static struct Py3dVector3 *do_PyVector3_Scalar_Mult(struct Py3dVector3 *self, fl
 }
 
 static PyObject *Py3dVector3_Mult(struct Py3dVector3 *self, PyObject *other) {
-    int isPy3dVector3 = PyObject_IsInstance(other, (PyObject *) &Py3dVector3_Type);
-    if (isPy3dVector3 == -1) {
+    int isVector3 = PyObject_IsInstance(other, (PyObject *) &Py3dVector3_Type);
+    if (isVector3 == -1) {
         return NULL;
-    } else if (isPy3dVector3 == 1) {
-        return  (PyObject *) do_PyVector3_Cross_Mult(self, (struct Py3dVector3 *) other);
+    } else if (isVector3 == 1) {
+        return  (PyObject *) do_Vector3_Cross_Mult(self, (struct Py3dVector3 *) other);
+    }
+
+    int isQuaternion = PyObject_IsInstance(other, (PyObject *) &Py3dQuaternion_Type);
+    if (isQuaternion == -1) {
+        return NULL;
+    } else if (isQuaternion == 1) {
+        return (PyObject *) do_Vector3_Quaternion_Mult(self, (struct Py3dQuaternion *) other);
     }
 
     PyObject *otherAsFlt = PyNumber_Float(other);
@@ -121,7 +138,7 @@ static PyObject *Py3dVector3_Mult(struct Py3dVector3 *self, PyObject *other) {
         return NULL;
     }
 
-    PyObject *result = (PyObject *) do_PyVector3_Scalar_Mult(self, (float) PyFloat_AsDouble(otherAsFlt));
+    PyObject *result = (PyObject *) do_Vector3_Scalar_Mult(self, (float) PyFloat_AsDouble(otherAsFlt));
     Py_CLEAR(otherAsFlt);
     return result;
 }

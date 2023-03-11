@@ -65,15 +65,6 @@ static PyObject *Py3dQuaternion_Repr(struct Py3dQuaternion *self) {
 }
 
 static PyObject *Py3dQuaternion_Mult(struct Py3dQuaternion *self, PyObject *other) {
-    int isVector = PyObject_IsInstance(other, (PyObject *) &Py3dVector3_Type);
-    if (isVector == -1) return NULL;
-
-    if (isVector == 1) {
-        // TODO: do it and return
-        PyErr_SetString(PyExc_NotImplementedError, "Quaternion * Vector3 is not implemented");
-        return NULL;
-    }
-
     int isQuaternion = PyObject_IsInstance(other, (PyObject *) &Py3dQuaternion_Type);
     if (isQuaternion == -1) return NULL;
 
