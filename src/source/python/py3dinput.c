@@ -106,10 +106,19 @@ static PyObject *Py3dInput_SetKeyCallback(PyObject *self, PyObject *args, PyObje
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dInput_GetCursorPos(PyObject *self, PyObject *args, PyObject *kwds) {
+    double x = 0.0, y = 0.0;
+
+    glfwGetCursorPos(glfwWindow, &x, &y);
+
+    return Py_BuildValue("(dd)", x, y);
+}
+
 static PyMethodDef Py3dInput_Methods[] = {
     {"is_key_pressed", (PyCFunction) Py3dInput_IsKeyPressed, METH_VARARGS, "Determine if a keyboard key is depressed"},
     {"is_key_released", (PyCFunction) Py3dInput_IsKeyReleased, METH_VARARGS, "Determine if a keyboard key is released"},
     {"set_key_callback", (PyCFunction) Py3dInput_SetKeyCallback, METH_VARARGS, "Register a callback to be executed when a keyboard event happens"},
+    {"get_cursor_pos", (PyCFunction) Py3dInput_GetCursorPos, METH_NOARGS, "Query the current position of the cursor in screen pixels"},
     {NULL}
 };
 
