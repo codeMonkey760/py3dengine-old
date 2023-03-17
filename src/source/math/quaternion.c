@@ -61,11 +61,46 @@ static PyObject *Py3dQuaternion_Repr(struct Py3dQuaternion *self) {
         self->elements[3]
     );
 
-    PyUnicode_FromString(buffer);
+    return PyUnicode_FromString(buffer);
 }
 
 static PyObject *Py3dQuaternion_Mult(struct Py3dQuaternion *self, PyObject *other) {
-    Py_RETURN_NONE;
+    int isQuaternion = PyObject_IsInstance(other, (PyObject *) &Py3dQuaternion_Type);
+    if (isQuaternion == -1) return NULL;
+
+    if (isQuaternion == 1) {
+        struct Py3dQuaternion *otherQuaternion = (struct Py3dQuaternion *) other;
+        struct Py3dQuaternion *result = Py3dQuaternion_New();
+
+        result->elements[0] =
+            (self->elements[3] * otherQuaternion->elements[0]) +
+            (self->elements[0] * otherQuaternion->elements[3]) +
+            (self->elements[1] * otherQuaternion->elements[2]) -
+            (self->elements[2] * otherQuaternion->elements[1]);
+
+        result->elements[1] =
+            (self->elements[3] * otherQuaternion->elements[1]) -
+            (self->elements[0] * otherQuaternion->elements[2]) +
+            (self->elements[1] * otherQuaternion->elements[3]) +
+            (self->elements[2] * otherQuaternion->elements[0]);
+
+        result->elements[2] =
+            (self->elements[3] * otherQuaternion->elements[2]) +
+            (self->elements[0] * otherQuaternion->elements[1]) -
+            (self->elements[1] * otherQuaternion->elements[0]) +
+            (self->elements[2] * otherQuaternion->elements[3]);
+
+        result->elements[3] =
+            (self->elements[3] * otherQuaternion->elements[3]) -
+            (self->elements[0] * otherQuaternion->elements[0]) -
+            (self->elements[1] * otherQuaternion->elements[1]) -
+            (self->elements[2] * otherQuaternion->elements[2]);
+
+        return (PyObject *) result;
+    }
+
+    PyErr_SetString(PyExc_TypeError, "Second operand must be of type Vector3 or Quaternion");
+    return NULL;
 }
 
 static PyObject *Py3dQuaternion_Normalize(struct Py3dQuaternion *self, PyObject *args, PyObject *kwds) {
@@ -77,7 +112,7 @@ static PyObject *Py3dQuaternion_Normalize(struct Py3dQuaternion *self, PyObject 
     );
 
     if (length == 0.0f) {
-        PyErr_SetString(PyExc_ZeroDivisionError, "Cannot normalize a quaterion with a length of zero");
+        PyErr_SetString(PyExc_ZeroDivisionError, "Cannot normalize a quaternion with a length of zero");
         return NULL;
     }
 
