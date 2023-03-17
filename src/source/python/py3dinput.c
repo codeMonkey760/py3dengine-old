@@ -114,11 +114,34 @@ static PyObject *Py3dInput_GetCursorPos(PyObject *self, PyObject *args, PyObject
     return Py_BuildValue("(dd)", x, y);
 }
 
+static PyObject *Py3dInput_SetCursorMode(PyObject *self, PyObject *args, PyObject *kwds) {
+    char *newMode = NULL;
+
+    if (PyArg_ParseTuple(args, "s", &newMode) != 1) return NULL;
+
+    int glfwCursorMode;
+    if (strcmp(newMode, "NORMAL") == 0) {
+        glfwCursorMode = GLFW_CURSOR_NORMAL;
+    } else if (strcmp(newMode, "DISABLED") == 0) {
+        glfwCursorMode = GLFW_CURSOR_DISABLED;
+    } else if (strcmp(newMode, "HIDDEN") == 0) {
+        glfwCursorMode = GLFW_CURSOR_HIDDEN;
+    } else {
+        PyErr_SetString(PyExc_ValueError, "Unrecognized cursor mode");
+        return NULL;
+    }
+
+    glfwSetInputMode(glfwWindow, GLFW_CURSOR, glfwCursorMode);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dInput_Methods[] = {
     {"is_key_pressed", (PyCFunction) Py3dInput_IsKeyPressed, METH_VARARGS, "Determine if a keyboard key is depressed"},
     {"is_key_released", (PyCFunction) Py3dInput_IsKeyReleased, METH_VARARGS, "Determine if a keyboard key is released"},
     {"set_key_callback", (PyCFunction) Py3dInput_SetKeyCallback, METH_VARARGS, "Register a callback to be executed when a keyboard event happens"},
     {"get_cursor_pos", (PyCFunction) Py3dInput_GetCursorPos, METH_NOARGS, "Query the current position of the cursor in screen pixels"},
+    {"set_cursor_mode", (PyCFunction) Py3dInput_SetCursorMode, METH_VARARGS, "Set the cursor mode"},
     {NULL}
 };
 
