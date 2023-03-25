@@ -124,7 +124,7 @@ endif()
 target_include_directories(py3dengine PRIVATE ${json-c_SOURCE_DIR})
 target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python json-c soil)
+target_link_libraries(py3dengine glfw Python::Python json-c soil ode)
 
 add_custom_command(
     TARGET
