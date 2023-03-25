@@ -3,7 +3,6 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <ode/ode.h>
 
 #include "logger.h"
 #include "config.h"
@@ -16,6 +15,7 @@
 #include "python/py3dgameobject.h"
 #include "resource_manager.h"
 #include "python/py3dinput.h"
+#include "collision.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -92,6 +92,8 @@ static void updateEngine(float dt) {
 
     Py_CLEAR(ret);
     Py_CLEAR(args);
+
+    handleCollisions();
 }
 
 static void renderEngine() {
@@ -128,7 +130,10 @@ void initializeEngine(int argc, char **argv){
         return;
     }
 
-    dInitODE2(0);
+    if (!initCollisionEngine()) {
+        critical_log("%s", "[Engine]: Could not initialize collision engine");
+        return;
+    }
 
     glfwSetErrorCallback(error_callback);
 
@@ -220,7 +225,7 @@ void finalizeEngine() {
 
     glfwTerminate();
 
-    dCloseODE();
+    finalizeCollisionEngine();
 
     finalizePython();
 
