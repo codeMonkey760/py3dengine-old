@@ -3,6 +3,7 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <ode/ode.h>
 
 #include "logger.h"
 #include "config.h"
@@ -127,6 +128,8 @@ void initializeEngine(int argc, char **argv){
         return;
     }
 
+    dInitODE2(0);
+
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit()) {
@@ -216,6 +219,8 @@ void finalizeEngine() {
     Py_CLEAR(root);
 
     glfwTerminate();
+
+    dCloseODE();
 
     finalizePython();
 
