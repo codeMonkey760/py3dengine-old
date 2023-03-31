@@ -6,6 +6,7 @@
 #include "python/py3dmodelrenderer.h"
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
+#include "python/py3dcollider.h"
 #include "resource_manager.h"
 #include "python/py3dgameobject.h"
 #include "engine.h"
@@ -89,6 +90,13 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dCollider(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach ColliderComponent to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -137,6 +145,10 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dCollider_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -151,4 +163,5 @@ void finalizePy3dEngineModule() {
     finalizePy3dResourceManagerCtor();
     Py3dModelRenderer_FinalizeCtor();
     Py3dSpriteRenderer_FinalizeCtor();
+    Py3dCollider_FinalizeCtor();
 }
