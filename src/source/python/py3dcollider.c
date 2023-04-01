@@ -4,7 +4,99 @@
 
 static PyObject *Py3dCollider_Ctor = NULL;
 
+// TODO: finish these
+static void deleteGeom() {
+
+}
+
+static void setGeom(dGeomID newGeom) {
+
+}
+
+static const char *getStringFromPyTuple(PyObject *tuple, Py_ssize_t index) {
+    PyObject *obj = PyTuple_GetItem(tuple, index);
+    if (obj == NULL) {
+        PyErr_Clear();
+        return NULL;
+    }
+
+    if (!PyUnicode_Check(obj)) return NULL;
+
+    return PyUnicode_AsUTF8(obj);
+}
+
+static int getRealFromPyTuple(PyObject *tuple, Py_ssize_t index, dReal *result) {
+    PyObject *obj = PyTuple_GetItem(tuple, index);
+    if (obj == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+
+    obj = PyNumber_Float(obj);
+    if (obj == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+
+    (*result) = (dReal) PyFloat_AsDouble(obj);
+    Py_CLEAR(obj);
+
+    return 1;
+}
+
+static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
+    const char *shapeName = getStringFromPyTuple(args, 0);
+    if (shapeName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Argument 0 must be a string with a valid collision shape name");
+        return NULL;
+    }
+
+    dGeomID newGeom = NULL;
+    dReal arg1 = 0.0f, arg2 = 0.0f, arg3 = 0.0f;
+    if (!getRealFromPyTuple(args, 1, &arg1)) {
+        PyErr_SetString(PyExc_ValueError, "Argument 1 must be a number");
+        return NULL;
+    }
+
+    if (strcmp(shapeName, "SPHERE") == 0) {
+        newGeom = dCreateSphere(NULL, arg1);
+    } else if (strcmp(shapeName, "CYLINDER") == 0) {
+        if (!getRealFromPyTuple(args, 2, &arg2)) {
+            PyErr_SetString(PyExc_ValueError, "Argument 2 must be a number");
+            return NULL;
+        }
+
+        newGeom = dCreateCylinder(NULL, arg1, arg2);
+    } else if (strcmp(shapeName, "CAPSULE") == 0) {
+        if (!getRealFromPyTuple(args, 2, &arg2)) {
+            PyErr_SetString(PyExc_ValueError, "Argument 2 must be a number");
+            return NULL;
+        }
+
+        newGeom = dCreateCapsule(NULL, arg1, arg2);
+    } else if (strcmp(shapeName, "BOX") == 0) {
+        if (!getRealFromPyTuple(args, 2, &arg2)) {
+            PyErr_SetString(PyExc_ValueError, "Argument 2 must be a number");
+            return NULL;
+        }
+        if (!getRealFromPyTuple(args, 3, &arg3)) {
+            PyErr_SetString(PyExc_ValueError, "Argument 3 must be a number");
+            return NULL;
+        }
+
+        newGeom = dCreateBox(NULL, arg1, arg2, arg3);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "Argument 0 must be a string with a valid collision shape name");
+        return NULL;
+    }
+
+    deleteGeom();
+    setGeom(newGeom);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dCollider_Methods[] = {
+    {"set_shape", (PyCFunction) Py3dCollider_SetShape, METH_VARARGS, "Set collision shape"},
     {NULL}
 };
 
