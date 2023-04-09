@@ -4,13 +4,11 @@
 
 static PyObject *Py3dCollider_Ctor = NULL;
 
-// TODO: finish these
-static void deleteGeom() {
+static void deleteGeom(struct Py3dCollider *self) {
+    if (self->geomId == NULL) return;
 
-}
-
-static void setGeom(dGeomID newGeom) {
-
+    dGeomDestroy(self->geomId);
+    self->geomId = NULL;
 }
 
 static const char *getStringFromPyTuple(PyObject *tuple, Py_ssize_t index) {
@@ -90,8 +88,9 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
         return NULL;
     }
 
-    deleteGeom();
-    setGeom(newGeom);
+    deleteGeom(self);
+    self->geomId = newGeom;
+
     Py_RETURN_NONE;
 }
 
@@ -108,6 +107,8 @@ static int Py3dCollider_Init(struct Py3dCollider *self, PyObject *args, PyObject
 }
 
 static void Py3dCollider_Dealloc(struct Py3dCollider *self) {
+    deleteGeom(self);
+
     Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }
 
