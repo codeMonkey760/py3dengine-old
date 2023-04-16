@@ -259,7 +259,13 @@ struct Py3dTransform *Py3dTransform_New() {
 }
 
 int Py3dTransform_Check(PyObject  *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dTransform_Type);
+    int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dTransform_Type);
+    if (ret == -1) {
+        handleException();
+        return 0;
+    }
+
+    return ret;
 }
 
 float *getTransformWorldMtx(struct Py3dTransform *component) {
