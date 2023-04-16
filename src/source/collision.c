@@ -1,5 +1,3 @@
-#include <ode/ode.h>
-
 #include "collision.h"
 
 dSpaceID space = NULL;
@@ -37,6 +35,14 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 
 void handleCollisions() {
     dSpaceCollide(space, NULL, (dNearCallback *) nearCallback);
+}
+
+void addGeomToWorldSpace(dGeomID newGeom) {
+    dSpaceAdd(space, newGeom);
+}
+
+void removeGeomFromWorldSpace(dGeomID geom) {
+    dSpaceRemove(space, geom);
 }
 
 void finalizeCollisionEngine() {
