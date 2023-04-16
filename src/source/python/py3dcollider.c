@@ -1,8 +1,33 @@
 #include "python/py3dcollider.h"
 #include "python/python_util.h"
+#include "python/py3dgameobject.h"
+#include "python/py3dtransform.h"
 #include "logger.h"
 
 static PyObject *Py3dCollider_Ctor = NULL;
+static void do_update(struct Py3dCollider *self);
+
+static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
+    PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
+
+    if (!Py3dGameObject_Check(owner)) {
+        Py_CLEAR(owner);
+        PyErr_SetString(PyExc_ValueError, "Py3dCollider component has no owner");
+
+        return NULL;
+    }
+
+    PyObject *transform = Py3dGameObject_GetTransform((struct Py3dGameObject *) owner, NULL);
+    Py_CLEAR(owner);
+    if (!Py3dTransform_Check(transform)) {
+        Py_CLEAR(transform);
+        PyErr_SetString(PyExc_ValueError, "Py3dCollider owner has no transform");
+
+        return NULL;
+    }
+
+    return (struct Py3dTransform *) transform;
+}
 
 static void deleteGeom(struct Py3dCollider *self) {
     if (self->geomId == NULL) return;
@@ -88,14 +113,43 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
         return NULL;
     }
 
+    dGeomSetData(newGeom, self);
+    dGeomSetBody(newGeom, 0);
     deleteGeom(self);
     self->geomId = newGeom;
+    do_update(self);
 
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dCollider_Update(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
+    do_update(self);
+
+    Py_RETURN_NONE;
+}
+
+static void do_update(struct Py3dCollider *self) {
+    if (self->geomId == NULL) return;
+
+    struct Py3dTransform *transform = getTransform(self);
+    if (transform == NULL) {
+        handleException();
+        return;
+    }
+
+    dGeomSetOffsetWorldPosition(
+        self->geomId,
+        transform->position[0],
+        transform->position[1],
+        transform->position[2]
+    );
+
+    Py_CLEAR(transform);
+}
+
 static PyMethodDef Py3dCollider_Methods[] = {
     {"set_shape", (PyCFunction) Py3dCollider_SetShape, METH_VARARGS, "Set collision shape"},
+    {"update", (PyCFunction) Py3dCollider_Update, METH_VARARGS, "Handle update messages"},
     {NULL}
 };
 
