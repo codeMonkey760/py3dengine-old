@@ -126,7 +126,13 @@ void Py3dGameObject_FinalizeCtor() {
 }
 
 int Py3dGameObject_Check(PyObject *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
+    int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
+    if (ret == -1) {
+        handleException();
+        return 0;
+    }
+
+    return ret;
 }
 
 PyObject *Py3dGameObject_New() {
