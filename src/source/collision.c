@@ -1,4 +1,6 @@
 #include "collision.h"
+#include "python/py3dcollider.h"
+#include "logger.h"
 
 dSpaceID space = NULL;
 
@@ -18,17 +20,52 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     // but this could become an issue later
     if (dGeomIsSpace(o1) || dGeomIsSpace(o2)) return;
 
-    struct dContactGeom contacts[64];
-    int num_contacts = dCollide(o1, o2, 64, contacts, sizeof(dContactGeom));
+    struct dContactGeom contacts[8];
+    int num_contacts = dCollide(o1, o2, 8, contacts, sizeof(dContactGeom));
+    if (num_contacts == 0) return;
 
-    // TODO: finish this
     // fetch Py3dColliders from o1 and o2 (hint: dGeomGetData should return a struct Py3dCollider *)
-    // create a Py3dCollision event object
+    struct Py3dCollider *collider1, *collider2;
+    collider1 = dGeomGetData(o1);
+    collider2 = dGeomGetData(o2);
+    if (collider1 == NULL || collider2 == NULL) {
+        critical_log("[Collision]: Improperly configured Geom discovered");
+        return;
+    }
+
     // if o1 and o2 don't belong to the same Py3dCollider (a Py3dCollider should have only one ODE Geom so this is a
     //    sanity check)
+    if (collider1 == collider2) {
+        warning_log("[Collision]: Colliding Geoms belong to same py3dcollider, discarding collision");
+        return;
+    }
+
     // if o1 and o2's Py3dColliders aren't owned by the same GameObject (this CAN and is likely to happen)
+    PyObject *owner1, *owner2;
+    owner1 = Py3dComponent_GetOwner((struct Py3dComponent *) collider1, NULL);
+    owner2 = Py3dComponent_GetOwner((struct Py3dComponent *) collider2, NULL);
+    if (Py_IsNone(owner1) || Py_IsNone(owner2)) {
+        warning_log("[Collision]: Collision detected with detached py3dcollider, discarding collision");
+        Py_CLEAR(owner1);
+        Py_CLEAR(owner2);
+        return;
+    }
+    if (owner1 == owner2) {
+        Py_CLEAR(owner1);
+        Py_CLEAR(owner2);
+        return;
+    }
+    Py_CLEAR(owner1);
+    Py_CLEAR(owner2);
+
     // if o1 and o2's Py3dColliders have settings that allow them to collide (not sure this will happen immediately,
     //    might be future features)
+    // TODO: this is temporary, since we're not doing collision handling yet let's only allow collisions between
+    //    colliders that have "isTrigger" set to true since collision handling isn't required for that use case
+    if (!collider1->isTrigger || !collider2->isTrigger) return;
+
+    // TODO: finish this
+    // create a Py3dCollision event object
     // call collide on o1 and o2's owner GameObject passing the Py3dCollision object
     // clean up
 }
