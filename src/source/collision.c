@@ -44,19 +44,15 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     PyObject *owner1, *owner2;
     owner1 = Py3dComponent_GetOwner((struct Py3dComponent *) collider1, NULL);
     owner2 = Py3dComponent_GetOwner((struct Py3dComponent *) collider2, NULL);
+    int ownersValid = 0;
     if (Py_IsNone(owner1) || Py_IsNone(owner2)) {
         warning_log("[Collision]: Collision detected with detached py3dcollider, discarding collision");
-        Py_CLEAR(owner1);
-        Py_CLEAR(owner2);
-        return;
-    }
-    if (owner1 == owner2) {
-        Py_CLEAR(owner1);
-        Py_CLEAR(owner2);
-        return;
+    } else if (owner1 != owner2) {
+        ownersValid = 1;
     }
     Py_CLEAR(owner1);
     Py_CLEAR(owner2);
+    if (!ownersValid) return;
 
     // if o1 and o2's Py3dColliders have settings that allow them to collide (not sure this will happen immediately,
     //    might be future features)
