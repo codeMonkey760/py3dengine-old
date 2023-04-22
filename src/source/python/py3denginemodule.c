@@ -9,6 +9,7 @@
 #include "python/py3dcollider.h"
 #include "resource_manager.h"
 #include "python/py3dgameobject.h"
+#include "python/py3dcontactpoint.h"
 #include "engine.h"
 
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -97,6 +98,13 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dContactPoint(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach ContactPoint to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -149,6 +157,10 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dContactPoint_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -164,4 +176,5 @@ void finalizePy3dEngineModule() {
     Py3dModelRenderer_FinalizeCtor();
     Py3dSpriteRenderer_FinalizeCtor();
     Py3dCollider_FinalizeCtor();
+    Py3dContactPoint_FinalizeCtor();
 }
