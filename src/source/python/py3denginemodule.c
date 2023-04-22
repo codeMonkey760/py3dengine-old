@@ -10,6 +10,7 @@
 #include "resource_manager.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dcontactpoint.h"
+#include "python/py3dcollisionevent.h"
 #include "engine.h"
 
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -105,6 +106,13 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dCollisionEvent(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach CollisionEvent to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -161,6 +169,10 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dCollisionEvent_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -177,4 +189,5 @@ void finalizePy3dEngineModule() {
     Py3dSpriteRenderer_FinalizeCtor();
     Py3dCollider_FinalizeCtor();
     Py3dContactPoint_FinalizeCtor();
+    Py3dCollisionEvent_FinalizeCtor();
 }
