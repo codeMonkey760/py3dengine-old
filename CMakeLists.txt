@@ -109,6 +109,7 @@ add_executable(
     src/source/python/py3dspriterenderer.c
     src/source/python/py3dinput.c
     src/source/python/py3dcollider.c
+    src/source/python/py3dcontactpoint.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
