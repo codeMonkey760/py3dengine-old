@@ -69,7 +69,7 @@ static PyObject *Py3dVector3_Add(struct Py3dVector3 *self, PyObject *other) {
     struct Py3dVector3 *otherAsVec3 = checkTypeOfOther(other);
     if (otherAsVec3 == NULL) return NULL;
 
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->elements[0] + otherAsVec3->elements[0];
     result->elements[1] = self->elements[1] + otherAsVec3->elements[1];
     result->elements[2] = self->elements[2] + otherAsVec3->elements[2];
@@ -81,7 +81,7 @@ static PyObject *Py3dVector3_Sub(struct Py3dVector3 *self, PyObject *other) {
     struct Py3dVector3 *otherAsVec3 = checkTypeOfOther(other);
     if (otherAsVec3 == NULL) return NULL;
 
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->elements[0] - otherAsVec3->elements[0];
     result->elements[1] = self->elements[1] - otherAsVec3->elements[1];
     result->elements[2] = self->elements[2] - otherAsVec3->elements[2];
@@ -90,7 +90,7 @@ static PyObject *Py3dVector3_Sub(struct Py3dVector3 *self, PyObject *other) {
 }
 
 static struct Py3dVector3 *do_Vector3_Cross_Mult(struct Py3dVector3 *self, struct Py3dVector3 *other) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
 
     result->elements[0] = (self->elements[1] * other->elements[2]) - (self->elements[2] * other->elements[1]);
     result->elements[1] = (self->elements[2] * other->elements[0]) - (self->elements[0] * other->elements[2]);
@@ -100,7 +100,7 @@ static struct Py3dVector3 *do_Vector3_Cross_Mult(struct Py3dVector3 *self, struc
 }
 
 static struct Py3dVector3 *do_Vector3_Quaternion_Mult(struct Py3dVector3 *self, struct Py3dQuaternion *other) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
 
     QuaternionVec3Rotation(self->elements, other->elements, result->elements);
 
@@ -108,7 +108,7 @@ static struct Py3dVector3 *do_Vector3_Quaternion_Mult(struct Py3dVector3 *self, 
 }
 
 static struct Py3dVector3 *do_Vector3_Scalar_Mult(struct Py3dVector3 *self, float scalar) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
 
     result->elements[0] = self->elements[0] * scalar;
     result->elements[1] = self->elements[1] * scalar;
@@ -158,7 +158,7 @@ static PyObject *Py3dVector3_Div(struct Py3dVector3 *self, PyObject *other) {
         return NULL;
     }
 
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->elements[0] / scalar;
     result->elements[1] = self->elements[1] / scalar;
     result->elements[2] = self->elements[2] / scalar;
@@ -196,7 +196,7 @@ static PyObject *Py3dVector3_Normalize(struct Py3dVector3 *self, PyObject *args,
         return NULL;
     }
 
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->elements[0] / length;
     result->elements[1] = self->elements[1] / length;
     result->elements[2] = self->elements[2] / length;
@@ -208,7 +208,7 @@ static PyObject *Py3dVector3_Fill(struct Py3dVector3 *self, PyObject *args, PyOb
     float t1 = 0.0f;
     if (PyArg_ParseTuple(args, "f", &t1) != 1) return NULL;
 
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = t1;
     result->elements[1] = t1;
     result->elements[2] = t1;
@@ -221,7 +221,7 @@ static PyObject *Py3dVector3_Copy(struct Py3dVector3 *self, PyObject *args, PyOb
     struct Py3dVector3 *other = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &other) == 0) return NULL;
 
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = other->elements[0];
     result->elements[1] = other->elements[1];
     result->elements[2] = other->elements[2];
@@ -294,20 +294,24 @@ void Py3dVector3_FinalizeCtor() {
     Py_CLEAR(py3dVector3Ctor);
 }
 
-struct Py3dVector3 *Py3dVector3_New() {
+struct Py3dVector3 *Py3dVector3_New(float x, float y, float z) {
     if (py3dVector3Ctor == NULL) {
         critical_log("%s", "[Python]: Py3dVector3 has not been initialized properly");
 
         return NULL;
     }
 
-    PyObject *py3dVector3 = PyObject_CallNoArgs(py3dVector3Ctor);
+    struct Py3dVector3 *py3dVector3 = (struct Py3dVector3 *) PyObject_CallNoArgs(py3dVector3Ctor);
     if (py3dVector3 == NULL) {
         critical_log("%s", "[Python]: Failed to allocate Vector3 in python interpreter");
         handleException();
 
         return NULL;
     }
+
+    py3dVector3->elements[0] = x;
+    py3dVector3->elements[1] = y;
+    py3dVector3->elements[2] = z;
 
     return (struct Py3dVector3 *) py3dVector3;
 }

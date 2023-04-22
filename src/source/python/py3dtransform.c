@@ -47,7 +47,7 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
 }
 
 static PyObject *Py3dTransform_GetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->position[0];
     result->elements[1] = self->position[1];
     result->elements[2] = self->position[2];
@@ -140,7 +140,7 @@ static PyObject *Py3dTransform_SetOrientation(struct Py3dTransform *self, PyObje
 }
 
 static PyObject *Py3dTransform_GetScale(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->scale[0];
     result->elements[1] = self->scale[1];
     result->elements[2] = self->scale[2];
