@@ -23,7 +23,7 @@ static PyGetSetDef Py3dContactPoint_GetSet[] = {
     {"position", (getter) Py3dContactPoint_GetPosition, NULL, "Retrieve position of contact point as a Vector3", NULL},
     {"normal", (getter) Py3dContactPoint_GetNormal, NULL, "Retrieve direction of contact point as a Vector3", NULL},
     {"depth", (getter) Py3dContactPoint_GetDepth, NULL, "Retrieve depth of contact point as a float", NULL},
-    NULL
+    {NULL}
 };
 
 static PyTypeObject Py3dContactPoint_Type = {
