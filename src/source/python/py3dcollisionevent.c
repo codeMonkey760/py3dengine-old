@@ -92,14 +92,14 @@ int Py3dCollisionEvent_Check(PyObject *obj) {
     return ret;
 }
 
-PyObject *Py3dContactPoint_GetObject1(struct Py3dCollisionEvent *self, void *closure) {
+PyObject *Py3dCollisionEvent_GetCollider1(struct Py3dCollisionEvent *self, void *closure) {
     return Py_NewRef(self->collider1);
 }
 
-PyObject *Py3dContactPoint_GetObject2(struct Py3dCollisionEvent *self, void *closure) {
+PyObject *Py3dCollisionEvent_GetCollider2(struct Py3dCollisionEvent *self, void *closure) {
     return Py_NewRef(self->collider2);
 }
 
-PyObject *Py3dContactPoint_GetContacts(struct Py3dCollisionEvent *self, void *closure) {
+PyObject *Py3dCollisionEvent_GetContacts(struct Py3dCollisionEvent *self, void *closure) {
     return Py_NewRef(self->contactsTuple);
 }
