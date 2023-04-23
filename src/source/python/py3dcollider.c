@@ -3,6 +3,7 @@
 #include "python/py3dgameobject.h"
 #include "python/py3dtransform.h"
 #include "logger.h"
+#include "collision.h"
 
 static PyObject *Py3dCollider_Ctor = NULL;
 static void do_update(struct Py3dCollider *self);
@@ -32,6 +33,7 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
 static void deleteGeom(struct Py3dCollider *self) {
     if (self->geomId == NULL) return;
 
+    removeGeomFromWorldSpace(self->geomId);
     dGeomDestroy(self->geomId);
     self->geomId = NULL;
 }
@@ -114,7 +116,8 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
     }
 
     dGeomSetData(newGeom, self);
-    dGeomSetBody(newGeom, 0);
+    dGeomSetBody(newGeom, NULL);
+    addGeomToWorldSpace(newGeom);
     deleteGeom(self);
     self->geomId = newGeom;
     do_update(self);
