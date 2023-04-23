@@ -6,8 +6,8 @@
 
 struct Py3dCollisionEvent {
     PyObject_HEAD
-    PyObject *object1;
-    PyObject *object2;
+    PyObject *collider1;
+    PyObject *collider2;
     PyObject *contactsTuple;
 };
 
@@ -17,8 +17,8 @@ extern void Py3dCollisionEvent_FinalizeCtor();
 extern struct Py3dCollisionEvent *Py3dCollisionEvent_New();
 extern int Py3dCollisionEvent_Check(PyObject *obj);
 
-extern PyObject *Py3dCollisionEvent_GetObject1(struct Py3dCollisionEvent *self, void *closure);
-extern PyObject *Py3dCollisionEvent_GetObject2(struct Py3dCollisionEvent *self, void *closure);
+extern PyObject *Py3dCollisionEvent_GetCollider1(struct Py3dCollisionEvent *self, void *closure);
+extern PyObject *Py3dCollisionEvent_GetCollider2(struct Py3dCollisionEvent *self, void *closure);
 extern PyObject *Py3dCollisionEvent_GetContacts(struct Py3dCollisionEvent *self, void *closure);
 
 #endif

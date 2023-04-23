@@ -5,22 +5,22 @@
 static PyObject *Py3dCollisionEvent_Ctor = NULL;
 
 static int Py3dCollisionEvent_Init(struct Py3dCollisionEvent *self, PyObject *args, PyObject *kwds) {
-    self->object1 = Py_NewRef(Py_None);
-    self->object2 = Py_NewRef(Py_None);
+    self->collider1 = Py_NewRef(Py_None);
+    self->collider2 = Py_NewRef(Py_None);
     self->contactsTuple = Py_NewRef(Py_None);
 
     return 1;
 }
 
 static void Py3dCollisionEvent_Dealloc(struct Py3dCollisionEvent *self) {
-    Py_CLEAR(self->object1);
-    Py_CLEAR(self->object2);
+    Py_CLEAR(self->collider1);
+    Py_CLEAR(self->collider2);
     Py_CLEAR(self->contactsTuple);
 }
 
 static PyGetSetDef Py3dCollisionEvent_GetSet[] = {
-    {"object1", (getter) Py3dCollisionEvent_GetObject1, NULL, "Retrieve the first object involved in the collision"},
-    {"object2", (getter) Py3dCollisionEvent_GetObject2, NULL, "Retrieve the second object involved in the collision"},
+    {"collider1", (getter) Py3dCollisionEvent_GetCollider1, NULL, "Retrieve the first collider involved in the collision"},
+    {"collider2", (getter) Py3dCollisionEvent_GetCollider2, NULL, "Retrieve the second collider involved in the collision"},
     {"contacts", (getter) Py3dCollisionEvent_GetContacts, NULL, "Retrieve a tuple containing the contact points"},
     {NULL}
 };
@@ -93,11 +93,11 @@ int Py3dCollisionEvent_Check(PyObject *obj) {
 }
 
 PyObject *Py3dContactPoint_GetObject1(struct Py3dCollisionEvent *self, void *closure) {
-    return Py_NewRef(self->object1);
+    return Py_NewRef(self->collider1);
 }
 
 PyObject *Py3dContactPoint_GetObject2(struct Py3dCollisionEvent *self, void *closure) {
-    return Py_NewRef(self->object2);
+    return Py_NewRef(self->collider2);
 }
 
 PyObject *Py3dContactPoint_GetContacts(struct Py3dCollisionEvent *self, void *closure) {
