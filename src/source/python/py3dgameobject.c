@@ -8,6 +8,7 @@
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
+#include "python/py3dcollisionevent.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
@@ -254,6 +255,25 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
     return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
+}
+
+void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
+    if (self->enabled == false) return; // TODO: decide if disabled GameObjects still collide
+
+    // TODO: do something other than log the collision
+    PyObject *colliderName = Py3dComponent_GetName((struct Py3dComponent *) event->collider1, NULL);
+    PyObject *otherOwner = Py3dComponent_GetOwner((struct Py3dComponent *) event->collider2, NULL);
+    PyObject *otherOwnersName = Py3dGameObject_GetName((struct Py3dGameObject *) otherOwner, NULL);
+
+    info_log(
+        "[GameObject]: Collider Component '%s' detected a collision with '%s'",
+        PyUnicode_AsUTF8(colliderName),
+        PyUnicode_AsUTF8(otherOwnersName)
+    );
+
+    Py_CLEAR(otherOwnersName);
+    Py_CLEAR(otherOwner);
+    Py_CLEAR(colliderName);
 }
 
 PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {

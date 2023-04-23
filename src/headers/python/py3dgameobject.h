@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 struct Py3dGameObject;
+struct Py3dCollisionEvent;
 extern PyTypeObject Py3dGameObject_Type;
 
 extern int PyInit_Py3dGameObject(PyObject *module);
@@ -29,6 +30,7 @@ extern void Py3dGameObject_SetNameCStr(struct Py3dGameObject *self, const char *
 extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event);
 extern PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetChildByNameCStr(struct Py3dGameObject *self, const char *name);
