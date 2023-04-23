@@ -144,6 +144,14 @@ static void do_update(struct Py3dCollider *self) {
         transform->position[2]
     );
 
+    dReal orientation[4] = {
+        transform->orientation[0],
+        transform->orientation[1],
+        transform->orientation[2],
+        transform->orientation[3]
+    };
+    dGeomSetOffsetWorldQuaternion(self->geomId, orientation);
+
     Py_CLEAR(transform);
 }
 
