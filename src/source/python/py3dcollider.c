@@ -158,9 +158,14 @@ static void do_update(struct Py3dCollider *self) {
     Py_CLEAR(transform);
 }
 
+static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dCollider_Methods[] = {
     {"set_shape", (PyCFunction) Py3dCollider_SetShape, METH_VARARGS, "Set collision shape"},
     {"update", (PyCFunction) Py3dCollider_Update, METH_VARARGS, "Handle update messages"},
+    {"parse", (PyCFunction) Py3dCollider_Parse, METH_VARARGS, "Handle parse messages"},
     {NULL}
 };
 
