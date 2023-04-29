@@ -159,8 +159,8 @@ static void do_update(struct Py3dCollider *self) {
 }
 
 static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
-    PyObject *parseDataDict = NULL;
-    if (PyArg_ParseTuple(args, "O!", &PyDict_Type, &parseDataDict) != 1) return NULL;
+    PyObject *parseDataDict = NULL, *py3dResourceManager = NULL;
+    if (PyArg_ParseTuple(args, "O!O", &PyDict_Type, &parseDataDict, &py3dResourceManager) != 1) return NULL;
 
     PyObject *shapeName = PyDict_GetItemString(parseDataDict, "shape");
     if (shapeName == NULL) {
