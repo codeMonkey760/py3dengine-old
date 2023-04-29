@@ -211,6 +211,8 @@ static int Py3dCollider_Init(struct Py3dCollider *self, PyObject *args, PyObject
 
     self->geomId = 0;
     self->isTrigger = 0;
+
+    return 0;
 }
 
 static void Py3dCollider_Dealloc(struct Py3dCollider *self) {
