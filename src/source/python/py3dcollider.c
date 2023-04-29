@@ -159,6 +159,43 @@ static void do_update(struct Py3dCollider *self) {
 }
 
 static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
+    PyObject *parseDataDict = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyDict_Type, &parseDataDict) != 1) return NULL;
+
+    PyObject *shapeName = PyDict_GetItemString(parseDataDict, "shape");
+    if (shapeName == NULL) {
+        PyErr_SetString(PyExc_KeyError, "Parse data for \"ColliderComponent\" must include a string called \"shape\"");
+        return NULL;
+    }
+    shapeName = PyObject_Str(shapeName);
+    if (shapeName == NULL) return NULL;
+
+    PyObject *argsList = PyDict_GetItemString(parseDataDict, "args");
+    if (!PyList_Check(argsList)) {
+        PyErr_SetString(PyExc_KeyError, "Parse data for \"ColliderComponent\" must include a list called \"args\"");
+        Py_CLEAR(shapeName);
+        return NULL;
+    }
+    Py_INCREF(argsList);
+
+    Py_ssize_t numArgs = PyList_Size(argsList);
+    PyObject *setShapeArgsTuple = PyTuple_New(numArgs + 1);
+    PyTuple_SetItem(setShapeArgsTuple, 0, shapeName); //PyTuple_SetItem steals this reference, so don't clear shapeName
+    for (Py_ssize_t i = 0; i < numArgs; ++i) {
+        //Without Py_NewRef, PyTuple_SetItem would steal a reference from argsList
+        PyObject *curArg = Py_NewRef(PyList_GetItem(argsList, i));
+        PyTuple_SetItem(setShapeArgsTuple, i+1, curArg);
+    }
+    Py_CLEAR(argsList);
+
+    PyObject *setShapeCallable = PyObject_GetAttrString((PyObject *) self, "set_shape");
+    PyObject *setShapeRet = PyObject_Call(setShapeCallable, setShapeArgsTuple, NULL);
+
+    Py_CLEAR(setShapeCallable);
+    Py_CLEAR(setShapeArgsTuple);
+    if (setShapeRet == NULL) return NULL;
+
+    Py_CLEAR(setShapeRet);
     Py_RETURN_NONE;
 }
 
