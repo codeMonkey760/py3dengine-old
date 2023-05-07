@@ -10,6 +10,7 @@ static PyObject *py3dTransformCtor = NULL;
 static void refreshMatrixCaches(struct Py3dTransform *component) {
     if (component == NULL || component->matrixCacheDirty == false) return;
 
+    // TODO: all of this nasty matrix multiplication can be removed for a substantial optimization
     float sMtx[16] = {0.0f};
     Mat4ScalingFA(sMtx, component->scale);
 
@@ -37,6 +38,7 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
     float camTarget[3] = {0.0f, 0.0f, 1.0f};
     float camUp[3] = {0.0f, 1.0f, 0.0f};
 
+    // TODO: this can probably be optimized as well
     QuaternionVec3Rotation(camTarget, component->orientation, camTarget);
     Vec3Add(camTarget, component->position, camTarget);
 
