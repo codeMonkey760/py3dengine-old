@@ -5,6 +5,8 @@
 
 int initCollisionEngine();
 void handleCollisions();
+dBodyID createDynamicsBody();
+void destroyDynamicsBody(dBodyID body);
 void addGeomToWorldSpace(dGeomID newGeom);
 void removeGeomFromWorldSpace(dGeomID geom);
 void finalizeCollisionEngine();

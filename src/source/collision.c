@@ -5,6 +5,7 @@
 #include "python/py3dgameobject.h"
 #include "logger.h"
 
+dWorldID world = NULL;
 dSpaceID space = NULL;
 
 static struct Py3dCollider *getColliderFromGeom(dGeomID geom) {
@@ -63,6 +64,8 @@ static void passCollideMessage(
 
 int initCollisionEngine() {
     if (!dInitODE2(0)) return 0;
+
+    world = dWorldCreate();
 
     space = dSimpleSpaceCreate(0);
     if (space == NULL) return 0;
@@ -148,6 +151,15 @@ void handleCollisions() {
     dSpaceCollide(space, NULL, (dNearCallback *) nearCallback);
 }
 
+dBodyID createDynamicsBody() {
+    return dBodyCreate(world);
+}
+
+void destroyDynamicsBody(dBodyID body) {
+    dBodyDestroy(body);
+    body = NULL;
+}
+
 void addGeomToWorldSpace(dGeomID newGeom) {
     dSpaceAdd(space, newGeom);
 }
@@ -158,6 +170,10 @@ void removeGeomFromWorldSpace(dGeomID geom) {
 
 void finalizeCollisionEngine() {
     dSpaceDestroy(space);
+    space = NULL;
+
+    dWorldDestroy(world);
+    world = NULL;
 
     dCloseODE();
 }
