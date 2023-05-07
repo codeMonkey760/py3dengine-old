@@ -48,6 +48,22 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
     component->viewMatrixCacheDirty = false;
 }
 
+static PyObject *Py3dTransform_Update(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
+    PyObject *superUpdateRet = Py3dComponent_Update((struct Py3dComponent *) self, args);
+    if (superUpdateRet == NULL) return NULL;
+    Py_CLEAR(superUpdateRet);
+
+    dBodySetPosition(self->dynamicsBody, self->position[0], self->position[1], self->position[2]);
+
+    dQuaternion localOrientation;
+    localOrientation[0] = self->orientation[0];
+    localOrientation[1] = self->orientation[1];
+    localOrientation[2] = self->orientation[2];
+    localOrientation[3] = self->orientation[3];
+
+    dBodySetQuaternion(self->dynamicsBody, localOrientation);
+}
+
 static PyObject *Py3dTransform_GetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
     struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->position[0];
@@ -177,6 +193,7 @@ static PyObject *Py3dTransform_SetScale(struct Py3dTransform *self, PyObject *ar
 }
 
 static PyMethodDef Py3dTransform_Methods[] = {
+    {"update", (PyCFunction) Py3dTransform_Update, METH_VARARGS, "Update event handler"},
     {"get_position", (PyCFunction) Py3dTransform_GetPosition, METH_NOARGS, "Get position as tuple"},
     {"move", (PyCFunction) Py3dTransform_Move, METH_VARARGS, "Move the transform by displacement value"},
     {"set_position", (PyCFunction) Py3dTransform_SetPosition, METH_VARARGS, "Set the position by absolute value"},
@@ -199,8 +216,16 @@ static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObje
     Mat4Identity(self->wMatrixCache);
     Mat4Identity(self->witMatrixCache);
     Mat4Identity(self->viewMatrixCache);
+    self->dynamicsBody = createDynamicsBody();
 
     return 0;
+}
+
+static void Py3dTransform_Dealloc(struct Py3dTransform *self) {
+    destroyDynamicsBody(self->dynamicsBody);
+    self->dynamicsBody = NULL;
+
+    Py3dComponent_Type.tp_dealloc((PyObject *) self);
 }
 
 static PyTypeObject Py3dTransform_Type = {
@@ -211,6 +236,7 @@ static PyTypeObject Py3dTransform_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dTransform_Init,
+    .tp_dealloc = (destructor) Py3dTransform_Dealloc,
     .tp_methods = Py3dTransform_Methods
 };
 

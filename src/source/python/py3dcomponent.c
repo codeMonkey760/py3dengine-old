@@ -10,7 +10,6 @@
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
-static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 
@@ -213,7 +212,7 @@ void Py3dComponent_Dealloc(struct Py3dComponent *self) {
 // Maybe one day there will need to be code in these, although that should be avoided because it'll require
 // subclasses to call "super" when overriding these methods
 // for now lets just have these so I can hang a doc string on them describing how to override them
-static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
     Py_RETURN_NONE;
 }
 

@@ -3,9 +3,11 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <ode/ode.h>
 
 #include <stdbool.h>
 
+#include "collision.h"
 #include "py3dcomponent.h"
 
 struct Py3dTransform {
@@ -20,6 +22,7 @@ struct Py3dTransform {
     float wMatrixCache[16];
     float witMatrixCache[16];
     float viewMatrixCache[16];
+    dBodyID dynamicsBody;
 };
 
 extern bool PyInit_Py3dTransform(PyObject *module);
