@@ -6,7 +6,6 @@
 #include "collision.h"
 
 static PyObject *Py3dCollider_Ctor = NULL;
-static void do_update(struct Py3dCollider *self);
 
 static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
     PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
@@ -33,6 +32,7 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
 static void deleteGeom(struct Py3dCollider *self) {
     if (self->geomId == NULL) return;
 
+    dGeomSetBody(self->geomId, 0);
     removeGeomFromWorldSpace(self->geomId);
     dGeomDestroy(self->geomId);
     self->geomId = NULL;
@@ -115,47 +115,23 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
         return NULL;
     }
 
+    struct Py3dTransform *transform = getTransform(self);
+    if (transform == NULL) {
+        critical_log("[ColliderComponent]: Could not attach new ode geom to py3dtransform dynamic body");
+        dGeomDestroy(newGeom);
+        newGeom = NULL;
+        return NULL;
+    }
+
     dGeomSetData(newGeom, self);
-    dGeomSetBody(newGeom, NULL);
+    dGeomSetBody(newGeom, transform->dynamicsBody);
     addGeomToWorldSpace(newGeom);
     deleteGeom(self);
     self->geomId = newGeom;
-    do_update(self);
-
-    Py_RETURN_NONE;
-}
-
-static PyObject *Py3dCollider_Update(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
-    do_update(self);
-
-    Py_RETURN_NONE;
-}
-
-static void do_update(struct Py3dCollider *self) {
-    if (self->geomId == NULL) return;
-
-    struct Py3dTransform *transform = getTransform(self);
-    if (transform == NULL) {
-        handleException();
-        return;
-    }
-
-    dGeomSetOffsetWorldPosition(
-        self->geomId,
-        transform->position[0],
-        transform->position[1],
-        transform->position[2]
-    );
-
-    dReal orientation[4] = {
-        transform->orientation[0],
-        transform->orientation[1],
-        transform->orientation[2],
-        transform->orientation[3]
-    };
-    dGeomSetOffsetWorldQuaternion(self->geomId, orientation);
 
     Py_CLEAR(transform);
+
+    Py_RETURN_NONE;
 }
 
 static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
@@ -201,7 +177,6 @@ static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, P
 
 static PyMethodDef Py3dCollider_Methods[] = {
     {"set_shape", (PyCFunction) Py3dCollider_SetShape, METH_VARARGS, "Set collision shape"},
-    {"update", (PyCFunction) Py3dCollider_Update, METH_VARARGS, "Handle update messages"},
     {"parse", (PyCFunction) Py3dCollider_Parse, METH_VARARGS, "Handle parse messages"},
     {NULL}
 };
