@@ -486,8 +486,7 @@ static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(str
 
     PyObject *messageHandler = getCallable((PyObject *) component, messageName);
     if (messageHandler == NULL) {
-        warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
-        handleException();
+        PyErr_Clear();
         return;
     }
 
