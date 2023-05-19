@@ -450,30 +450,39 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     return callable;
 }
 
+static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+    if (!Py3dComponent_Check(component)) {
+        warning_log("[GameObject]: GameObject list has non component item.");
+        return;
+    }
+
+    if (!acceptMessage((struct Py3dComponent *) component)) return;
+
+    PyObject *messageHandler = getCallable((PyObject *) component, messageName);
+    if (messageHandler == NULL) {
+        warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
+        handleException();
+        return;
+    }
+
+    PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+    Py_CLEAR(ret);
+    Py_CLEAR(messageHandler);
+}
+
 static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+    PyObject *transform = Py3dGameObject_GetTransform(self, NULL);
+    passMessageToComponent(transform, acceptMessage, messageName, args);
+    Py_CLEAR(transform);
+
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
-        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
-        if (!Py3dComponent_Check(curComponent)) {
-            warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
-            continue;
-        }
-
-        if (!acceptMessage((struct Py3dComponent *) curComponent)) continue;
-
-        PyObject *messageHandler = getCallable((PyObject *) curComponent, messageName);
-        if (messageHandler == NULL) {
-            warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
-            handleException();
-            continue;
-        }
-
-        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
-        if (ret == NULL) {
-            handleException();
-        }
-        Py_CLEAR(ret);
-        Py_CLEAR(messageHandler);
+        PyObject *curComponent = Py_NewRef(PyList_GetItem(self->componentsList, i));
+        passMessageToComponent(curComponent, acceptMessage, messageName, args);
+        Py_CLEAR(curComponent);
     }
 
     Py_ssize_t childCount = PySequence_Size(self->childrenList);
