@@ -105,6 +105,7 @@ PyObject *Py3dComponent_MakeVisible(struct Py3dComponent *self, PyObject *args, 
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
 
     bool make_visible = Py_IsTrue(makeVisibleObj);
+    // TODO: ???
     Py3dComponent_EnableBool(self, make_visible);
 
     Py_RETURN_NONE;
