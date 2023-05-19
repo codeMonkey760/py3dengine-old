@@ -258,22 +258,48 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
 }
 
 void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
-    if (self->enabled == false) return; // TODO: decide if disabled GameObjects still collide
+    if (self->enabled == false) return;
 
-    // TODO: do something other than log the collision
-    PyObject *colliderName = Py3dComponent_GetName((struct Py3dComponent *) event->collider1, NULL);
-    PyObject *otherOwner = Py3dComponent_GetOwner((struct Py3dComponent *) event->collider2, NULL);
-    PyObject *otherOwnersName = Py3dGameObject_GetName((struct Py3dGameObject *) otherOwner, NULL);
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 1, (PyObject *) event);
 
-    info_log(
-        "[GameObject]: Collider Component '%s' detected a collision with '%s'",
-        PyUnicode_AsUTF8(colliderName),
-        PyUnicode_AsUTF8(otherOwnersName)
-    );
+    PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collide", args);
+    if (ret == NULL) {
+        handleException();
+    }
 
-    Py_CLEAR(otherOwnersName);
-    Py_CLEAR(otherOwner);
-    Py_CLEAR(colliderName);
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
+}
+
+extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
+    if (self->enabled == false) return;
+
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 1, (PyObject *) event);
+
+    PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_enter", args);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
+}
+
+extern void Py3dGameObject_ColliderExit(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
+    if (self->enabled == false) return;
+
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 1, (PyObject *) event);
+
+    PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_exit", args);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
 }
 
 PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
