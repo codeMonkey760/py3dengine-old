@@ -56,10 +56,10 @@ static PyObject *Py3dTransform_Update(struct Py3dTransform *self, PyObject *args
     dBodySetPosition(self->dynamicsBody, self->position[0], self->position[1], self->position[2]);
 
     dQuaternion localOrientation;
-    localOrientation[0] = self->orientation[0];
+    localOrientation[0] = self->orientation[3];
     localOrientation[1] = self->orientation[1];
     localOrientation[2] = self->orientation[2];
-    localOrientation[3] = self->orientation[3];
+    localOrientation[3] = self->orientation[0];
 
     dBodySetQuaternion(self->dynamicsBody, localOrientation);
 
