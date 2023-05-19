@@ -9,7 +9,7 @@ static int Py3dCollisionEvent_Init(struct Py3dCollisionEvent *self, PyObject *ar
     self->collider2 = Py_NewRef(Py_None);
     self->contactsTuple = Py_NewRef(Py_None);
 
-    return 1;
+    return 0;
 }
 
 static void Py3dCollisionEvent_Dealloc(struct Py3dCollisionEvent *self) {
@@ -33,6 +33,7 @@ static PyTypeObject Py3dCollisionEvent_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dCollisionEvent_Init,
+    .tp_new = PyType_GenericNew,
     .tp_dealloc = (destructor) Py3dCollisionEvent_Dealloc,
     .tp_getset = Py3dCollisionEvent_GetSet
 };
@@ -80,6 +81,8 @@ struct Py3dCollisionEvent *Py3dCollisionEvent_New() {
         Py_CLEAR(py3dCollisionEvent);
         return NULL;
     }
+
+    return py3dCollisionEvent;
 }
 
 int Py3dCollisionEvent_Check(PyObject *obj) {

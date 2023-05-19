@@ -10,7 +10,7 @@ static int Py3dContactPoint_Init(struct Py3dContactPoint *self, PyObject *args, 
     self->normal = Py_NewRef(Py_None);
     self->depth = Py_NewRef(Py_None);
 
-    return 1;
+    return 0;
 }
 
 static void Py3dContactPoint_Dealloc(struct Py3dContactPoint *self) {
@@ -34,6 +34,7 @@ static PyTypeObject Py3dContactPoint_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dContactPoint_Init,
+    .tp_new = PyType_GenericNew,
     .tp_dealloc = (destructor) Py3dContactPoint_Dealloc,
     .tp_getset = Py3dContactPoint_GetSet
 };
