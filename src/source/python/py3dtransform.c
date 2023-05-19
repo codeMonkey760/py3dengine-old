@@ -62,6 +62,8 @@ static PyObject *Py3dTransform_Update(struct Py3dTransform *self, PyObject *args
     localOrientation[3] = self->orientation[3];
 
     dBodySetQuaternion(self->dynamicsBody, localOrientation);
+
+    Py_RETURN_NONE;
 }
 
 static PyObject *Py3dTransform_GetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
