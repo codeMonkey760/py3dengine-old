@@ -1,4 +1,5 @@
 #include "physics/collision.h"
+#include "physics/collision_state.h"
 #include "python/py3dcollider.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
@@ -7,6 +8,7 @@
 
 dWorldID world = NULL;
 dSpaceID space = NULL;
+struct CollisionState *collisionState = NULL;
 
 static struct Py3dCollider *getColliderFromGeom(dGeomID geom) {
     PyObject *obj = NULL;
@@ -42,19 +44,49 @@ static struct Py3dGameObject *getOwnerFromCollider(struct Py3dCollider *collider
     return (struct Py3dGameObject *) Py_NewRef(obj);
 }
 
+static struct Py3dCollisionEvent *createCollisionEvent(struct Py3dCollider *c1, struct Py3dCollider *c2) {
+    struct Py3dCollisionEvent *event = Py3dCollisionEvent_New();
+
+    Py_CLEAR(event->collider1);
+    event->collider1 = Py_NewRef(c1);
+    Py_CLEAR(event->collider2);
+    event->collider2 = Py_NewRef(c2);
+
+    return event;
+}
+
+static void passColliderEnterMessage(
+    struct Py3dGameObject *owner,
+    struct Py3dCollider *ownedCollider,
+    struct Py3dCollider *otherCollider
+) {
+    struct Py3dCollisionEvent *event = createCollisionEvent(ownedCollider, otherCollider);
+
+    Py3dGameObject_ColliderEnter((struct Py3dGameObject *) owner, event);
+
+    Py_CLEAR(event);
+}
+
+static void passColliderExitMessage(
+    struct Py3dGameObject *owner,
+    struct Py3dCollider *ownedCollider,
+    struct Py3dCollider *otherCollider
+) {
+    struct Py3dCollisionEvent *event = createCollisionEvent(ownedCollider, otherCollider);
+
+    Py3dGameObject_ColliderExit((struct Py3dGameObject *) owner, event);
+
+    Py_CLEAR(event);
+}
+
 static void passCollideMessage(
     struct Py3dGameObject *owner,
     struct Py3dCollider *ownedCollider,
     struct Py3dCollider *otherCollider,
     PyObject *contactsTuple
 ) {
-    struct Py3dCollisionEvent *event = NULL;
+    struct Py3dCollisionEvent *event = createCollisionEvent(ownedCollider, otherCollider);
 
-    event = Py3dCollisionEvent_New();
-    Py_CLEAR(event->collider1);
-    event->collider1 = Py_NewRef(ownedCollider);
-    Py_CLEAR(event->collider2);
-    event->collider2 = Py_NewRef(otherCollider);
     Py_CLEAR(event->contactsTuple);
     event->contactsTuple = Py_NewRef(contactsTuple);
     Py3dGameObject_Collide((struct Py3dGameObject *) owner, event);
@@ -71,6 +103,8 @@ int initCollisionEngine() {
     if (space == NULL) return 0;
     //destroy geoms registered to this space when its destroyed
     dSpaceSetCleanup(space, 1);
+
+    allocCollisionState(&collisionState);
 
     return 1;
 }
@@ -127,6 +161,10 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     //    colliders that have "isTrigger" set to true since collision handling isn't required for that use case
     if (!collider1->isTrigger || !collider2->isTrigger) return;
 
+    // add Collision to current collision state
+    addCollisionToState(collisionState, collider1, collider2);
+    addCollisionToState(collisionState, collider2, collider1);
+
     // create a tuple containing contact info
     PyObject *contactsTuple = PyTuple_New(num_contacts);
     for (Py_ssize_t i = 0; i < num_contacts; ++i) {
@@ -147,8 +185,43 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     Py_CLEAR(owner2);
 }
 
+static void handleCollisionEvents(struct CollisionStateDiff *diff) {
+    if (diff == NULL) return;
+
+    struct CollisionStateDiffEntry *curEntry = diff->head;
+    while (curEntry != NULL) {
+        struct Py3dGameObject *owner = getOwnerFromCollider(curEntry->c1);
+        if (owner == NULL) continue;
+
+        if (curEntry->isAddition == 0) {
+            passColliderExitMessage(owner, curEntry->c1, curEntry->c2);
+        } else if (curEntry->isAddition == 1) {
+            passColliderEnterMessage(owner, curEntry->c1, curEntry->c2);
+        } else {
+            warning_log("[Collision]: Bad collision event enum detected");
+        }
+
+        Py_CLEAR(owner);
+
+        curEntry = curEntry->next;
+    }
+}
+
 void handleCollisions() {
+    struct CollisionState *prevState = collisionState;
+    collisionState = NULL;
+    allocCollisionState(&collisionState);
+
     dSpaceCollide(space, NULL, (dNearCallback *) nearCallback);
+
+    struct CollisionStateDiff *diff = NULL;
+    allocCollisionStateDiff(&diff);
+    calculateCollisionStateDiff(diff, prevState, collisionState);
+
+    deallocCollisionState(&prevState);
+    handleCollisionEvents(diff);
+
+    deallocCollisionStateDiff(&diff);
 }
 
 dBodyID createDynamicsBody() {
@@ -169,6 +242,8 @@ void removeGeomFromWorldSpace(dGeomID geom) {
 }
 
 void finalizeCollisionEngine() {
+    deallocCollisionState(&collisionState);
+
     dSpaceDestroy(space);
     space = NULL;
 

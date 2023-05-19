@@ -31,6 +31,8 @@ extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObje
 extern PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event);
+extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3dCollisionEvent *event);
+extern void Py3dGameObject_ColliderExit(struct Py3dGameObject *self, struct Py3dCollisionEvent *event);
 extern PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetChildByName(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetChildByNameCStr(struct Py3dGameObject *self, const char *name);
