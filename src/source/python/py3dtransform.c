@@ -49,7 +49,7 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
 }
 
 static PyObject *Py3dTransform_Update(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    PyObject *superUpdateRet = Py3dComponent_Update((struct Py3dComponent *) self, args);
+    PyObject *superUpdateRet = Py3dComponent_Update((struct Py3dComponent *) self, args, NULL);
     if (superUpdateRet == NULL) return NULL;
     Py_CLEAR(superUpdateRet);
 
