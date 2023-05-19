@@ -218,11 +218,12 @@ bool parseGameObject(
 
         Py_CLEAR(attachComponentRet);
         Py_CLEAR(attachComponentArgs);
-        Py_CLEAR(pyComponent);
 
         if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
             error_log("%s", "[JsonParser]: Python component failed to parse.");
         }
+
+        Py_CLEAR(pyComponent);
     }
 
     size_t json_children_array_length = json_object_array_length(json_children_array);
