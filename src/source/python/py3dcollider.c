@@ -138,6 +138,20 @@ static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, P
     PyObject *parseDataDict = NULL, *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O", &PyDict_Type, &parseDataDict, &py3dResourceManager) != 1) return NULL;
 
+    PyObject *isTriggerObj = PyDict_GetItemString(parseDataDict, "is_trigger");
+    if (isTriggerObj == NULL) {
+        PyErr_SetString(PyExc_KeyError, "Parse data for \"ColliderComponent\" must include a boolean called \"is_trigger\"");
+        return NULL;
+    }
+    if (Py_IsTrue(isTriggerObj)) {
+        self->isTrigger = 1;
+    } else if (Py_IsFalse(isTriggerObj)) {
+        self->isTrigger = 0;
+    } else {
+        PyErr_SetString(PyExc_KeyError, "Parse data for \"ColliderComponent\" must include a boolean called \"is_trigger\"");
+        return NULL;
+    }
+
     PyObject *shapeName = PyDict_GetItemString(parseDataDict, "shape");
     if (shapeName == NULL) {
         PyErr_SetString(PyExc_KeyError, "Parse data for \"ColliderComponent\" must include a string called \"shape\"");
