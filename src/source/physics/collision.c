@@ -1,4 +1,4 @@
-#include "collision.h"
+#include "physics/collision.h"
 #include "python/py3dcollider.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"

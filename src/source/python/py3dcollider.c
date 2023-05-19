@@ -3,7 +3,7 @@
 #include "python/py3dgameobject.h"
 #include "python/py3dtransform.h"
 #include "logger.h"
-#include "collision.h"
+#include "physics/collision.h"
 
 static PyObject *Py3dCollider_Ctor = NULL;
 

@@ -85,7 +85,7 @@ add_executable(
     src/source/resource_manager.c
     src/source/config.c
     src/source/json_parser.c
-    src/source/collision.c
+    src/source/physics/collision.c
     src/source/wfo_parser/wfo_parser.c
     src/source/wfo_parser/vertex_data_list.c
     src/source/wfo_parser/object_list.c

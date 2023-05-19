@@ -15,7 +15,7 @@
 #include "python/py3dgameobject.h"
 #include "resource_manager.h"
 #include "python/py3dinput.h"
-#include "collision.h"
+#include "physics/collision.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;

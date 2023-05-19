@@ -7,7 +7,7 @@
 
 #include <stdbool.h>
 
-#include "collision.h"
+#include "physics/collision.h"
 #include "py3dcomponent.h"
 
 struct Py3dTransform {
