@@ -275,8 +275,7 @@ void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEve
 extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
     if (self->enabled == false) return;
 
-    PyObject *args = PyTuple_New(1);
-    PyTuple_SetItem(args, 1, (PyObject *) event);
+    PyObject *args = Py_BuildValue("(O)", event);
 
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_enter", args);
     if (ret == NULL) {
@@ -290,8 +289,7 @@ extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3
 extern void Py3dGameObject_ColliderExit(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
     if (self->enabled == false) return;
 
-    PyObject *args = PyTuple_New(1);
-    PyTuple_SetItem(args, 1, (PyObject *) event);
+    PyObject *args = Py_BuildValue("(O)", event);
 
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_exit", args);
     if (ret == NULL) {
