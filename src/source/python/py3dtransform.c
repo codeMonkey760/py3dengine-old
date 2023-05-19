@@ -238,6 +238,7 @@ static PyTypeObject Py3dTransform_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dTransform_Init,
+    .tp_new = PyType_GenericNew,
     .tp_dealloc = (destructor) Py3dTransform_Dealloc,
     .tp_methods = Py3dTransform_Methods
 };
