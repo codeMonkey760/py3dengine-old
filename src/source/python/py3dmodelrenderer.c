@@ -167,6 +167,7 @@ static PyTypeObject Py3dModelRenderer_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dModelRenderer_Init,
+    .tp_new = PyType_GenericNew,
     .tp_methods = Py3dModelRenderer_Methods,
     .tp_dealloc = (destructor) Py3dModelRenderer_Dealloc,
 };

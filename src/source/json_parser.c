@@ -12,7 +12,8 @@
 #include "python/py3dtransform.h"
 #include "python/python_util.h"
 
-#define TYPE_NAME_MAX_SIZE 64
+static PyObject *createPyDictFromJsonObject(json_object *json);
+static PyObject *createPyListFromJsonArray(json_object *json);
 
 static json_object *fetchProperty(json_object *parent, const char *key, json_type type) {
     if (parent == NULL || key == NULL) return NULL;
@@ -53,41 +54,51 @@ static bool parseVec(json_object *json, const char *name, float dst[4], size_t v
     return true;
 }
 
-static PyObject *createPyDictFromJsonObject(json_object *root) {
-    if (root == NULL || json_object_is_type(root, json_type_object) == 0) Py_RETURN_NONE;
+static PyObject *createPyValueFromJsonObject(json_object *json) {
+    PyObject *value = NULL;
+    switch (json_object_get_type(json)) {
+        case json_type_int:
+            return PyLong_FromLong(json_object_get_int(json));
+        case json_type_double:
+            return PyFloat_FromDouble(json_object_get_double(json));
+        case json_type_string:
+            return PyUnicode_FromString(json_object_get_string(json));
+        case json_type_boolean:
+            return PyBool_FromLong(json_object_get_boolean(json));
+        case json_type_null:
+            Py_RETURN_NONE;
+        case json_type_array:
+            return createPyListFromJsonArray(json);
+        case json_type_object:
+            return createPyDictFromJsonObject(json);
+    }
+}
+
+static PyObject *createPyDictFromJsonObject(json_object *json) {
+    if (json == NULL || json_object_is_type(json, json_type_object) == 0) Py_RETURN_NONE;
 
     PyObject *ret = PyDict_New();
-    if (ret == NULL) Py_RETURN_NONE;
+    if (ret == NULL) return NULL;
 
-    json_object_object_foreach(root, key, val) {
-        PyObject *value = NULL;
-        switch (json_object_get_type(val)) {
-            case json_type_int:
-                value = PyLong_FromLong(json_object_get_int(val));
-                break;
-            case json_type_double:
-                value = PyFloat_FromDouble(json_object_get_double(val));
-                break;
-            case json_type_string:
-                value = PyUnicode_FromString(json_object_get_string(val));
-                break;
-            case json_type_boolean:
-                value = PyBool_FromLong(json_object_get_boolean(val));
-                break;
-            case json_type_null:
-                value = Py_NewRef(Py_None);
-                break;
-            case json_type_array:
-                // TODO: implement this
-                value = Py_NewRef(Py_None);
-                break;
-            case json_type_object:
-                value = createPyDictFromJsonObject(val);
-                break;
-        }
+    json_object_object_foreach(json, key, val) {
+        PyDict_SetItemString(ret, key, createPyValueFromJsonObject(val));
+    }
 
-        PyDict_SetItemString(ret, key, value);
-        Py_CLEAR(value);
+    return ret;
+}
+
+static PyObject *createPyListFromJsonArray(json_object *json) {
+    if (json == NULL || json_object_is_type(json, json_type_array) == 0) Py_RETURN_NONE;
+
+    // TODO: unsigned to signed cast based on input from a file ... security problem?
+    Py_ssize_t array_length = (Py_ssize_t) json_object_array_length(json);
+
+    PyObject *ret = PyList_New(array_length);
+    if (ret == NULL) return NULL;
+
+    for(Py_ssize_t i = 0; i < array_length; ++i) {
+        json_object *curJson = json_object_array_get_idx(json, i);
+        PyList_SetItem(ret, i, createPyValueFromJsonObject(curJson));
     }
 
     return ret;
@@ -198,13 +209,6 @@ bool parseGameObject(
         if (!isResourceTypePythonScript(pyScript)) continue;
 
         createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
-        if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
-            error_log("%s", "[JsonParser]: Python component failed to parse. Discarding it.");
-            Py_CLEAR(pyComponent);
-
-            continue;
-        }
-
         PyObject *attachComponentArgs = Py_BuildValue("(O)", pyComponent);
         PyObject *attachComponentRet = Py3dGameObject_AttachComponent(newGO, attachComponentArgs, NULL);
         if (attachComponentRet == NULL) {
@@ -214,6 +218,11 @@ bool parseGameObject(
 
         Py_CLEAR(attachComponentRet);
         Py_CLEAR(attachComponentArgs);
+
+        if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
+            error_log("%s", "[JsonParser]: Python component failed to parse.");
+        }
+
         Py_CLEAR(pyComponent);
     }
 

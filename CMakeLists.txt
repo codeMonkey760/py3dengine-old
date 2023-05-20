@@ -85,6 +85,8 @@ add_executable(
     src/source/resource_manager.c
     src/source/config.c
     src/source/json_parser.c
+    src/source/physics/collision.c
+    src/source/physics/collision_state.c
     src/source/wfo_parser/wfo_parser.c
     src/source/wfo_parser/vertex_data_list.c
     src/source/wfo_parser/object_list.c
@@ -107,6 +109,9 @@ add_executable(
     src/source/python/py3drenderingcontext.c
     src/source/python/py3dspriterenderer.c
     src/source/python/py3dinput.c
+    src/source/python/py3dcollider.c
+    src/source/python/py3dcontactpoint.c
+    src/source/python/py3dcollisionevent.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
@@ -124,7 +129,7 @@ endif()
 target_include_directories(py3dengine PRIVATE ${json-c_SOURCE_DIR})
 target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python json-c soil)
+target_link_libraries(py3dengine glfw Python::Python json-c soil ode)
 
 add_custom_command(
     TARGET

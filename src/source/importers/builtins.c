@@ -97,6 +97,13 @@ void importBuiltInResources(struct ResourceManager *rm) {
     storeResource(rm, (struct BaseResource *) script);
     script = NULL;
 
+    importBuiltinComponent(&script, "ColliderComponent");
+    if (script == NULL) {
+        error_log("%s", "[BuiltInImporter]: Unable to load ColliderComponent builtin");
+    }
+    storeResource(rm, (struct BaseResource *) script);
+    script = NULL;
+
     importQuadModel(rm);
     importSpriteShader(rm);
 }

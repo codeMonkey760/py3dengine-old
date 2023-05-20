@@ -6,8 +6,11 @@
 #include "python/py3dmodelrenderer.h"
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
+#include "python/py3dcollider.h"
 #include "resource_manager.h"
 #include "python/py3dgameobject.h"
+#include "python/py3dcontactpoint.h"
+#include "python/py3dcollisionevent.h"
 #include "engine.h"
 
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -89,6 +92,27 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dCollider(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach ColliderComponent to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (!PyInit_Py3dContactPoint(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach ContactPoint to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (!PyInit_Py3dCollisionEvent(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach CollisionEvent to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -137,6 +161,18 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dCollider_FindCtor(module)) {
+        return false;
+    }
+
+    if (!Py3dContactPoint_FindCtor(module)) {
+        return false;
+    }
+
+    if (!Py3dCollisionEvent_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -151,4 +187,7 @@ void finalizePy3dEngineModule() {
     finalizePy3dResourceManagerCtor();
     Py3dModelRenderer_FinalizeCtor();
     Py3dSpriteRenderer_FinalizeCtor();
+    Py3dCollider_FinalizeCtor();
+    Py3dContactPoint_FinalizeCtor();
+    Py3dCollisionEvent_FinalizeCtor();
 }

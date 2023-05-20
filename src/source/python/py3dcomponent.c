@@ -10,9 +10,11 @@
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
-static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
-static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
-static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
+static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Collide(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_ColliderEnter(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 
 static PyMemberDef py3d_component_members[] = { {NULL} };
 static PyMethodDef py3d_component_methods[] = {
@@ -22,6 +24,9 @@ static PyMethodDef py3d_component_methods[] = {
         {"make_visible", (PyCFunction) Py3dComponent_MakeVisible, METH_VARARGS, "Make a Component visible or invisible"},
         {"update", (PyCFunction) Py3dComponent_Update, METH_VARARGS, "Update event handler"},
         {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
+        {"collide", (PyCFunction) Py3dComponent_Collide, METH_VARARGS, "Handle per tick collision events"},
+        {"collider_enter", (PyCFunction) Py3dComponent_ColliderEnter, METH_VARARGS, "Handle collision enter events"},
+        {"collider_exit", (PyCFunction) Py3dComponent_ColliderExit, METH_VARARGS, "Handle collision exit events"},
         {"get_name", (PyCFunction) Py3dComponent_GetName, METH_NOARGS, "Get component name"},
         {"get_owner", (PyCFunction) Py3dComponent_GetOwner, METH_NOARGS, "Get component owner"},
         {"parse", (PyCFunction) Py3dComponent_Parse, METH_VARARGS, "Parse json contents"},
@@ -100,6 +105,7 @@ PyObject *Py3dComponent_MakeVisible(struct Py3dComponent *self, PyObject *args, 
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
 
     bool make_visible = Py_IsTrue(makeVisibleObj);
+    // TODO: ???
     Py3dComponent_EnableBool(self, make_visible);
 
     Py_RETURN_NONE;
@@ -213,14 +219,26 @@ void Py3dComponent_Dealloc(struct Py3dComponent *self) {
 // Maybe one day there will need to be code in these, although that should be avoided because it'll require
 // subclasses to call "super" when overriding these methods
 // for now lets just have these so I can hang a doc string on them describing how to override them
-static PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
-static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
-static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *Py3dComponent_Collide(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dComponent_ColliderEnter(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }

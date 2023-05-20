@@ -10,6 +10,7 @@ static PyObject *py3dTransformCtor = NULL;
 static void refreshMatrixCaches(struct Py3dTransform *component) {
     if (component == NULL || component->matrixCacheDirty == false) return;
 
+    // TODO: all of this nasty matrix multiplication can be removed for a substantial optimization
     float sMtx[16] = {0.0f};
     Mat4ScalingFA(sMtx, component->scale);
 
@@ -37,6 +38,7 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
     float camTarget[3] = {0.0f, 0.0f, 1.0f};
     float camUp[3] = {0.0f, 1.0f, 0.0f};
 
+    // TODO: this can probably be optimized as well
     QuaternionVec3Rotation(camTarget, component->orientation, camTarget);
     Vec3Add(camTarget, component->position, camTarget);
 
@@ -46,8 +48,26 @@ static void refreshViewMatrixCache(struct Py3dTransform *component) {
     component->viewMatrixCacheDirty = false;
 }
 
+static PyObject *Py3dTransform_Update(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
+    PyObject *superUpdateRet = Py3dComponent_Update((struct Py3dComponent *) self, args, NULL);
+    if (superUpdateRet == NULL) return NULL;
+    Py_CLEAR(superUpdateRet);
+
+    dBodySetPosition(self->dynamicsBody, self->position[0], self->position[1], self->position[2]);
+
+    dQuaternion localOrientation;
+    localOrientation[0] = self->orientation[3];
+    localOrientation[1] = self->orientation[0];
+    localOrientation[2] = self->orientation[1];
+    localOrientation[3] = self->orientation[2];
+
+    dBodySetQuaternion(self->dynamicsBody, localOrientation);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *Py3dTransform_GetPosition(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->position[0];
     result->elements[1] = self->position[1];
     result->elements[2] = self->position[2];
@@ -140,7 +160,7 @@ static PyObject *Py3dTransform_SetOrientation(struct Py3dTransform *self, PyObje
 }
 
 static PyObject *Py3dTransform_GetScale(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
-    struct Py3dVector3 *result = Py3dVector3_New();
+    struct Py3dVector3 *result = Py3dVector3_New(0.0f, 0.0f, 0.0f);
     result->elements[0] = self->scale[0];
     result->elements[1] = self->scale[1];
     result->elements[2] = self->scale[2];
@@ -175,6 +195,7 @@ static PyObject *Py3dTransform_SetScale(struct Py3dTransform *self, PyObject *ar
 }
 
 static PyMethodDef Py3dTransform_Methods[] = {
+    {"update", (PyCFunction) Py3dTransform_Update, METH_VARARGS, "Update event handler"},
     {"get_position", (PyCFunction) Py3dTransform_GetPosition, METH_NOARGS, "Get position as tuple"},
     {"move", (PyCFunction) Py3dTransform_Move, METH_VARARGS, "Move the transform by displacement value"},
     {"set_position", (PyCFunction) Py3dTransform_SetPosition, METH_VARARGS, "Set the position by absolute value"},
@@ -197,8 +218,16 @@ static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObje
     Mat4Identity(self->wMatrixCache);
     Mat4Identity(self->witMatrixCache);
     Mat4Identity(self->viewMatrixCache);
+    self->dynamicsBody = createDynamicsBody();
 
     return 0;
+}
+
+static void Py3dTransform_Dealloc(struct Py3dTransform *self) {
+    destroyDynamicsBody(self->dynamicsBody);
+    self->dynamicsBody = NULL;
+
+    Py3dComponent_Type.tp_dealloc((PyObject *) self);
 }
 
 static PyTypeObject Py3dTransform_Type = {
@@ -209,6 +238,8 @@ static PyTypeObject Py3dTransform_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dTransform_Init,
+    .tp_new = PyType_GenericNew,
+    .tp_dealloc = (destructor) Py3dTransform_Dealloc,
     .tp_methods = Py3dTransform_Methods
 };
 
@@ -259,7 +290,13 @@ struct Py3dTransform *Py3dTransform_New() {
 }
 
 int Py3dTransform_Check(PyObject  *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dTransform_Type);
+    int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dTransform_Type);
+    if (ret == -1) {
+        handleException();
+        return 0;
+    }
+
+    return ret;
 }
 
 float *getTransformWorldMtx(struct Py3dTransform *component) {

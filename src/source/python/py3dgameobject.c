@@ -8,6 +8,7 @@
 #include "python/py3dcomponent.h"
 #include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
+#include "python/py3dcollisionevent.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
@@ -126,7 +127,13 @@ void Py3dGameObject_FinalizeCtor() {
 }
 
 int Py3dGameObject_Check(PyObject *obj) {
-    return PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
+    int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
+    if (ret == -1) {
+        handleException();
+        return 0;
+    }
+
+    return ret;
 }
 
 PyObject *Py3dGameObject_New() {
@@ -248,6 +255,49 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
     return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
+}
+
+void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
+    if (self->enabled == false) return;
+
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 1, (PyObject *) event);
+
+    PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collide", args);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
+}
+
+extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
+    if (self->enabled == false) return;
+
+    PyObject *args = Py_BuildValue("(O)", event);
+
+    PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_enter", args);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
+}
+
+extern void Py3dGameObject_ColliderExit(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
+    if (self->enabled == false) return;
+
+    PyObject *args = Py_BuildValue("(O)", event);
+
+    PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_exit", args);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
 }
 
 PyObject *Py3dGameObject_AttachChild(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -424,30 +474,38 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     return callable;
 }
 
+static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+    if (!Py3dComponent_Check(component)) {
+        warning_log("[GameObject]: GameObject list has non component item.");
+        return;
+    }
+
+    if (!acceptMessage((struct Py3dComponent *) component)) return;
+
+    PyObject *messageHandler = getCallable((PyObject *) component, messageName);
+    if (messageHandler == NULL) {
+        PyErr_Clear();
+        return;
+    }
+
+    PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+    Py_CLEAR(ret);
+    Py_CLEAR(messageHandler);
+}
+
 static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+    PyObject *transform = Py3dGameObject_GetTransform(self, NULL);
+    passMessageToComponent(transform, acceptMessage, messageName, args);
+    Py_CLEAR(transform);
+
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
-        PyObject *curComponent = PyList_GetItem(self->componentsList, i);
-        if (!Py3dComponent_Check(curComponent)) {
-            warning_log("[GameObject]: Component list has non component item. Will not pass update message.");
-            continue;
-        }
-
-        if (!acceptMessage((struct Py3dComponent *) curComponent)) continue;
-
-        PyObject *messageHandler = getCallable((PyObject *) curComponent, messageName);
-        if (messageHandler == NULL) {
-            warning_log("[GameObject]: Could not pass \"%s\" message to component", messageName);
-            handleException();
-            continue;
-        }
-
-        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
-        if (ret == NULL) {
-            handleException();
-        }
-        Py_CLEAR(ret);
-        Py_CLEAR(messageHandler);
+        PyObject *curComponent = Py_NewRef(PyList_GetItem(self->componentsList, i));
+        passMessageToComponent(curComponent, acceptMessage, messageName, args);
+        Py_CLEAR(curComponent);
     }
 
     Py_ssize_t childCount = PySequence_Size(self->childrenList);

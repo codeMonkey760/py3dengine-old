@@ -15,6 +15,7 @@
 #include "python/py3dgameobject.h"
 #include "resource_manager.h"
 #include "python/py3dinput.h"
+#include "physics/collision.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -91,6 +92,8 @@ static void updateEngine(float dt) {
 
     Py_CLEAR(ret);
     Py_CLEAR(args);
+
+    handleCollisions();
 }
 
 static void renderEngine() {
@@ -124,6 +127,11 @@ void initializeEngine(int argc, char **argv){
 
     if (!initializePython(argc, argv)) {
         critical_log("%s", "Could not initialize python. Halting");
+        return;
+    }
+
+    if (!initCollisionEngine()) {
+        critical_log("%s", "[Engine]: Could not initialize collision engine");
         return;
     }
 
@@ -218,6 +226,11 @@ void finalizeEngine() {
     glfwTerminate();
 
     finalizePython();
+
+    // TODO: this was moved after finalizePython because it segfaults if its done before
+    // that's probably happening because there's probably component clean up being performed in finalizePython
+    // ... and that's probably happening because of leaked component references!!!
+    finalizeCollisionEngine();
 
     finalizeConfig();
 }
