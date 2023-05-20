@@ -14,7 +14,6 @@ static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args
 static PyObject *Py3dComponent_Collide(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_ColliderEnter(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
-static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 
 static PyMemberDef py3d_component_members[] = { {NULL} };
 static PyMethodDef py3d_component_methods[] = {
@@ -156,32 +155,7 @@ PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED
     return self->owner;
 }
 
-bool Py3dComponent_CallParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm) {
-    if (component == NULL || data == NULL) return false;
 
-    PyObject *pyParse = PyObject_GetAttrString((PyObject *) component, "parse");
-    if (pyParse == NULL) {
-        handleException();
-
-        return false;
-    }
-
-    PyObject *parseArgs = Py_BuildValue("(OO)", data, rm->py3dResourceManager);
-    PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
-    if (parseRet == NULL) {
-        handleException();
-        Py_CLEAR(parseArgs);
-        Py_CLEAR(pyParse);
-
-        return false;
-    }
-
-    Py_CLEAR(parseRet);
-    Py_CLEAR(parseArgs);
-    Py_CLEAR(pyParse);
-
-    return true;
-}
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg) {
     Py_VISIT(self->name);
@@ -239,6 +213,30 @@ static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject
     Py_RETURN_NONE;
 }
 
-static PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    PyObject *parseDataDict = NULL;
+    struct Py3dResourceManager *py3DResourceManager = NULL;
+    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3DResourceManager) != 1) return NULL;
+
+    PyObject *nameObj = PyDict_GetItemString(parseDataDict, "name");
+    if (nameObj == NULL || PyUnicode_Check(nameObj) != 1) {
+        PyErr_SetString(PyExc_ValueError, "Component must have a string called \"name\"");
+        return NULL;
+    }
+    Py_CLEAR(self->name);
+    self->name = Py_NewRef(nameObj);
+
+    PyObject *enabledObj = PyDict_GetItemString(parseDataDict, "enabled");
+    if (enabledObj != NULL && PyBool_Check(enabledObj) == 1) {
+        // TODO: warn if set but not valid?
+        self->enabled = Py_IsTrue(enabledObj);
+    }
+
+    PyObject *visibleObj = PyDict_GetItemString(parseDataDict, "visible");
+    if (visibleObj != NULL && PyBool_Check(visibleObj) == 1) {
+        // TODO: warn if set but not valid?
+        self->visible = Py_IsTrue(visibleObj);
+    }
+
     Py_RETURN_NONE;
 }

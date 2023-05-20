@@ -19,21 +19,9 @@ static json_object *fetchProperty(json_object *parent, const char *key, json_typ
     if (parent == NULL || key == NULL) return NULL;
 
     json_object *ret = json_object_object_get(parent, key);
-    if (ret == NULL) {
-        error_log("[JsonParser]: Could not fetch field named \"%s\"", key);
+    if (ret == NULL) return NULL;
 
-        return NULL;
-    }
-    if (!json_object_is_type(ret, type)) {
-        error_log(
-            "[JsonParser]: Type check failure. Expected \"%s\" to be \"%s\", but got \"%s\" instead",
-            key,
-            json_type_to_name(type),
-            json_type_to_name(json_object_get_type(ret))
-        );
-
-        return NULL;
-    }
+    if (!json_object_is_type(ret, type)) return NULL;
 
     return ret;
 }
@@ -55,7 +43,6 @@ static bool parseVec(json_object *json, const char *name, float dst[4], size_t v
 }
 
 static PyObject *createPyValueFromJsonObject(json_object *json) {
-    PyObject *value = NULL;
     switch (json_object_get_type(json)) {
         case json_type_int:
             return PyLong_FromLong(json_object_get_int(json));
@@ -104,6 +91,33 @@ static PyObject *createPyListFromJsonArray(json_object *json) {
     return ret;
 }
 
+static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm) {
+    if (component == NULL || data == NULL) return false;
+
+    PyObject *pyParse = PyObject_GetAttrString((PyObject *) component, "parse");
+    if (pyParse == NULL) {
+        handleException();
+
+        return false;
+    }
+
+    PyObject *parseArgs = Py_BuildValue("(OO)", data, rm->py3dResourceManager);
+    PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
+    if (parseRet == NULL) {
+        handleException();
+        Py_CLEAR(parseArgs);
+        Py_CLEAR(pyParse);
+
+        return false;
+    }
+
+    Py_CLEAR(parseRet);
+    Py_CLEAR(parseArgs);
+    Py_CLEAR(pyParse);
+
+    return true;
+}
+
 bool parseTransformComponent(json_object *json, PyObject *component) {
     if (json == NULL || component == NULL || Py3dTransform_Check(component) != 1) return false;
 
@@ -134,22 +148,14 @@ static bool parsePythonComponent(
 ) {
     if (json == NULL || pyComponent == NULL || resourceManager == NULL) return false;
 
-    json_object *json_name = fetchProperty(json, "name", json_type_string);
-    if (json_name == NULL) return false;
-
-    Py3dComponent_SetNameCStr(pyComponent, json_object_get_string(json_name));
-
     PyObject *parsedData = createPyDictFromJsonObject(json);
     if (parsedData == NULL) {
-        critical_log(
-            "[JsonParser]: Failed to parse attributes for Component named \"%s\"",
-            json_object_get_string(json_name)
-        );
+        critical_log("[JsonParser]: Failed to parse attributes for Component");
         handleException();
         return false;
     }
 
-    if (!Py3dComponent_CallParse(pyComponent, parsedData, resourceManager)) {
+    if (!callPythonComponentParse(pyComponent, parsedData, resourceManager)) {
         Py_CLEAR(parsedData);
         return false;
     }
