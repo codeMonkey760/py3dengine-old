@@ -178,12 +178,21 @@ bool parseGameObject(
     json_object *json_children_array = fetchProperty(json, "children", json_type_array);
     if (json_children_array == NULL) return false;
 
+    json_object *json_enabled = fetchProperty(json, "enabled", json_type_boolean);
+    json_object *json_visible = fetchProperty(json, "visible", json_type_boolean);
+
     struct Py3dGameObject *newGO = NULL;
     newGO = (struct Py3dGameObject *) Py3dGameObject_New();
     if (newGO == NULL) return false;
 
     const char *gameObjectName = json_object_get_string(json_name);
     Py3dGameObject_SetNameCStr(newGO, gameObjectName);
+    if (json_enabled != NULL) {
+        Py3dGameObject_EnableBool(newGO, json_object_get_boolean(json_enabled));
+    }
+    if (json_visible != NULL) {
+        Py3dGameObject_MakeVisibleBool(newGO, json_object_get_boolean(json_visible));
+    }
     PyObject *transform = Py3dGameObject_GetTransform(newGO, NULL);
     parseTransformComponent(json_transform, transform);
     Py_CLEAR(transform);
