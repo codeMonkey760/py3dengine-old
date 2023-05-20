@@ -125,13 +125,15 @@ static void startEngine() {
         return;
     }
 
-    PyObject *startRet = PyObject_CallNoArgs(startCallable);
+    PyObject *startArgs = PyTuple_New(0);
+    PyObject *startRet = PyObject_Call(startCallable, startArgs, NULL);
     if (startRet == NULL) {
         handleException();
     }
 
     Py_CLEAR(startRet);
     Py_CLEAR(startCallable);
+    Py_CLEAR(startArgs);
 }
 
 static void resizeEngine() {
@@ -149,13 +151,15 @@ static void endEngine() {
         return;
     }
 
-    PyObject *endRet = PyObject_CallNoArgs(endCallable);
+    PyObject *endArgs = PyTuple_New(0);
+    PyObject *endRet = PyObject_Call(endCallable, endArgs, NULL);
     if (endRet == NULL) {
         handleException();
     }
 
     Py_CLEAR(endRet);
     Py_CLEAR(endCallable);
+    Py_CLEAR(endArgs);
 }
 
 void initializeEngine(int argc, char **argv){
