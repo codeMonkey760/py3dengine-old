@@ -135,6 +135,10 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
 }
 
 static PyObject *Py3dCollider_Parse(struct Py3dCollider *self, PyObject *args, PyObject *kwds) {
+    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    if (superParseRet == NULL) return NULL;
+    Py_CLEAR(superParseRet);
+
     PyObject *parseDataDict = NULL, *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O", &PyDict_Type, &parseDataDict, &py3dResourceManager) != 1) return NULL;
 

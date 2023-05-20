@@ -167,6 +167,10 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
 }
 
 PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds) {
+    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    if (superParseRet == NULL) return NULL;
+    Py_CLEAR(superParseRet);
+
     PyObject *parseDataDict = NULL;
     struct Py3dResourceManager *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3dResourceManager) != 1) return NULL;
