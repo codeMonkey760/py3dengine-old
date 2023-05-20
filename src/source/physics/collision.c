@@ -159,7 +159,13 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     //    might be future features)
     // TODO: this is temporary, since we're not doing collision handling yet let's only allow collisions between
     //    colliders that have "isTrigger" set to true since collision handling isn't required for that use case
-    if (!collider1->isTrigger || !collider2->isTrigger) return;
+    if (!collider1->isTrigger || !collider2->isTrigger) {
+        Py_CLEAR(collider1);
+        Py_CLEAR(collider2);
+        Py_CLEAR(owner1);
+        Py_CLEAR(owner2);
+        return;
+    }
 
     // add Collision to current collision state
     addCollisionToState(collisionState, collider1, collider2);
