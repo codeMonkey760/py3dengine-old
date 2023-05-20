@@ -36,7 +36,7 @@ extern void Py3dComponent_SetNameCStr(struct Py3dComponent *self, const char *ne
 extern PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED(ignored));
 extern PyObject *Py3dComponent_SetOwner(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 
-extern bool Py3dComponent_CallParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm);
 extern PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 
 #endif

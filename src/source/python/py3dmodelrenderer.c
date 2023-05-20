@@ -91,6 +91,10 @@ static struct BaseResource *lookupResource(const char *name, PyObject *parseData
 }
 
 static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
+    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    if (superParseRet == NULL) return NULL;
+    Py_CLEAR(superParseRet);
+
     PyObject *parseDataDict = NULL;
     struct Py3dResourceManager *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3dResourceManager) != 1) return NULL;
