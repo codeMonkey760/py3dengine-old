@@ -41,7 +41,7 @@ static struct Py3dGameObject *getOwnerFromCollider(struct Py3dCollider *collider
         return NULL;
     }
 
-    return (struct Py3dGameObject *) Py_NewRef(obj);
+    return (struct Py3dGameObject *) obj;
 }
 
 static struct Py3dCollisionEvent *createCollisionEvent(struct Py3dCollider *c1, struct Py3dCollider *c2) {
