@@ -490,7 +490,9 @@ static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(str
         return;
     }
 
-    if (!acceptMessage((struct Py3dComponent *) component)) return;
+    if (acceptMessage != NULL) {
+        if (!acceptMessage((struct Py3dComponent *) component)) return;
+    }
 
     PyObject *messageHandler = getCallable((PyObject *) component, messageName);
     if (messageHandler == NULL) {
