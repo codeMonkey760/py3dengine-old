@@ -10,7 +10,9 @@
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Start(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_End(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Collide(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_ColliderEnter(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
@@ -21,8 +23,10 @@ static PyMethodDef py3d_component_methods[] = {
         {"enable", (PyCFunction) Py3dComponent_Enable, METH_VARARGS, "Enable or disable a Component"},
         {"visible", (PyCFunction) Py3dComponent_IsVisible, METH_NOARGS, "Determine if a Component is visible"},
         {"make_visible", (PyCFunction) Py3dComponent_MakeVisible, METH_VARARGS, "Make a Component visible or invisible"},
+        {"start", (PyCFunction) Py3dComponent_Start, METH_VARARGS, "Start event handler"},
         {"update", (PyCFunction) Py3dComponent_Update, METH_VARARGS, "Update event handler"},
         {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
+        {"end", (PyCFunction) Py3dComponent_End, METH_VARARGS, "End event handler"},
         {"collide", (PyCFunction) Py3dComponent_Collide, METH_VARARGS, "Handle per tick collision events"},
         {"collider_enter", (PyCFunction) Py3dComponent_ColliderEnter, METH_VARARGS, "Handle collision enter events"},
         {"collider_exit", (PyCFunction) Py3dComponent_ColliderExit, METH_VARARGS, "Handle collision exit events"},
@@ -193,11 +197,19 @@ void Py3dComponent_Dealloc(struct Py3dComponent *self) {
 // Maybe one day there will need to be code in these, although that should be avoided because it'll require
 // subclasses to call "super" when overriding these methods
 // for now lets just have these so I can hang a doc string on them describing how to override them
+static PyObject *Py3dComponent_Start(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
 PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dComponent_End(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 

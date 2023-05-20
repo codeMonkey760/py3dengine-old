@@ -116,10 +116,50 @@ static void renderEngine() {
     Py_CLEAR(rc);
 }
 
+static void startEngine() {
+    PyObject *startCallable = PyObject_GetAttrString((PyObject *) root, "start");
+    if (startCallable == NULL || PyCallable_Check(startCallable) == 0) {
+        critical_log("[Engine]: Root GameObject must have callable attribute called \"start\"");
+        Py_CLEAR(startCallable);
+        handleException();
+        return;
+    }
+
+    PyObject *startArgs = PyTuple_New(0);
+    PyObject *startRet = PyObject_Call(startCallable, startArgs, NULL);
+    if (startRet == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(startRet);
+    Py_CLEAR(startCallable);
+    Py_CLEAR(startArgs);
+}
+
 static void resizeEngine() {
     int newWidth, newHeight;
     glfwGetFramebufferSize(glfwWindow, &newWidth, &newHeight);
     glViewport(0, 0, newWidth, newHeight);
+}
+
+static void endEngine() {
+    PyObject *endCallable = PyObject_GetAttrString((PyObject *) root, "end");
+    if (endCallable == NULL || PyCallable_Check(endCallable) == 0) {
+        critical_log("[Engine]: Root GameObject must have callable attribute called \"end\"");
+        Py_CLEAR(endCallable);
+        handleException();
+        return;
+    }
+
+    PyObject *endArgs = PyTuple_New(0);
+    PyObject *endRet = PyObject_Call(endCallable, endArgs, NULL);
+    if (endRet == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(endRet);
+    Py_CLEAR(endCallable);
+    Py_CLEAR(endArgs);
 }
 
 void initializeEngine(int argc, char **argv){
@@ -195,6 +235,8 @@ void initializeEngine(int argc, char **argv){
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
+    startEngine();
 }
 
 void runEngine() {
@@ -215,6 +257,8 @@ void runEngine() {
 }
 
 void finalizeEngine() {
+    endEngine();
+
     finalizeCallbackTable();
 
     glfwDestroyWindow(glfwWindow);

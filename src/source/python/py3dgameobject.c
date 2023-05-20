@@ -73,8 +73,10 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
     {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
+    {"start", (PyCFunction) Py3dGameObject_Start, METH_VARARGS, "Propagate start message"},
     {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
     {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
+    {"end", (PyCFunction) Py3dGameObject_End, METH_VARARGS, "Propagate end message"},
     {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
     {"get_child_by_name", (PyCFunction) Py3dGameObject_GetChildByName, METH_VARARGS, "Get a ref to the first child with the specified name"},
     {"get_child_by_index", (PyCFunction) Py3dGameObject_GetChildByIndex, METH_VARARGS, "Get a ref to the child at the specified index"},
@@ -239,6 +241,10 @@ PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_
     return (PyObject *) self->transform;
 }
 
+PyObject *Py3dGameObject_Start(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return passMessage(self, NULL, "start", args);
+}
+
 PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     if (self->enabled == false) Py_RETURN_NONE;
 
@@ -255,6 +261,10 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
     return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
+}
+
+PyObject *Py3dGameObject_End(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return passMessage(self, NULL, "end", args);
 }
 
 void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event) {
@@ -480,7 +490,9 @@ static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(str
         return;
     }
 
-    if (!acceptMessage((struct Py3dComponent *) component)) return;
+    if (acceptMessage != NULL) {
+        if (!acceptMessage((struct Py3dComponent *) component)) return;
+    }
 
     PyObject *messageHandler = getCallable((PyObject *) component, messageName);
     if (messageHandler == NULL) {
