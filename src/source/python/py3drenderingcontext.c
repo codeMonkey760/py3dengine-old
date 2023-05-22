@@ -170,6 +170,7 @@ static void buildPerspectiveMatrix(
     dst[10] = far_z / (far_z - near_z);
     dst[11] = 1.0f;
     dst[14] = (-1.0f * near_z * far_z) / (far_z - near_z);
+    dst[15] = 0.0f;
 }
 
 static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject *args, PyObject *kwds) {
