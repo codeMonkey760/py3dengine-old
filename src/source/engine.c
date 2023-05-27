@@ -170,6 +170,9 @@ void initializeEngine(int argc, char **argv){
         return;
     }
 
+    trace_log("[Engine]: Pre scene parse python object dump");
+    dumpPythonObjects();
+
     if (!initCollisionEngine()) {
         critical_log("%s", "[Engine]: Could not initialize collision engine");
         return;
@@ -233,6 +236,9 @@ void initializeEngine(int argc, char **argv){
         warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
     }
 
+    trace_log("[Engine]: Post scene parse python object dump");
+    dumpPythonObjects();
+
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -240,6 +246,8 @@ void initializeEngine(int argc, char **argv){
 }
 
 void runEngine() {
+    return;
+
     float prev_ts, cur_ts = 0.0f;
     while(!glfwWindowShouldClose(glfwWindow)) {
         prev_ts = cur_ts;
@@ -266,6 +274,12 @@ void finalizeEngine() {
 
     Py_CLEAR(activeCamera);
     Py_CLEAR(root);
+
+    trace_log("[Engine]: Post scene de-allocation python object dump");
+    dumpPythonObjects();
+
+    trace_log("[Engine]: Early exit to prevent python clean up. REPORT THIS MESSAGE AS A BUG.");
+    exit(0);
 
     glfwTerminate();
 
