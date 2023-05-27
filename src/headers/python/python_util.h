@@ -2,5 +2,6 @@
 #define PY3DENGINE_PYTHON_UTIL_H
 
 extern void handleException();
+extern void dumpPythonObjects();
 
 #endif
