@@ -11,6 +11,8 @@ struct Py3dCollisionEvent {
     PyObject *contactsTuple;
 };
 
+extern PyTypeObject Py3dCollisionEvent_Type;
+
 extern int PyInit_Py3dCollisionEvent(PyObject *module);
 extern int Py3dCollisionEvent_FindCtor(PyObject *module);
 extern void Py3dCollisionEvent_FinalizeCtor();
