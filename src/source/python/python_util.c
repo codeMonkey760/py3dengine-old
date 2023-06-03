@@ -62,42 +62,64 @@ static bool isObjectInteresting(PyObject *obj) {
     return false;
 }
 
+static PyObject *callGCMethod(const char *callableName, PyObject *args) {
+    PyObject *gcModule = PyImport_ImportModule("gc");
+    if (gcModule == NULL) {
+        critical_log("[Python]: Failed to import module \"gc\"");
+        handleException();
+        return NULL;
+    }
+
+    PyObject *callable = PyObject_GetAttrString(gcModule, callableName);
+    if (callable == NULL) {
+        critical_log("[Python]: Module \"gc\" has no attribute \"%s\"", callableName);
+        handleException();
+        Py_CLEAR(gcModule);
+        return NULL;
+    } else if (!PyCallable_Check(callable)) {
+        critical_log("[Python]: \"gc.%s\" is not callable", callableName);
+        handleException();
+        Py_CLEAR(callable);
+        Py_CLEAR(gcModule);
+        return NULL;
+    }
+
+    PyObject *ret = PyObject_Call(callable, args, NULL);
+    if (ret == NULL) {
+        critical_log("[Python]: \"gc.%s\" raised error", callableName);
+        handleException();
+    }
+    Py_CLEAR(callable);
+    Py_CLEAR(gcModule);
+
+    return ret;
+}
+
+void forceGarbageCollection() {
+    trace_log("[Python]: Beginning python garbage collection");
+
+    PyObject *gcCollectArgs = Py_BuildValue("()");
+    PyObject *gcCollectRet = callGCMethod("collect", gcCollectArgs);
+    Py_CLEAR(gcCollectArgs);
+    if (gcCollectRet == NULL) {
+        critical_log("[Python]: Failed python garbage collection: \"gc.collect\" raised error");
+        handleException();
+        return;
+    }
+    Py_CLEAR(gcCollectRet);
+}
+
 void dumpPythonObjects() {
     trace_log("[Python]: Beginning python object dump");
 
-    PyObject *gcModule = PyImport_ImportModule("gc");
-    if (gcModule == NULL) {
-        critical_log("[Python]: Failed python object dump: Failed to import module \"gc\"");
-        handleException();
-        return;
-    }
+    PyObject *gcGetObjectsArgs = Py_BuildValue("()");
+    PyObject *gcGetObjectsRet = callGCMethod("get_objects", gcGetObjectsArgs);
+    Py_CLEAR(gcGetObjectsArgs);
+    if (gcGetObjectsRet == NULL) return;
 
-    PyObject *gcGetObjectsCallable = PyObject_GetAttrString(gcModule, "get_objects");
-    if (gcGetObjectsCallable == NULL) {
-        critical_log("[Python]: Failed python object dump: Module \"gc\" has no attribute \"get_objects\"");
-        handleException();
-        Py_CLEAR(gcModule);
-        return;
-    } else if (!PyCallable_Check(gcGetObjectsCallable)) {
-        critical_log("[Python]: Failed python object dump: \"gc.get_objects\" is not callable");
-        handleException();
-        Py_CLEAR(gcGetObjectsCallable);
-        Py_CLEAR(gcModule);
-        return;
-    }
-
-    PyObject *gcGetObjectsRet = PyObject_CallNoArgs(gcGetObjectsCallable);
-    Py_CLEAR(gcGetObjectsCallable);
-    if (gcGetObjectsRet == NULL) {
-        critical_log("[Python]: Failed python object dump: \"gc.get_objects\" raised error");
-        handleException();
-        Py_CLEAR(gcModule);
-        return;
-    } else if (!PyList_Check(gcGetObjectsRet)) {
+    if (!PyList_Check(gcGetObjectsRet)) {
         critical_log("[Python]: Failed python object dump: Expected return from \"gc.get_objects\" to be of type \"list\"");
-        handleException();
         Py_CLEAR(gcGetObjectsRet);
-        Py_CLEAR(gcModule);
         return;
     }
 
@@ -128,7 +150,6 @@ void dumpPythonObjects() {
     }
 
     Py_CLEAR(gcGetObjectsRet);
-    Py_CLEAR(gcModule);
 
     trace_log("[Python]: Ending python object dump");
 }

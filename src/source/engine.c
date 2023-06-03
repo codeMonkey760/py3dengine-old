@@ -274,6 +274,7 @@ void finalizeEngine() {
 
     Py_CLEAR(activeCamera);
     Py_CLEAR(root);
+    forceGarbageCollection();
 
     trace_log("[Engine]: Post scene de-allocation python object dump");
     dumpPythonObjects();
