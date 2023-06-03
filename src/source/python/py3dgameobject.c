@@ -29,7 +29,6 @@ static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit,
     Py_VISIT(self->componentsList);
     Py_VISIT(self->childrenList);
     Py_VISIT(self->parent);
-    Py_VISIT(self->name);
     Py_VISIT(self->transform);
     return 0;
 }
@@ -46,7 +45,6 @@ static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
 static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
     trace_log("%s", "[GameObject]: Deallocating GameObject");
 
-    PyObject_GC_UnTrack(self);
     Py3dGameObject_Clear(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }

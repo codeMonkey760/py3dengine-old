@@ -12,6 +12,8 @@ struct Py3dContactPoint {
     PyObject *depth;
 };
 
+extern PyTypeObject Py3dContactPoint_Type;
+
 extern int PyInit_Py3dContactPoint(PyObject *module);
 extern int Py3dContactPoint_FindCtor(PyObject *module);
 extern void Py3dContactPoint_FinalizeCtor();

@@ -162,7 +162,6 @@ PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED
 
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg) {
-    Py_VISIT(self->name);
     Py_VISIT(self->owner);
 
     return 0;
@@ -171,6 +170,7 @@ static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, v
 static int Py3dComponent_Clear(struct Py3dComponent *self) {
     Py_CLEAR(self->name);
     Py_CLEAR(self->owner);
+
     return 0;
 }
 
@@ -188,7 +188,6 @@ static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObje
 void Py3dComponent_Dealloc(struct Py3dComponent *self) {
     trace_log("[Component]: Deallocating Component of type \"%s\"", Py_TYPE(self)->tp_name);
 
-    PyObject_GC_UnTrack(self);
     Py3dComponent_Clear(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
