@@ -162,14 +162,12 @@ PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED
 
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg) {
-    trace_log("[Component]: Calling base component class \"Traverse\" for sub type: \"%s\"", Py_TYPE(self)->tp_name);
     Py_VISIT(self->owner);
 
     return 0;
 }
 
 static int Py3dComponent_Clear(struct Py3dComponent *self) {
-    trace_log("[Component]: Calling base component class \"Clear\" for sub type: \"%s\"", Py_TYPE(self)->tp_name);
     Py_CLEAR(self->name);
     Py_CLEAR(self->owner);
 
