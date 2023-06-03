@@ -266,14 +266,15 @@ void finalizeEngine() {
 
     Py_CLEAR(activeCamera);
     Py_CLEAR(root);
+    forceGarbageCollection();
+
+    trace_log("[Engine]: Post scene de-allocation python object dump");
+    dumpPythonObjects();
 
     glfwTerminate();
 
     finalizePython();
 
-    // TODO: this was moved after finalizePython because it segfaults if its done before
-    // that's probably happening because there's probably component clean up being performed in finalizePython
-    // ... and that's probably happening because of leaked component references!!!
     finalizeCollisionEngine();
 
     finalizeConfig();
