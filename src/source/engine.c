@@ -170,7 +170,7 @@ void initializeEngine(int argc, char **argv){
         return;
     }
 
-    if (!initCollisionEngine()) {
+    if (!dInitODE2(0)) {
         critical_log("%s", "[Engine]: Could not initialize collision engine");
         return;
     }
@@ -275,7 +275,7 @@ void finalizeEngine() {
 
     finalizePython();
 
-    finalizeCollisionEngine();
+    dCloseODE();
 
     finalizeConfig();
 }
