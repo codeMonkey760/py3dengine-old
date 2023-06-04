@@ -12,10 +12,13 @@ extern int Py3dScene_FindCtor(PyObject *module);
 extern void Py3dScene_FinalizeCtor();
 extern int Py3dScene_Check(PyObject *obj);
 extern struct Py3dScene *Py3dScene_New();
-extern int Py3dScene_IsEnabled(struct Py3dScene *scene);
-extern void Py3dScene_Enable(struct Py3dScene *scene, int enable);
-extern int Py3dScene_IsVisible(struct Py3dScene *scene);
-extern void Py3dScene_MakeVisible(struct Py3dScene *scene, int visible);
-
+extern PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+extern int Py3dScene_IsEnabledBool(struct Py3dScene *scene);
+extern PyObject *Py3dScene_Enable(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+extern void Py3dScene_EnableBool(struct Py3dScene *scene, int enable);
+extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene);
+extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible);
 
 #endif

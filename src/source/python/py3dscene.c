@@ -47,6 +47,10 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
 }
 
 PyMethodDef Py3dScene_Methods[] = {
+    {"enabled", (PyCFunction) Py3dScene_IsEnabled, METH_NOARGS, "Determine if a Scene is enabled"},
+    {"enable", (PyCFunction) Py3dScene_Enable, METH_VARARGS, "Enable or disable a Scene"},
+    {"visible", (PyCFunction) Py3dScene_IsVisible, METH_NOARGS, "Determine if a Scene is visible"},
+    {"make_visible", (PyCFunction) Py3dScene_MakeVisible, METH_VARARGS, "Make a Scene visible or invisible"},
     {NULL}
 };
 
@@ -126,4 +130,46 @@ struct Py3dScene *Py3dScene_New() {
     }
 
     return (struct Py3dScene *) py3dScene;
+}
+
+extern PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    return PyBool_FromLong(Py3dScene_IsEnabledBool(self));
+}
+
+extern int Py3dScene_IsEnabledBool(struct Py3dScene *scene) {
+    return scene->enabled;
+}
+
+extern PyObject *Py3dScene_Enable(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    PyObject *enableObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
+
+    Py3dScene_EnableBool(self, Py_IsTrue(enableObj));
+
+    Py_RETURN_NONE;
+}
+
+extern void Py3dScene_EnableBool(struct Py3dScene *scene, int enable) {
+    scene->enabled = enable;
+}
+
+extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    return PyBool_FromLong(Py3dScene_IsVisibleBool(self));
+}
+
+extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene) {
+    return scene->visible;
+}
+
+extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    PyObject *visibleObj = NULL;
+    if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &visibleObj) != 1) return NULL;
+
+    Py3dScene_MakeVisibleBool(self, Py_IsTrue(visibleObj));
+
+    Py_RETURN_NONE;
+}
+
+extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible) {
+    scene->visible = makeVisible;
 }
