@@ -8,6 +8,7 @@
 #include "python/py3dcollisionevent.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3drenderingcontext.h"
+#include "python/py3dscene.h"
 #include "math/vector3.h"
 #include "math/quaternion.h"
 
@@ -48,6 +49,7 @@ static PyObject *interesting_types[] = {
     (PyObject *) &Py3dRenderingContext_Type,
     (PyObject *) &Py3dVector3_Type,
     (PyObject *) &Py3dQuaternion_Type,
+    (PyObject *) &Py3dScene_Type,
 };
 
 static bool isObjectInteresting(PyObject *obj) {
