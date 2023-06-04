@@ -3,14 +3,7 @@
 
 #include "logger.h"
 #include "python/python_util.h"
-
-struct Py3dScene {
-    PyObject_HEAD
-    int enabled;
-    int visible;
-    PyObject *sceneGraph;
-    PyObject *activeCamera;
-};
+#include "physics/collision.h"
 
 static PyObject *py3dSceneCtor = NULL;
 
@@ -24,6 +17,7 @@ static int Py3dScene_Traverse(struct Py3dScene *self, visitproc visit, void *arg
 static int Py3dScene_Clear(struct Py3dScene *self) {
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
+    deallocPhysicsSpace(&self->space);
 
     return 0;
 }
@@ -42,6 +36,8 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
     self->visible = 1;
     self->sceneGraph = Py_NewRef(Py_None);
     self->activeCamera = Py_NewRef(Py_None);
+    allocPhysicsSpace(&self->space);
+    initPhysicsSpace(self->space);
 
     return 0;
 }

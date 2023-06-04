@@ -4,7 +4,16 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-struct Py3dScene;
+struct PhysicsSpace;
+
+struct Py3dScene {
+    PyObject_HEAD
+    int enabled;
+    int visible;
+    PyObject *sceneGraph;
+    PyObject *activeCamera;
+    struct PhysicsSpace *space;
+};
 extern PyTypeObject Py3dScene_Type;
 
 extern int PyInit_Py3dScene(PyObject *module);
