@@ -11,6 +11,7 @@
 #include "python/py3dgameobject.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
+#include "python/py3dscene.h"
 #include "engine.h"
 
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -113,6 +114,13 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dScene(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach Scene to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -190,4 +198,5 @@ void finalizePy3dEngineModule() {
     Py3dCollider_FinalizeCtor();
     Py3dContactPoint_FinalizeCtor();
     Py3dCollisionEvent_FinalizeCtor();
+    Py3dScene_FinalizeCtor();
 }
