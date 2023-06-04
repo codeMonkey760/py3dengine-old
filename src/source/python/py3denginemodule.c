@@ -181,6 +181,10 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dScene_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
