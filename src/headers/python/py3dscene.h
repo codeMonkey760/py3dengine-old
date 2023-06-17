@@ -25,6 +25,8 @@ extern int Py3dScene_FindCtor(PyObject *module);
 extern void Py3dScene_FinalizeCtor();
 extern int Py3dScene_Check(PyObject *obj);
 extern struct Py3dScene *Py3dScene_New();
+extern void Py3dScene_Activate(struct Py3dScene *self);
+extern void Py3dScene_Deactivate(struct Py3dScene *self);
 extern PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern int Py3dScene_IsEnabledBool(struct Py3dScene *scene);
 extern PyObject *Py3dScene_Enable(struct Py3dScene *self, PyObject *args, PyObject *kwds);

@@ -142,6 +142,16 @@ struct Py3dScene *Py3dScene_New() {
     return (struct Py3dScene *) py3dScene;
 }
 
+void Py3dScene_Activate(struct Py3dScene *self) {
+    // TODO: call the engine and set this scene's cursor mode
+
+    // TODO: propagate the activation message to the scene graph
+}
+
+void P73dScene_Deactivate(struct Py3dScene *self) {
+    //TODO: propagate the deactivation message to the scene graph
+}
+
 PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
     return PyBool_FromLong(Py3dScene_IsEnabledBool(self));
 }
