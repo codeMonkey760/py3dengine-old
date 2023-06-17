@@ -16,6 +16,16 @@ static int Py3dScene_Traverse(struct Py3dScene *self, visitproc visit, void *arg
     return 0;
 }
 
+static void initCallbackTable(struct Py3dScene *self) {
+    for (int i = 0; i < GLFW_KEY_MENU+1; ++i) {
+        for (int j = 0; j < GLFW_REPEAT+1; ++j) {
+            for (int k = 0; k < 64; ++k) {
+                self->callbackTable[i][j][k] = NULL;
+            }
+        }
+    }
+}
+
 static void finalizeCallbackTable(struct Py3dScene *self) {
     for (int i = 0; i < GLFW_KEY_MENU+1; ++i) {
         for (int j = 0; j < GLFW_REPEAT+1; ++j) {
@@ -51,6 +61,8 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
     self->activeCamera = Py_NewRef(Py_None);
     allocPhysicsSpace(&self->space);
     initPhysicsSpace(self->space);
+    initCallbackTable(self);
+    self->cursorMode = GLFW_CURSOR_NORMAL;
 
     return 0;
 }
