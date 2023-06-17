@@ -1,6 +1,7 @@
 #include "python/py3dscene.h"
 #include <structmember.h>
 
+#include "engine.h"
 #include "logger.h"
 #include "python/python_util.h"
 #include "physics/collision.h"
@@ -257,8 +258,7 @@ PyObject *Py3dInput_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObje
         return NULL;
     }
 
-    // TODO: use the engine to set this
-    glfwSetInputMode(glfwWindow, GLFW_CURSOR, self->cursorMode);
+    setCursorMode(self->cursorMode);
 
     Py_RETURN_NONE;
 }
