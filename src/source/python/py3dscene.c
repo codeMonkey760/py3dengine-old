@@ -9,11 +9,23 @@
 
 static PyObject *py3dSceneCtor = NULL;
 
+static int traverseCallbackTable(struct Py3dScene *self, visitproc visit, void *arg) {
+    for (int i = 0; i < GLFW_KEY_MENU+1; ++i) {
+        for (int j = 0; j < GLFW_REPEAT+1; ++j) {
+            for (int k = 0; k < 64; ++k) {
+                Py_VISIT(self->callbackTable[i][j][k]);
+            }
+        }
+    }
+
+    return 0;
+}
+
 static int Py3dScene_Traverse(struct Py3dScene *self, visitproc visit, void *arg) {
     Py_VISIT(self->sceneGraph);
     Py_VISIT(self->activeCamera);
 
-    return 0;
+    return traverseCallbackTable(self, visit, arg);
 }
 
 static void initCallbackTable(struct Py3dScene *self) {
