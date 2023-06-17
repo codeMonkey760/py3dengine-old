@@ -34,6 +34,10 @@ static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
 }
 
+static void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    // TODO: pass key event to current scene
+}
+
 static void resizeEngine();
 
 static void resize_window_callback(GLFWwindow *window, int newWidth, int newHeight) {
