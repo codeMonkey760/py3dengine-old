@@ -296,3 +296,11 @@ void getRenderingTargetDimensions(int *width, int *height) {
 void markWindowShouldClose() {
     glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
 }
+
+int getCursorMode() {
+    return glfwGetInputMode(glfwWindow, GLFW_CURSOR);
+}
+
+void setCursorMode(int newMode) {
+    glfwSetInputMode(glfwWindow, GLFW_CURSOR, newMode);
+}

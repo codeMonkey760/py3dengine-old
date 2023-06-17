@@ -10,5 +10,7 @@ extern void runEngine();
 extern void finalizeEngine();
 extern void getRenderingTargetDimensions(int *width, int *height);
 extern void markWindowShouldClose();
+extern int getCursorMode();
+extern void setCursorMode(int newMode);
 
 #endif
