@@ -4,6 +4,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <GLFW/glfw3.h>
+
 struct PhysicsSpace;
 
 struct Py3dScene {
@@ -13,6 +15,8 @@ struct Py3dScene {
     PyObject *sceneGraph;
     PyObject *activeCamera;
     struct PhysicsSpace *space;
+    PyObject *callbackTable[GLFW_KEY_MENU+1][GLFW_REPEAT+1][64];
+    int cursorMode;
 };
 extern PyTypeObject Py3dScene_Type;
 
@@ -29,5 +33,9 @@ extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyO
 extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene);
 extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible);
+
+extern void Py3dScene_KeyEvent(struct Py3dScene *self, int key, int scancode, int action, int mods);
+extern PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+PyObject *Py3dInput_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 
 #endif

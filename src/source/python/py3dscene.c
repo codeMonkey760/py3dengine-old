@@ -4,6 +4,7 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "physics/collision.h"
+#include "python/py3dinput.h"
 
 static PyObject *py3dSceneCtor = NULL;
 
@@ -14,10 +15,21 @@ static int Py3dScene_Traverse(struct Py3dScene *self, visitproc visit, void *arg
     return 0;
 }
 
+static void finalizeCallbackTable(struct Py3dScene *self) {
+    for (int i = 0; i < GLFW_KEY_MENU+1; ++i) {
+        for (int j = 0; j < GLFW_REPEAT+1; ++j) {
+            for (int k = 0; k < 64; ++k) {
+                Py_CLEAR(self->callbackTable[i][j][k]);
+            }
+        }
+    }
+}
+
 static int Py3dScene_Clear(struct Py3dScene *self) {
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
     deallocPhysicsSpace(&self->space);
+    finalizeCallbackTable(self);
 
     return 0;
 }
@@ -47,6 +59,8 @@ PyMethodDef Py3dScene_Methods[] = {
     {"enable", (PyCFunction) Py3dScene_Enable, METH_VARARGS, "Enable or disable a Scene"},
     {"visible", (PyCFunction) Py3dScene_IsVisible, METH_NOARGS, "Determine if a Scene is visible"},
     {"make_visible", (PyCFunction) Py3dScene_MakeVisible, METH_VARARGS, "Make a Scene visible or invisible"},
+    {"set_key_callback", (PyCFunction) Py3dScene_SetKeyCallback, METH_VARARGS, "Register a callback to be executed when a keyboard event happens"},
+    {"set_cursor_mode", (PyCFunction) Py3dInput_SetCursorMode, METH_VARARGS, "Set the cursor mode"},
     {NULL}
 };
 
@@ -128,15 +142,15 @@ struct Py3dScene *Py3dScene_New() {
     return (struct Py3dScene *) py3dScene;
 }
 
-extern PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
     return PyBool_FromLong(Py3dScene_IsEnabledBool(self));
 }
 
-extern int Py3dScene_IsEnabledBool(struct Py3dScene *scene) {
+int Py3dScene_IsEnabledBool(struct Py3dScene *scene) {
     return scene->enabled;
 }
 
-extern PyObject *Py3dScene_Enable(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dScene_Enable(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
     PyObject *enableObj = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
 
@@ -145,19 +159,19 @@ extern PyObject *Py3dScene_Enable(struct Py3dScene *self, PyObject *args, PyObje
     Py_RETURN_NONE;
 }
 
-extern void Py3dScene_EnableBool(struct Py3dScene *scene, int enable) {
+void Py3dScene_EnableBool(struct Py3dScene *scene, int enable) {
     scene->enabled = enable;
 }
 
-extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
     return PyBool_FromLong(Py3dScene_IsVisibleBool(self));
 }
 
-extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene) {
+int Py3dScene_IsVisibleBool(struct Py3dScene *scene) {
     return scene->visible;
 }
 
-extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
     PyObject *visibleObj = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &visibleObj) != 1) return NULL;
 
@@ -166,6 +180,75 @@ extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, P
     Py_RETURN_NONE;
 }
 
-extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible) {
+void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible) {
     scene->visible = makeVisible;
+}
+
+// TODO: receive these event from the engine
+void Py3dScene_KeyEvent(struct Py3dScene *self, int key, int scancode, int action, int mods) {
+    PyObject *callback = self->callbackTable[key][action][mods];
+    if (callback == NULL) return;
+
+    PyObject *ret = PyObject_CallNoArgs(callback);
+    if (ret == NULL) {
+        error_log("[Py3dScene]: Key callback threw exception when handling key:%d action:%d mods:%d", key, action, mods);
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+}
+
+PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    PyObject *callback = NULL, *keyObj = NULL, *actionObj = NULL, *modsObj = NULL;
+
+    PyArg_ParseTuple(args, "OO!O!O!", &callback, &PyLong_Type, &keyObj, &PyLong_Type, &actionObj, &PyLong_Type, &modsObj);
+    if (!PyCallable_Check(callback)) {
+        PyErr_SetString(PyExc_ValueError, "Param 1 must be callable");
+        return NULL;
+    }
+
+    int key = convertIntToGlfwKey((int) PyLong_AsLong(keyObj));
+    if (key == GLFW_KEY_UNKNOWN) {
+        PyErr_SetString(PyExc_ValueError, "Cannot convert param 2 to GLFW Key");
+        return NULL;
+    }
+
+    int action = (int) PyLong_AsLong(actionObj);
+    if (action != GLFW_PRESS && action != GLFW_RELEASE && action != GLFW_REPEAT) {
+        PyErr_SetString(PyExc_ValueError, "Cannot convert param 3 to GLFW Action");
+        return NULL;
+    }
+
+    int mods = (int) PyLong_AsLong(modsObj);
+    if (mods > 63) {
+        PyErr_SetString(PyExc_ValueError, "Cannot convert param 4 to GLFW Action");
+        return NULL;
+    }
+
+    Py_INCREF(callback);
+    self->callbackTable[key][action][mods] = callback;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dInput_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    char *newMode = NULL;
+
+    if (PyArg_ParseTuple(args, "s", &newMode) != 1) return NULL;
+
+    if (strcmp(newMode, "NORMAL") == 0) {
+        self->cursorMode = GLFW_CURSOR_NORMAL;
+    } else if (strcmp(newMode, "DISABLED") == 0) {
+        self->cursorMode = GLFW_CURSOR_DISABLED;
+    } else if (strcmp(newMode, "HIDDEN") == 0) {
+        self->cursorMode = GLFW_CURSOR_HIDDEN;
+    } else {
+        PyErr_SetString(PyExc_ValueError, "Unrecognized cursor mode");
+        return NULL;
+    }
+
+    // TODO: use the engine to set this
+    glfwSetInputMode(glfwWindow, GLFW_CURSOR, self->cursorMode);
+
+    Py_RETURN_NONE;
 }
