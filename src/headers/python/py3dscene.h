@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 
 struct PhysicsSpace;
+struct Py3dResourceManager;
 
 struct Py3dScene {
     PyObject_HEAD
@@ -14,6 +15,7 @@ struct Py3dScene {
     int visible;
     PyObject *sceneGraph;
     PyObject *activeCamera;
+    PyObject *resourceManager;
     struct PhysicsSpace *space;
     PyObject *callbackTable[GLFW_KEY_MENU+1][GLFW_REPEAT+1][64];
     int cursorMode;
@@ -35,9 +37,14 @@ extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyO
 extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene);
 extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible);
+extern void Py3dScene_SetResourceManager(struct Py3dScene *self, PyObject *newManager);
+extern void Py3dScene_SetSceneGraph(struct Py3dScene *self, PyObject *newSceneGraph);
+extern PyObject *Py3dScene_ActivateCamera(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dScene_ActivateCameraByName(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dScene_ActivateCameraByNameCStr(struct Py3dScene *self, const char *name);
 
 extern void Py3dScene_KeyEvent(struct Py3dScene *self, int key, int scancode, int action, int mods);
 extern PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args, PyObject *kwds);
-PyObject *Py3dInput_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+PyObject *Py3dScene_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 
 #endif

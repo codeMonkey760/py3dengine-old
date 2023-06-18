@@ -6,6 +6,8 @@
 #include "python/python_util.h"
 #include "physics/collision.h"
 #include "python/py3dinput.h"
+#include "python/py3dgameobject.h"
+#include "resource_manager.h"
 
 static PyObject *py3dSceneCtor = NULL;
 
@@ -51,6 +53,7 @@ static void finalizeCallbackTable(struct Py3dScene *self) {
 static int Py3dScene_Clear(struct Py3dScene *self) {
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
+    Py_CLEAR(self->resourceManager);
     deallocPhysicsSpace(&self->space);
     finalizeCallbackTable(self);
 
@@ -71,6 +74,7 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
     self->visible = 1;
     self->sceneGraph = Py_NewRef(Py_None);
     self->activeCamera = Py_NewRef(Py_None);
+    self->resourceManager = Py_NewRef(Py_None);
     allocPhysicsSpace(&self->space);
     initPhysicsSpace(self->space);
     initCallbackTable(self);
@@ -85,7 +89,9 @@ PyMethodDef Py3dScene_Methods[] = {
     {"visible", (PyCFunction) Py3dScene_IsVisible, METH_NOARGS, "Determine if a Scene is visible"},
     {"make_visible", (PyCFunction) Py3dScene_MakeVisible, METH_VARARGS, "Make a Scene visible or invisible"},
     {"set_key_callback", (PyCFunction) Py3dScene_SetKeyCallback, METH_VARARGS, "Register a callback to be executed when a keyboard event happens"},
-    {"set_cursor_mode", (PyCFunction) Py3dInput_SetCursorMode, METH_VARARGS, "Set the cursor mode"},
+    {"set_cursor_mode", (PyCFunction) Py3dScene_SetCursorMode, METH_VARARGS, "Set the cursor mode"},
+    {"activate_camera", (PyCFunction) Py3dScene_ActivateCamera, METH_VARARGS, "Activate the supplied camera"},
+    {"activate_camera_by_name", (PyCFunction) Py3dScene_ActivateCameraByName, METH_VARARGS, "Find and activate the specified camera"},
     {NULL}
 };
 
@@ -217,6 +223,74 @@ PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject
 
 void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible) {
     scene->visible = makeVisible;
+}
+
+void Py3dScene_SetResourceManager(struct Py3dScene *self, PyObject *newManager) {
+    if (self == NULL || newManager == NULL) return;
+
+    if (!Py3dResourceManager_Check(newManager)) return;
+
+    Py_CLEAR(self->resourceManager);
+
+    // The caller should be passing its ownership of the resource manager to this scene
+    // So the interface for this function "steals" the reference from the caller
+    // by NOT incrementing its reference count here with Py_NewRef
+    self->resourceManager = newManager;
+}
+
+void Py3dScene_SetSceneGraph(struct Py3dScene *self, PyObject *newSceneGraph) {
+    if (self == NULL || newSceneGraph == NULL) return;
+
+    if (!Py3dGameObject_Check(newSceneGraph)) return;
+
+    Py_CLEAR(self->activeCamera);
+    self->activeCamera = Py_NewRef(Py_None);
+    Py_CLEAR(self->sceneGraph);
+
+    // The caller should be passing its ownership of the scene graph to this scene
+    // So the interface for this function "steals" the reference from the caller
+    // by NOT incrementing its reference count here with Py_NewRef
+    self->sceneGraph = newSceneGraph;
+}
+
+PyObject *Py3dScene_ActivateCamera(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    struct Py3dGameObject *newCamera = NULL;
+
+    if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &newCamera) != 1) return NULL;
+
+    Py_CLEAR(self->activeCamera);
+    self->activeCamera = Py_NewRef(newCamera);
+}
+
+PyObject *Py3dScene_ActivateCameraByName(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+    const char *newCameraName = NULL;
+
+    if (PyArg_ParseTuple(args, "s", &newCameraName) != 1) return NULL;
+
+    return Py3dScene_ActivateCameraByNameCStr(self, newCameraName);
+}
+
+PyObject *Py3dScene_ActivateCameraByNameCStr(struct Py3dScene *self, const char *name) {
+    if (Py_IsNone(self->sceneGraph)) {
+        PyErr_SetString(PyExc_ValueError, "Active camera must exist on scene graph");
+        return NULL;
+    }
+
+    PyObject *newCamera = Py3dGameObject_GetChildByNameCStr((struct Py3dGameObject *) self->sceneGraph, name);
+    if (newCamera == NULL) return NULL;
+
+    if (Py_IsNone(newCamera)) {
+        PyErr_SetString(PyExc_ValueError, "Active camera must exist on scene graph");
+        Py_CLEAR(newCamera);
+        return NULL;
+    }
+
+    Py_CLEAR(self->activeCamera);
+    // the reference for this comes from Py3dGameObject_GetChildByNameCStr
+    // so incrementing the ref count here isn't necessary
+    self->activeCamera = newCamera;
+
+    Py_RETURN_NONE;
 }
 
 // TODO: receive these event from the engine
