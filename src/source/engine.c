@@ -1,6 +1,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <json.h>
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -24,10 +26,7 @@ static float time_since_last_report = 0.0f;
 static bool print_report = true;
 static GLFWwindow *glfwWindow = NULL;
 
-struct ResourceManager *resourceManager = NULL;
-
-struct Py3dGameObject *root = NULL;
-struct Py3dGameObject *activeCamera = NULL;
+struct Py3dScene *startingScene = NULL;
 
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
@@ -210,30 +209,27 @@ void initializeEngine(int argc, char **argv){
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
-    allocResourceManager(&resourceManager);
-    if (resourceManager == NULL) {
-        critical_log("%s", "[Engine]: Unable to allocate resource manager. Resource importing will fail");
-    }
-
     const char *startingScenePath = getConfigStartingScene();
-    FILE *startingScene = fopen(startingScenePath, "r");
-    if (startingScene == NULL) {
+    FILE *startingSceneFile = fopen(startingScenePath, "r");
+    if (startingSceneFile == NULL) {
         critical_log("[Engine]: Unable to open \"%s\" as scene descriptor for parsing. Cannot initialize", startingScenePath);
+        return;
     }
 
-    importScene(resourceManager, &root, startingScene);
-
-    if (startingScene != NULL) {
-        fclose(startingScene);
-        startingScene = NULL;
+    json_object *startingSceneJson = json_object_from_fd(fileno(startingSceneFile));
+    if (startingSceneJson == NULL) {
+        critical_log("%s", "[Engine]: Could not parse scene descriptor");
+        return;
     }
 
-    activeCamera = (struct Py3dGameObject *) Py3dGameObject_GetChildByNameCStr(root, "Camera");
-    if (activeCamera == NULL) {
+    startingScene = importScene(startingSceneJson);
+
+    json_object_put(startingSceneJson);
+
+    if (startingScene == NULL) {
+        critical_log("%s", "[Engine]: Scene parser raised exception while parsing");
         handleException();
-        warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
-    } else if (Py_IsNone((PyObject *) activeCamera)) {
-        warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
+        return;
     }
 
     glEnable(GL_CULL_FACE);
@@ -262,13 +258,9 @@ void runEngine() {
 void finalizeEngine() {
     endEngine();
 
-    finalizeCallbackTable();
-
     glfwDestroyWindow(glfwWindow);
-    deleteResourceManager(&resourceManager);
 
-    Py_CLEAR(activeCamera);
-    Py_CLEAR(root);
+    Py_CLEAR(startingScene);
     forceGarbageCollection();
 
     trace_log("[Engine]: Post scene de-allocation python object dump");
