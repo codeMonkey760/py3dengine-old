@@ -50,10 +50,27 @@ static void finalizeCallbackTable(struct Py3dScene *self) {
     }
 }
 
+static void clearResourceManager(struct Py3dScene *self) {
+    if (self == NULL || self->resourceManager == NULL) return;
+
+    if (!Py3dResourceManager_Check(self->resourceManager)) {
+        Py_CLEAR(self->resourceManager);
+        return;
+    }
+
+    struct Py3dResourceManager *rm = (struct Py3dResourceManager *) self->resourceManager;
+    if (rm->resourceManager != NULL) {
+        deleteResourceManager(&rm->resourceManager);
+    }
+    rm = NULL;
+
+    Py_CLEAR(self->resourceManager);
+}
+
 static int Py3dScene_Clear(struct Py3dScene *self) {
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
-    Py_CLEAR(self->resourceManager);
+    clearResourceManager(self);
     deallocPhysicsSpace(&self->space);
     finalizeCallbackTable(self);
 
