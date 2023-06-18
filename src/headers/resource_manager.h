@@ -25,6 +25,8 @@ extern bool PyInit_Py3dResourceManager(PyObject *module);
 extern bool findPy3dResourceManagerCtor(PyObject *module);
 extern void finalizePy3dResourceManagerCtor();
 
+extern int Py3dResourceManager_Check(PyObject *obj);
+
 extern void allocResourceManager(struct ResourceManager **resourceManagerPtr);
 extern void deleteResourceManager(struct ResourceManager **resourceManagerPtr);
 

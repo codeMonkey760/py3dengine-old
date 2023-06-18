@@ -67,6 +67,16 @@ void finalizePy3dResourceManagerCtor() {
     Py_CLEAR(Py3dResourceManager_Ctor);
 }
 
+int Py3dResourceManager_Check(PyObject *obj) {
+    int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dResourceManager_Type);
+    if (ret == -1) {
+        handleException();
+        return 0;
+    }
+
+    return ret;
+}
+
 static struct Py3dResourceManager *Py3dResourceManager_New() {
     if (Py3dResourceManager_Ctor == NULL) {
         critical_log("%s", "[Python]: Py3dResourceManager has not been initialized properly");
