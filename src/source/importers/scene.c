@@ -140,8 +140,19 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
         return NULL;
     }
 
+    Py_INCREF(manager->py3dResourceManager);
     Py3dScene_SetResourceManager(newScene, (PyObject *) manager->py3dResourceManager);
+    manager = NULL;
     Py3dScene_SetSceneGraph(newScene, (PyObject *) rootGO);
+    rootGO = NULL;
+
+    PyObject *activateCameraRet = Py3dScene_ActivateCameraByNameCStr(newScene, "Camera");
+    if (activateCameraRet == NULL) {
+        Py_CLEAR(newScene);
+        // rootGO and manager are owned by newScene, clean up unnecessary
+        return NULL;
+    }
+    Py_CLEAR(activateCameraRet);
 
     return newScene;
 }
