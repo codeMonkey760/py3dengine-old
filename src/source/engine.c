@@ -14,10 +14,8 @@
 #include "python/python_wrapper.h"
 #include "engine.h"
 #include "importers/scene.h"
-#include "python/py3dgameobject.h"
-#include "resource_manager.h"
-#include "python/py3dinput.h"
 #include "physics/collision.h"
+#include "python/py3dscene.h"
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -75,93 +73,10 @@ static void printStats(float dt) {
     }
 }
 
-static void updateEngine(float dt) {
-    updateStats(dt);
-    printStats(dt);
-
-    if (root == NULL) return;
-
-    PyObject *args = Py_BuildValue("(f)", dt);
-    if (args == NULL) {
-        handleException();
-        return;
-    }
-
-    PyObject *ret = Py3dGameObject_Update(root, args, NULL);
-    if (ret == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(ret);
-    Py_CLEAR(args);
-
-    handleCollisions();
-}
-
-static void renderEngine() {
-    if (root == NULL) return;
-
-    struct Py3dRenderingContext *rc = Py3dRenderingContext_New(activeCamera);
-    if (rc == NULL) {
-        handleException();
-        return;
-    }
-    PyObject *args = Py_BuildValue("(O)", rc);
-
-    PyObject *ret = Py3dGameObject_Render(root, args, NULL);
-    if (ret == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(ret);
-    Py_CLEAR(args);
-    Py_CLEAR(rc);
-}
-
-static void startEngine() {
-    PyObject *startCallable = PyObject_GetAttrString((PyObject *) root, "start");
-    if (startCallable == NULL || PyCallable_Check(startCallable) == 0) {
-        critical_log("[Engine]: Root GameObject must have callable attribute called \"start\"");
-        Py_CLEAR(startCallable);
-        handleException();
-        return;
-    }
-
-    PyObject *startArgs = PyTuple_New(0);
-    PyObject *startRet = PyObject_Call(startCallable, startArgs, NULL);
-    if (startRet == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(startRet);
-    Py_CLEAR(startCallable);
-    Py_CLEAR(startArgs);
-}
-
 static void resizeEngine() {
     int newWidth, newHeight;
     glfwGetFramebufferSize(glfwWindow, &newWidth, &newHeight);
     glViewport(0, 0, newWidth, newHeight);
-}
-
-static void endEngine() {
-    PyObject *endCallable = PyObject_GetAttrString((PyObject *) root, "end");
-    if (endCallable == NULL || PyCallable_Check(endCallable) == 0) {
-        critical_log("[Engine]: Root GameObject must have callable attribute called \"end\"");
-        Py_CLEAR(endCallable);
-        handleException();
-        return;
-    }
-
-    PyObject *endArgs = PyTuple_New(0);
-    PyObject *endRet = PyObject_Call(endCallable, endArgs, NULL);
-    if (endRet == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(endRet);
-    Py_CLEAR(endCallable);
-    Py_CLEAR(endArgs);
 }
 
 void initializeEngine(int argc, char **argv){
@@ -235,7 +150,7 @@ void initializeEngine(int argc, char **argv){
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    startEngine();
+    Py3dScene_Start(startingScene);
 }
 
 void runEngine() {
@@ -247,8 +162,11 @@ void runEngine() {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        updateEngine(dt);
-        renderEngine();
+        updateStats(dt);
+        printStats(dt);
+
+        Py3dScene_Update(startingScene, dt);
+        Py3dScene_Render(startingScene);
 
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
@@ -256,7 +174,7 @@ void runEngine() {
 }
 
 void finalizeEngine() {
-    endEngine();
+    Py3dScene_End(startingScene);
 
     glfwDestroyWindow(glfwWindow);
 
