@@ -8,6 +8,7 @@
 #include "python/py3dinput.h"
 #include "python/py3dgameobject.h"
 #include "resource_manager.h"
+#include "python/py3drenderingcontext.h"
 
 static PyObject *py3dSceneCtor = NULL;
 
@@ -240,6 +241,103 @@ PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject
 
 void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible) {
     scene->visible = makeVisible;
+}
+
+void Py3dScene_Start(struct Py3dScene *self) {
+    if (self == NULL) return;
+
+    if (self->sceneGraph == NULL || !Py3dGameObject_Check(self->sceneGraph)) {
+        warning_log("[Scene]: Scene graph is not rooted with a GameObject");
+        return;
+    }
+
+    PyObject *startArgs = PyTuple_New(0);
+    PyObject *startRet = Py3dGameObject_Start((struct Py3dGameObject *) self->sceneGraph, startArgs, NULL);
+    if (startRet == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(startRet);
+    Py_CLEAR(startArgs);
+}
+
+void Py3dScene_Update(struct Py3dScene *self, float dt) {
+    if (self == NULL) return;
+
+    if (!self->enabled) return;
+
+    if (self->sceneGraph == NULL || !Py3dGameObject_Check(self->sceneGraph)) {
+        warning_log("[Scene]: Scene graph is not rooted with a GameObject");
+        return;
+    }
+
+    PyObject *args = Py_BuildValue("(f)", dt);
+    if (args == NULL) {
+        handleException();
+        return;
+    }
+
+    PyObject *ret = Py3dGameObject_Update((struct Py3dGameObject *) self->sceneGraph, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
+
+    if (self->space == NULL) return;
+
+    handleCollisions(self->space);
+}
+
+void Py3dScene_Render(struct Py3dScene *self) {
+    if (self == NULL) return;
+
+    if (!self->visible) return;
+
+    if (self->sceneGraph == NULL || !Py3dGameObject_Check(self->sceneGraph)) {
+        warning_log("[Scene]: Scene graph is not rooted with a GameObject");
+        return;
+    }
+
+    if (self->activeCamera == NULL || !Py3dGameObject_Check(self->activeCamera)) {
+        warning_log("[Scene]: Scene graph does not possess a valid active camera");
+        return;
+    }
+
+    struct Py3dRenderingContext *rc = Py3dRenderingContext_New((struct Py3dGameObject *)self->activeCamera);
+    if (rc == NULL) {
+        handleException();
+        return;
+    }
+    PyObject *args = Py_BuildValue("(O)", rc);
+
+    PyObject *ret = Py3dGameObject_Render((struct Py3dGameObject *) self->sceneGraph, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(ret);
+    Py_CLEAR(args);
+    Py_CLEAR(rc);
+}
+
+void Py3dScene_End(struct Py3dScene *self) {
+    if (self == NULL) return;
+
+    if (self->sceneGraph == NULL || !Py3dGameObject_Check(self->sceneGraph)) {
+        warning_log("[Scene]: Scene graph is not rooted with a GameObject");
+        return;
+    }
+
+    PyObject *endArgs = PyTuple_New(0);
+    PyObject *endRet = Py3dGameObject_End((struct Py3dGameObject *) self->sceneGraph, endArgs, NULL);
+    if (endRet == NULL) {
+        handleException();
+    }
+
+    Py_CLEAR(endRet);
+    Py_CLEAR(endArgs);
 }
 
 void Py3dScene_SetResourceManager(struct Py3dScene *self, PyObject *newManager) {

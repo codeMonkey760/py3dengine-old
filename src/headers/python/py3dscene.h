@@ -37,6 +37,10 @@ extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyO
 extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene);
 extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible);
+extern void Py3dScene_Start(struct Py3dScene *self);
+extern void Py3dScene_Update(struct Py3dScene *self, float dt);
+extern void Py3dScene_Render(struct Py3dScene *self);
+extern void Py3dScene_End(struct Py3dScene *self);
 extern void Py3dScene_SetResourceManager(struct Py3dScene *self, PyObject *newManager);
 extern void Py3dScene_SetSceneGraph(struct Py3dScene *self, PyObject *newSceneGraph);
 extern PyObject *Py3dScene_ActivateCamera(struct Py3dScene *self, PyObject *args, PyObject *kwds);
