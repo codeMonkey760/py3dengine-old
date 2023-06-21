@@ -7,6 +7,7 @@
 
 #include "python/python_util.h"
 #include "resource_manager.h"
+#include "physics/collision.h"
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
@@ -257,4 +258,8 @@ PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObje
     }
 
     Py_RETURN_NONE;
+}
+
+struct PhysicsSpace *Py3dComponent_GetPhysicsSpace(struct Py3dComponent *self) {
+    return self->scene->space;
 }

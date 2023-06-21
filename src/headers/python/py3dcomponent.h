@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <stdbool.h>
+#include <ode/ode.h>
 
 struct Py3dGameObject;
 struct ResourceManager;
@@ -40,5 +41,7 @@ extern PyObject *Py3dComponent_SetOwner(struct Py3dComponent *self, PyObject *ar
 
 extern PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+
+extern struct PhysicsSpace * Py3dComponent_GetPhysicsSpace(struct Py3dComponent *self);
 
 #endif
