@@ -33,7 +33,7 @@ static void deleteGeom(struct Py3dCollider *self) {
     if (self->geomId == NULL) return;
 
     dGeomSetBody(self->geomId, 0);
-    removeGeomFromWorldSpace(self->geomId);
+    removeGeomFromWorldSpace(Py3dComponent_GetPhysicsSpace((struct Py3dComponent *) self), self->geomId);
     dGeomDestroy(self->geomId);
     self->geomId = NULL;
 }
@@ -125,7 +125,7 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
 
     dGeomSetData(newGeom, self);
     dGeomSetBody(newGeom, transform->dynamicsBody);
-    addGeomToWorldSpace(newGeom);
+    addGeomToWorldSpace(Py3dComponent_GetPhysicsSpace((struct Py3dComponent *) self), newGeom);
     deleteGeom(self);
     self->geomId = newGeom;
 

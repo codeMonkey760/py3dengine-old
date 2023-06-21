@@ -218,7 +218,7 @@ static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObje
     Mat4Identity(self->wMatrixCache);
     Mat4Identity(self->witMatrixCache);
     Mat4Identity(self->viewMatrixCache);
-    self->dynamicsBody = createDynamicsBody();
+    self->dynamicsBody = createDynamicsBody(Py3dComponent_GetPhysicsSpace((struct Py3dComponent *) self));
 
     return 0;
 }
