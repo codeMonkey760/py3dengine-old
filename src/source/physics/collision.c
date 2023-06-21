@@ -270,6 +270,8 @@ dBodyID createDynamicsBody(struct PhysicsSpace *space) {
 }
 
 void destroyDynamicsBody(dBodyID body) {
+    if (body == NULL) return;
+
     dBodyDestroy(body);
     body = NULL;
 }
