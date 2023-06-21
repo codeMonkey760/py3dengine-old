@@ -22,9 +22,9 @@ static float fps = 0.0f;
 static float mpf = 0.0f;
 static float time_since_last_report = 0.0f;
 static bool print_report = true;
-static GLFWwindow *glfwWindow = NULL;
+static struct Py3dScene *startingScene = NULL;
 
-struct Py3dScene *startingScene = NULL;
+GLFWwindow *glfwWindow = NULL;
 
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
