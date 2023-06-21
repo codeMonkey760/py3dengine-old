@@ -8,9 +8,11 @@
 
 struct Py3dGameObject;
 struct ResourceManager;
+struct Py3dScene;
 
 struct Py3dComponent {
     PyObject_HEAD
+    struct Py3dScene *scene;
     PyObject *name;
     PyObject *owner;
     bool enabled;
