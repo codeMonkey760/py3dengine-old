@@ -455,7 +455,7 @@ PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args, PyObj
     Py_RETURN_NONE;
 }
 
-PyObject *Py3dInput_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
+PyObject *Py3dScene_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
     char *newMode = NULL;
 
     if (PyArg_ParseTuple(args, "s", &newMode) != 1) return NULL;
