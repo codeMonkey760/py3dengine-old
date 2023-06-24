@@ -8,13 +8,14 @@
 
 struct Py3dGameObject;
 struct Py3dCollisionEvent;
+struct Py3dScene;
 extern PyTypeObject Py3dGameObject_Type;
 
 extern int PyInit_Py3dGameObject(PyObject *module);
 extern int Py3dGameObject_FindCtor(PyObject *module);
 extern void Py3dGameObject_FinalizeCtor();
 extern int Py3dGameObject_Check(PyObject *obj);
-extern PyObject *Py3dGameObject_New();
+extern struct Py3dGameObject *Py3dGameObject_New();
 extern PyObject *Py3dGameObject_IsEnabled(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern bool Py3dGameObject_IsEnabledBool(struct Py3dGameObject *self);
 extern PyObject *Py3dGameObject_Enable(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
@@ -48,5 +49,6 @@ extern PyObject *Py3dGameObject_GetComponentByIndex(struct Py3dGameObject *self,
 extern PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *self, Py_ssize_t index);
 extern PyObject *Py3dGameObject_GetComponentCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self);
+extern struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self);
 
 #endif

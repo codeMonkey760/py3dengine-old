@@ -9,11 +9,13 @@
 #include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dcollisionevent.h"
+#include "python/py3dscene.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
     bool enabled;
     bool visible;
+    struct Py3dScene *scene;
     PyObject *componentsList;
     PyObject *childrenList;
     PyObject *parent;
@@ -30,6 +32,7 @@ static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit,
     Py_VISIT(self->childrenList);
     Py_VISIT(self->parent);
     Py_VISIT(self->transform);
+    Py_VISIT(self->scene);
     return 0;
 }
 
@@ -39,6 +42,7 @@ static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
     Py_CLEAR(self->parent);
     Py_CLEAR(self->childrenList);
     Py_CLEAR(self->componentsList);
+    Py_CLEAR(self->scene);
     return 0;
 }
 
@@ -52,13 +56,19 @@ static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
 static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     trace_log("%s", "[GameObject]: Initializing Game Object");
 
+    struct Py3dScene *newScene = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dScene_Type, &newScene) != 1) {
+        return -1;
+    }
+
     self->enabled = true;
     self->visible = true;
     self->componentsList = PyList_New(0);
     self->childrenList = PyList_New(0);
     self->parent = Py_NewRef(Py_None);
     self->name = Py_NewRef(Py_None);
-    self->transform = (PyObject *) Py3dTransform_New();
+    self->transform = (PyObject *) Py3dTransform_New(self);
+    self->scene = (struct Py3dScene *) Py_NewRef(newScene);
 
     return 0;
 }
@@ -136,22 +146,31 @@ int Py3dGameObject_Check(PyObject *obj) {
     return ret;
 }
 
-PyObject *Py3dGameObject_New() {
+struct Py3dGameObject *Py3dGameObject_New(struct Py3dScene *newScene) {
     if (py3dGameObjectCtor == NULL) {
         critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
 
         return NULL;
     }
 
-    PyObject *py3dGameObject = PyObject_Call(py3dGameObjectCtor, PyTuple_New(0), NULL);
-    if (py3dGameObject == NULL) {
+    if (newScene == NULL) {
+        error_log("[GameObject]: Could not instantiate. Requires valid scene pointer.");
+
+        return NULL;
+    }
+
+    PyObject *args = Py_BuildValue("(O)", newScene);
+    PyObject *ret = PyObject_Call(py3dGameObjectCtor, args, NULL);
+    Py_CLEAR(args);
+    if (ret == NULL || !Py3dGameObject_Check(ret)) {
+        Py_CLEAR(ret);
         critical_log("%s", "[Python]: Failed to allocate GameObject in python interpreter");
         handleException();
 
         return NULL;
     }
 
-    return py3dGameObject;
+    return (struct Py3dGameObject *) ret;
 }
 
 PyObject *Py3dGameObject_IsEnabled(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
@@ -413,6 +432,7 @@ PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *
     PyObject *newComponent = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
 
+    // TODO: I think that this is incrementing the ref count of newComponent ... double check
     if (PyList_Append(self->componentsList, newComponent) != 0) {
         return NULL;
     }
@@ -469,6 +489,10 @@ PyObject *Py3dGameObject_GetComponentCount(struct Py3dGameObject *self, PyObject
 
 Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self) {
     return PySequence_Size(self->componentsList);
+}
+
+struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self) {
+    return self->scene;
 }
 
 static PyObject *getCallable(PyObject *obj, const char *callableName) {
