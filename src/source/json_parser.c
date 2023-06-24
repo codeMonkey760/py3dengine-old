@@ -168,6 +168,7 @@ bool parseGameObject(
     json_object *json,
     struct Py3dGameObject *parent,
     struct Py3dGameObject **rootPtr,
+    struct Py3dScene *scene,
     struct ResourceManager *resourceManager
 ) {
     if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return false;
@@ -253,7 +254,7 @@ bool parseGameObject(
             continue;
         }
 
-        parseGameObject(cur_child_json, newGO, rootPtr, resourceManager);
+        parseGameObject(cur_child_json, newGO, rootPtr, scene, resourceManager);
     }
 
     if (parent != NULL) {

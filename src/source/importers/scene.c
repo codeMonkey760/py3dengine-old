@@ -110,6 +110,9 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
         return NULL;
     }
 
+    struct Py3dScene *newScene = Py3dScene_New();
+    if (newScene == NULL) return NULL;
+
     struct ResourceManager *manager = NULL;
     allocResourceManager(&manager);
 
@@ -117,6 +120,9 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
 
     json_object *resourceArray = json_object_object_get(sceneDescriptor, "resources");
     importResources(manager, resourceArray);
+
+    Py_INCREF(manager->py3dResourceManager);
+    Py3dScene_SetResourceManager(newScene, (PyObject *) manager->py3dResourceManager);
 
     json_object *scene_root = json_object_object_get(sceneDescriptor, "scene_root");
     if (scene_root == NULL || !json_object_is_type(scene_root, json_type_object)) {
@@ -126,23 +132,13 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
     }
 
     struct Py3dGameObject *rootGO = NULL;
-    if (!parseGameObject(scene_root, NULL, &rootGO, manager)) {
+    if (!parseGameObject(scene_root, NULL, &rootGO, newScene, manager)) {
         PyErr_SetString(PyExc_ValueError, "Unable to parse scene");
         deleteResourceManager(&manager);
         Py_CLEAR(rootGO);
         return NULL;
     }
 
-    struct Py3dScene *newScene = Py3dScene_New();
-    if (newScene == NULL) {
-        deleteResourceManager(&manager);
-        Py_CLEAR(rootGO);
-        return NULL;
-    }
-
-    Py_INCREF(manager->py3dResourceManager);
-    Py3dScene_SetResourceManager(newScene, (PyObject *) manager->py3dResourceManager);
-    manager = NULL;
     Py3dScene_SetSceneGraph(newScene, (PyObject *) rootGO);
     rootGO = NULL;
 
