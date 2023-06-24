@@ -2,7 +2,6 @@
 
 #include "logger.h"
 #include "custom_string.h"
-#include "python/py3dscene.h"
 #include "python/py3dgameobject.h"
 
 #include "python/python_util.h"
@@ -163,7 +162,6 @@ PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg) {
     Py_VISIT(self->owner);
-    Py_VISIT(self->scene);
 
     return 0;
 }
@@ -171,7 +169,6 @@ static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, v
 static int Py3dComponent_Clear(struct Py3dComponent *self) {
     Py_CLEAR(self->name);
     Py_CLEAR(self->owner);
-    Py_CLEAR(self->scene);
 
     return 0;
 }
@@ -179,16 +176,10 @@ static int Py3dComponent_Clear(struct Py3dComponent *self) {
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     trace_log("[Component]: Initializing Component of type \"%s\"", Py_TYPE(self)->tp_name);
 
-    struct Py3dScene *scene = NULL;
-    if (PyArg_ParseTuple(args, "O!", &Py3dScene_Type, &scene) != 1) {
-        return -1;
-    }
-
     self->name = Py_NewRef(Py_None);
     self->owner = Py_NewRef(Py_None);
     self->enabled = true;
     self->visible = true;
-    self->scene = (struct Py3dScene *) Py_NewRef(scene);
 
     return 0;
 }
@@ -260,6 +251,3 @@ PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObje
     Py_RETURN_NONE;
 }
 
-struct PhysicsSpace *Py3dComponent_GetPhysicsSpace(struct Py3dComponent *self) {
-    return self->scene->space;
-}

@@ -13,7 +13,6 @@ struct Py3dScene;
 
 struct Py3dComponent {
     PyObject_HEAD
-    struct Py3dScene *scene;
     PyObject *name;
     PyObject *owner;
     bool enabled;
@@ -41,7 +40,5 @@ extern PyObject *Py3dComponent_SetOwner(struct Py3dComponent *self, PyObject *ar
 
 extern PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
-
-extern struct PhysicsSpace * Py3dComponent_GetPhysicsSpace(struct Py3dComponent *self);
 
 #endif
