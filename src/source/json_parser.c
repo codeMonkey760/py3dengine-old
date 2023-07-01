@@ -189,7 +189,7 @@ bool parseGameObject(
     json_object *json_visible = fetchProperty(json, "visible", json_type_boolean);
 
     struct Py3dGameObject *newGO = NULL;
-    newGO = (struct Py3dGameObject *) Py3dGameObject_New();
+    newGO = (struct Py3dGameObject *) Py3dGameObject_New(scene);
     if (newGO == NULL) return false;
 
     const char *gameObjectName = json_object_get_string(json_name);
