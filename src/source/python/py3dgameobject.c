@@ -440,8 +440,8 @@ void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dC
         return;
     }
 
-    ((struct Py3dComponent *) component)->owner = (PyObject *) self;
-    Py_INCREF(self);
+    Py_CLEAR(component->owner);
+    component->owner = Py_NewRef((PyObject *) self);
 }
 
 PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
