@@ -90,6 +90,7 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"get_child_by_index", (PyCFunction) Py3dGameObject_GetChildByIndex, METH_VARARGS, "Get a ref to the child at the specified index"},
     {"get_child_count", (PyCFunction) Py3dGameObject_GetChildCount, METH_NOARGS, "Get the number of children this GameObject has"},
     {"attach_component", (PyCFunction) Py3dGameObject_AttachComponent, METH_VARARGS, "Attach a Component to a GameObject"},
+    {"detach_component", (PyCFunction) Py3dGameObject_DetachComponent, METH_VARARGS, "Detach a Component from a GameObject"},
     {"get_component_by_type", (PyCFunction) Py3dGameObject_GetComponentByType, METH_VARARGS, "Get a ref to the first Component of the specified type"},
     {"get_component_by_index", (PyCFunction) Py3dGameObject_GetComponentByIndex, METH_VARARGS, "Get a ref to the component at the specified index"},
     {"get_component_count", (PyCFunction) Py3dGameObject_GetComponentCount, METH_NOARGS, "Get the number of components this GameObject has"},
@@ -448,6 +449,27 @@ PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *
     if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
 
     Py3dGameObject_AttachComponentInC(self, newComponent);
+
+    Py_RETURN_NONE;
+}
+
+void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component) {
+    if (Py3dGameObject_Check((PyObject *) self) != 1 || Py3dComponent_Check((PyObject *) component) != 1) return;
+
+    PyObject *methodName = PyUnicode_FromString("remove");
+    PyObject *ret = PyObject_CallMethodOneArg(self->componentsList, methodName, (PyObject *) component);
+    Py_CLEAR(methodName);
+    if (ret == NULL) {
+        handleException();
+    }
+    Py_CLEAR(ret);
+}
+
+extern PyObject *Py3dGameObject_DetachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dComponent *target = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &target) != 1) return NULL;
+
+    Py3dGameObject_DetachComponentInC(self, target);
 
     Py_RETURN_NONE;
 }

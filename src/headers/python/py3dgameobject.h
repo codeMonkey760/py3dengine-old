@@ -46,6 +46,8 @@ extern PyObject *Py3dGameObject_GetChildCount(struct Py3dGameObject *self, PyObj
 extern Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self);
 extern void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component);
 extern PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component);
+extern PyObject *Py3dGameObject_DetachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetComponentByType(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetComponentByIndex(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *self, Py_ssize_t index);
