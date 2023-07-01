@@ -225,15 +225,7 @@ bool parseGameObject(
         if (!isResourceTypePythonScript(pyScript)) continue;
 
         createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
-        PyObject *attachComponentArgs = Py_BuildValue("(O)", pyComponent);
-        PyObject *attachComponentRet = Py3dGameObject_AttachComponent(newGO, attachComponentArgs, NULL);
-        if (attachComponentRet == NULL) {
-            error_log("%s", "[JsonParser]: Component failed to attach. Discarding it.");
-            handleException();
-        }
-
-        Py_CLEAR(attachComponentRet);
-        Py_CLEAR(attachComponentArgs);
+        Py3dGameObject_AttachComponentInC(newGO, pyComponent);
 
         if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
             error_log("%s", "[JsonParser]: Python component failed to parse.");
