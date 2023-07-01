@@ -63,7 +63,7 @@ int PyInit_Py3dComponent(PyObject *module) {
 }
 
 int Py3dComponent_Check(PyObject *pyObj) {
-    if (pyObj == NULL) return false;
+    if (pyObj == NULL) return 0;
 
     int res = PyObject_IsInstance(pyObj, (PyObject *) &Py3dComponent_Type);
     if (res == -1) {
