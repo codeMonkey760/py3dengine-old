@@ -116,13 +116,14 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
     struct ResourceManager *manager = NULL;
     allocResourceManager(&manager);
 
+    Py_INCREF(manager->py3dResourceManager);
+    Py3dScene_SetResourceManager(newScene, (PyObject *) manager->py3dResourceManager);
+    setResourceManagerOwner(manager, (struct Py3dScene *) newScene);
+
     importBuiltInResources(manager);
 
     json_object *resourceArray = json_object_object_get(sceneDescriptor, "resources");
     importResources(manager, resourceArray);
-
-    Py_INCREF(manager->py3dResourceManager);
-    Py3dScene_SetResourceManager(newScene, (PyObject *) manager->py3dResourceManager);
 
     json_object *scene_root = json_object_object_get(sceneDescriptor, "scene_root");
     if (scene_root == NULL || !json_object_is_type(scene_root, json_type_object)) {
