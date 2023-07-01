@@ -229,6 +229,7 @@ bool parseGameObject(
 
         if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
             error_log("%s", "[JsonParser]: Python component failed to parse.");
+            Py3dGameObject_DetachComponentInC(newGO, pyComponent);
         }
 
         Py_CLEAR(pyComponent);
