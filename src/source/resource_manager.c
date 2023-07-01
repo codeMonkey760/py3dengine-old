@@ -128,6 +128,7 @@ void allocResourceManager(struct ResourceManager **resourceManagerPtr){
     newResourceManager->py3dResourceManager = NULL;
     newResourceManager->py3dResourceManager = Py3dResourceManager_New();
     newResourceManager->py3dResourceManager->resourceManager = newResourceManager;
+    newResourceManager->owner = NULL;
 
     (*resourceManagerPtr) = newResourceManager;
     newResourceManager = NULL;
@@ -140,10 +141,25 @@ void deleteResourceManager(struct ResourceManager **resourceManagerPtr){
 
     deleteListNode(&manager->_root);
     Py_CLEAR(manager->py3dResourceManager);
+    Py_CLEAR(manager->owner);
 
     free(manager);
     manager = NULL;
     (*resourceManagerPtr) = NULL;
+}
+
+extern struct Py3dScene *getResourceManagerOwner(struct ResourceManager *resourceManager) {
+    if (resourceManager == NULL) return NULL;
+
+    return resourceManager->owner;
+}
+
+extern void setResourceManagerOwner(struct ResourceManager *resourceManager, struct Py3dScene *newOwner) {
+    if (resourceManager == NULL) return;
+
+    Py_CLEAR(resourceManager->owner);
+
+    resourceManager->owner = Py_NewRef(newOwner);
 }
 
 void storeResource(struct ResourceManager *manager, struct BaseResource *resource) {

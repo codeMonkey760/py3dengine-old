@@ -7,11 +7,13 @@
 #include <Python.h>
 
 struct BaseResource;
+struct Py3dScene;
 struct Py3dResourceManager;
 
 struct ResourceManager {
     struct ListNode *_root;
     struct Py3dResourceManager *py3dResourceManager;
+    struct Py3dScene *owner;
 };
 
 struct Py3dResourceManager {
@@ -29,6 +31,9 @@ extern int Py3dResourceManager_Check(PyObject *obj);
 
 extern void allocResourceManager(struct ResourceManager **resourceManagerPtr);
 extern void deleteResourceManager(struct ResourceManager **resourceManagerPtr);
+
+extern struct Py3dScene *getResourceManagerOwner(struct ResourceManager *resourceManager);
+extern void setResourceManagerOwner(struct ResourceManager *resourceManager, struct Py3dScene *newOwner);
 
 extern void storeResource(struct ResourceManager *manager, struct BaseResource *resource);
 extern struct BaseResource *getResource(struct ResourceManager *manager, const char *name);
