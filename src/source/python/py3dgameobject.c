@@ -137,6 +137,8 @@ void Py3dGameObject_FinalizeCtor() {
 }
 
 int Py3dGameObject_Check(PyObject *obj) {
+    if (obj == NULL) return 0;
+
     int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
     if (ret == -1) {
         handleException();
@@ -428,17 +430,24 @@ Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self) {
     return PySequence_Size(self->childrenList);
 }
 
-PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
-    PyObject *newComponent = NULL;
-    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
+void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component) {
+    if (Py3dGameObject_Check((PyObject *) self) || Py3dComponent_Check((PyObject *) component) != 1) return;
 
-    // TODO: I think that this is incrementing the ref count of newComponent ... double check
-    if (PyList_Append(self->componentsList, newComponent) != 0) {
-        return NULL;
+    // TODO: I think that PyList_Append is incrementing the ref count of component ... double check
+    if (PyList_Append(self->componentsList, (PyObject *) component) != 0) {
+        handleException();
+        return;
     }
 
-    ((struct Py3dComponent *) newComponent)->owner = (PyObject *) self;
+    ((struct Py3dComponent *) component)->owner = (PyObject *) self;
     Py_INCREF(self);
+}
+
+PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dComponent *newComponent = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
+
+    Py3dGameObject_AttachComponentInC(self, newComponent);
 
     Py_RETURN_NONE;
 }
