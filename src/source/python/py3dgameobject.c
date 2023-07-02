@@ -293,6 +293,7 @@ void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEve
     PyObject *args = PyTuple_New(1);
     PyTuple_SetItem(args, 1, (PyObject *) event);
 
+    // TODO: this is a bug ... this message is propagated to children of this GO
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collide", args);
     if (ret == NULL) {
         handleException();
@@ -307,6 +308,7 @@ extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3
 
     PyObject *args = Py_BuildValue("(O)", event);
 
+    // TODO: this is a bug ... this message is propagated to children of this GO
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_enter", args);
     if (ret == NULL) {
         handleException();
@@ -321,6 +323,7 @@ extern void Py3dGameObject_ColliderExit(struct Py3dGameObject *self, struct Py3d
 
     PyObject *args = Py_BuildValue("(O)", event);
 
+    // TODO: this is a bug ... this message is propagated to children of this GO
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_exit", args);
     if (ret == NULL) {
         handleException();
