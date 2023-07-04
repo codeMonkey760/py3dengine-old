@@ -173,7 +173,7 @@ struct Py3dScene *Py3dScene_New() {
     }
 
     PyObject *args = PyTuple_New(0);
-    PyObject *py3dScene = PyObject_Call(py3dScene, args, NULL);
+    PyObject *py3dScene = PyObject_Call(py3dSceneCtor, args, NULL);
     Py_CLEAR(args);
     if (py3dScene == NULL) {
         critical_log("%s", "[Python]: Failed to create Scene");
