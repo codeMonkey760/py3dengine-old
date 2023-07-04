@@ -435,7 +435,7 @@ Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self) {
 }
 
 void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component) {
-    if (Py3dGameObject_Check((PyObject *) self) || Py3dComponent_Check((PyObject *) component) != 1) return;
+    if (Py3dGameObject_Check((PyObject *) self) != 1 || Py3dComponent_Check((PyObject *) component) != 1) return;
 
     // TODO: I think that PyList_Append is incrementing the ref count of component ... double check
     if (PyList_Append(self->componentsList, (PyObject *) component) != 0) {
