@@ -67,8 +67,8 @@ static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyOb
     self->childrenList = PyList_New(0);
     self->parent = Py_NewRef(Py_None);
     self->name = Py_NewRef(Py_None);
-    self->transform = (PyObject *) Py3dTransform_New(self);
     self->scene = (struct Py3dScene *) Py_NewRef(newScene);
+    self->transform = (PyObject *) Py3dTransform_New(self);
 
     return 0;
 }
