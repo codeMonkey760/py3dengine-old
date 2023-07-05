@@ -20,7 +20,7 @@ static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dCollider *self) {
 
     struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
     Py_CLEAR(owner);
-    if (Py3dScene_Check((PyObject *) scene)) {
+    if (Py3dScene_Check((PyObject *) scene) != 1) {
         critical_log("%s", "[ColliderComponent]: Owner Game Object is not attached to a scene graph");
         return NULL;
     }
