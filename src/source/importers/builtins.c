@@ -1,6 +1,6 @@
 #include "importers/builtins.h"
 #include "importers/component.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "logger.h"
 #include "resources/model.h"
 #include "resources/shader.h"
@@ -35,8 +35,8 @@ const char *spriteFragShader =
 "   outputColor = vec4(texture(gSprite, texCoord).rgb * gMixColor, 1.0);"
 "}\n";
 
-static void importQuadModel(struct ResourceManager *rm) {
-    if (rm == NULL) return;
+static void importQuadModel(struct Py3dResourceManager *rm) {
+    if (Py3dResourceManager_Check((PyObject *) rm) != 1) return;
 
     struct Model *quad = NULL;
     allocModel(&quad);
@@ -58,12 +58,12 @@ static void importQuadModel(struct ResourceManager *rm) {
 
     setModelPNTBuffer(quad, vertices, 6);
 
-    storeResource(rm, (struct BaseResource *) quad);
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) quad);
     quad = NULL;
 }
 
-static void importSpriteShader(struct ResourceManager *rm) {
-    if (rm == NULL) return;
+static void importSpriteShader(struct Py3dResourceManager *rm) {
+    if (Py3dResourceManager_Check((PyObject *) rm) != 1) return;
 
     struct Shader *shader = NULL;
     allocShader(&shader);
@@ -75,33 +75,33 @@ static void importSpriteShader(struct ResourceManager *rm) {
     setResourceName((struct BaseResource *) shader, "SpriteShaderBuiltIn");
     initShader(shader, spriteVertexShader, spriteFragShader);
 
-    storeResource(rm, (struct BaseResource *) shader);
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) shader);
     shader = NULL;
 }
 
-void importBuiltInResources(struct ResourceManager *rm) {
-    if (rm == NULL) return;
+void importBuiltInResources(struct Py3dResourceManager *rm) {
+    if (Py3dResourceManager_Check((PyObject *) rm) != 1) return;
 
     struct PythonScript *script = NULL;
     importBuiltinComponent(&script, "ModelRendererComponent");
     if (script == NULL) {
         error_log("%s", "[BuiltInImporter]: Unable to load ModelRendererComponent builtin");
     }
-    storeResource(rm, (struct BaseResource *) script);
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
     script = NULL;
 
     importBuiltinComponent(&script, "SpriteRendererComponent");
     if (script == NULL) {
         error_log("%s", "[BuiltInImporter]: Unable to load SpriteRendererComponent builtin");
     }
-    storeResource(rm, (struct BaseResource *) script);
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
     script = NULL;
 
     importBuiltinComponent(&script, "ColliderComponent");
     if (script == NULL) {
         error_log("%s", "[BuiltInImporter]: Unable to load ColliderComponent builtin");
     }
-    storeResource(rm, (struct BaseResource *) script);
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
     script = NULL;
 
     importQuadModel(rm);
