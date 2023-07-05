@@ -13,7 +13,7 @@ static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dCollider *self) {
 
     struct Py3dGameObject *owner = (struct Py3dGameObject *) Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
     if (Py3dGameObject_Check((PyObject *) owner) != 1) {
-        critical_log("%s", "[Py3dCollider]: Collider does not have an owner");
+        critical_log("%s", "[ColliderComponent]: ColliderComponent does not have an owner");
         Py_CLEAR(owner);
         return NULL;
     }
@@ -21,7 +21,7 @@ static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dCollider *self) {
     struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
     Py_CLEAR(owner);
     if (Py3dScene_Check((PyObject *) scene)) {
-        critical_log("%s", "[Py3dCollider]: Owner Game Object is not attached to a scene graph");
+        critical_log("%s", "[ColliderComponent]: Owner Game Object is not attached to a scene graph");
         return NULL;
     }
 
@@ -33,7 +33,7 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
 
     if (!Py3dGameObject_Check(owner)) {
         Py_CLEAR(owner);
-        PyErr_SetString(PyExc_ValueError, "Py3dCollider component has no owner");
+        PyErr_SetString(PyExc_ValueError, "ColliderComponent component has no owner");
 
         return NULL;
     }
@@ -42,7 +42,7 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
     Py_CLEAR(owner);
     if (!Py3dTransform_Check(transform)) {
         Py_CLEAR(transform);
-        PyErr_SetString(PyExc_ValueError, "Py3dCollider owner has no transform");
+        PyErr_SetString(PyExc_ValueError, "ColliderComponent owner has no transform");
 
         return NULL;
     }
@@ -144,7 +144,7 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
 
     struct PhysicsSpace *space = getOwnersPhysicsSpace(self);
     if (space == NULL) {
-        PyErr_SetString(PyExc_ValueError, "[ColliderComponent]: Could not obtain owners physics space]");
+        PyErr_SetString(PyExc_ValueError, "[ColliderComponent]: Could not obtain owners physics space");
         critical_log("[ColliderComponent]: Could not attach new ode geom to scene physics space");
         dGeomDestroy(newGeom);
         newGeom = NULL;
