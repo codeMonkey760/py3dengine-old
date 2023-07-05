@@ -82,7 +82,6 @@ add_executable(
     src/source/engine.c
     src/source/custom_string.c
     src/source/custom_path.c
-    src/source/resource_manager.c
     src/source/config.c
     src/source/json_parser.c
     src/source/physics/collision.c
@@ -113,6 +112,7 @@ add_executable(
     src/source/python/py3dcontactpoint.c
     src/source/python/py3dcollisionevent.c
     src/source/python/py3dscene.c
+    src/source/python/py3dresourcemanager.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
