@@ -5,7 +5,7 @@
 #include "util.h"
 #include "json_parser.h"
 #include "python/py3dgameobject.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"
 #include "python/py3dcomponent.h"
@@ -91,8 +91,12 @@ static PyObject *createPyListFromJsonArray(json_object *json) {
     return ret;
 }
 
-static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *data, struct ResourceManager *rm) {
-    if (component == NULL || data == NULL) return false;
+static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *data, struct Py3dResourceManager *rm) {
+    if (
+        Py3dComponent_Check((PyObject *) component) != 1 ||
+        data == NULL ||
+        Py3dResourceManager_Check((PyObject *) rm) != 1
+    ) return false;
 
     PyObject *pyParse = PyObject_GetAttrString((PyObject *) component, "parse");
     if (pyParse == NULL) {
@@ -101,7 +105,7 @@ static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *
         return false;
     }
 
-    PyObject *parseArgs = Py_BuildValue("(OO)", data, rm->py3dResourceManager);
+    PyObject *parseArgs = Py_BuildValue("(OO)", data, rm);
     PyObject *parseRet = PyObject_Call(pyParse, parseArgs, NULL);
     if (parseRet == NULL) {
         handleException();
@@ -144,9 +148,13 @@ bool parseTransformComponent(json_object *json, PyObject *component) {
 static bool parsePythonComponent(
     struct Py3dComponent *pyComponent,
     json_object *json,
-    struct ResourceManager *resourceManager
+    struct Py3dResourceManager *resourceManager
 ) {
-    if (json == NULL || pyComponent == NULL || resourceManager == NULL) return false;
+    if (
+        json == NULL ||
+        Py3dComponent_Check((PyObject *) pyComponent) != 1 ||
+        Py3dResourceManager_Check((PyObject *) resourceManager) != 1
+    ) return false;
 
     PyObject *parsedData = createPyDictFromJsonObject(json);
     if (parsedData == NULL) {
@@ -169,9 +177,14 @@ bool parseGameObject(
     struct Py3dGameObject *parent,
     struct Py3dGameObject **rootPtr,
     struct Py3dScene *scene,
-    struct ResourceManager *resourceManager
+    struct Py3dResourceManager *resourceManager
 ) {
-    if (json == NULL || rootPtr == NULL || (*rootPtr) != NULL || resourceManager == NULL) return false;
+    if (
+        json == NULL ||
+        rootPtr == NULL ||
+        (*rootPtr) != NULL ||
+        Py3dResourceManager_Check((PyObject *) resourceManager) != 1
+    ) return false;
 
     json_object *json_name = fetchProperty(json, "name", json_type_string);
     if (json_name == NULL) return false;
@@ -221,7 +234,7 @@ bool parseGameObject(
         const char *typeName = json_object_get_string(type_name_json);
 
         struct Py3dComponent *pyComponent = NULL;
-        struct BaseResource *pyScript = getResource(resourceManager,typeName);
+        struct BaseResource *pyScript = Py3dResourceManager_GetResource(resourceManager,typeName);
         if (!isResourceTypePythonScript(pyScript)) continue;
 
         createPythonComponent((struct PythonScript *) pyScript, &pyComponent);

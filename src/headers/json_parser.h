@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 struct Py3dGameObject;
-struct ResourceManager;
+struct Py3dResourceManager;
 struct Py3dScene;
 
 typedef struct json_object json_object;
@@ -17,7 +17,7 @@ extern bool parseGameObject(
     struct Py3dGameObject *parent,
     struct Py3dGameObject **root,
     struct Py3dScene *scene,
-    struct ResourceManager *resourceManager
+    struct Py3dResourceManager *resourceManager
 );
 
 #endif
