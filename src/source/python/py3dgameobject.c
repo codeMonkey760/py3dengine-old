@@ -73,11 +73,16 @@ static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyOb
     return 0;
 }
 
+static PyObject *Py3dGameObject_GetScenePython(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return Py_NewRef(self->scene);
+}
+
 PyMethodDef Py3dGameObject_Methods[] = {
     {"enabled", (PyCFunction) Py3dGameObject_IsEnabled, METH_NOARGS, "Determine if a Game Object is enabled"},
     {"enable", (PyCFunction) Py3dGameObject_Enable, METH_VARARGS, "Enable or disable a Game Object"},
     {"visible", (PyCFunction) Py3dGameObject_IsVisible, METH_NOARGS, "Determine if a Game Object is visible"},
     {"make_visible", (PyCFunction) Py3dGameObject_MakeVisible, METH_VARARGS, "Make a Game Object visible or invisible"},
+    {"get_scene", (PyCFunction) Py3dGameObject_GetScenePython, METH_NOARGS, "Get Game Object's scene"},
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
     {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
