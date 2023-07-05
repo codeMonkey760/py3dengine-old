@@ -31,7 +31,9 @@ static void error_callback(int code, const char* description) {
 }
 
 static void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    // TODO: pass key event to current scene
+    if (startingScene == NULL) return;
+
+    Py3dScene_KeyEvent(startingScene, key, scancode, action, mods);
 }
 
 static void resizeEngine();
