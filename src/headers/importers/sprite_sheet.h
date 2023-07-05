@@ -2,8 +2,8 @@
 #define PY3DENGINE_IMPORTERS_SPRITE_SHEET_H
 
 #include <json.h>
-struct ResourceManager;
+struct Py3dResourceManager;
 
-extern void importSprites(struct ResourceManager *manager, json_object *resourceDescriptor);
+extern void importSprites(struct Py3dResourceManager *manager, json_object *resourceDescriptor);
 
 #endif
