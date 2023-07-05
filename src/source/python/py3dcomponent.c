@@ -1,11 +1,14 @@
 #include "python/py3dcomponent.h"
 
+#include <structmember.h>
+#include <ode/ode.h>
+
 #include "logger.h"
 #include "custom_string.h"
 #include "python/py3dgameobject.h"
 
 #include "python/python_util.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "physics/collision.h"
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
@@ -78,7 +81,7 @@ PyObject *Py3dComponent_IsEnabled(struct Py3dComponent *self, PyObject *Py_UNUSE
     return PyBool_FromLong(Py3dComponent_IsEnabledBool(self));
 }
 
-bool Py3dComponent_IsEnabledBool(struct Py3dComponent *self) {
+int Py3dComponent_IsEnabledBool(struct Py3dComponent *self) {
     return self->enabled;
 }
 
@@ -86,13 +89,13 @@ PyObject *Py3dComponent_Enable(struct Py3dComponent *self, PyObject *args, PyObj
     PyObject *enableObj = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
 
-    bool enable = Py_IsTrue(enableObj);
+    int enable = Py_IsTrue(enableObj);
     Py3dComponent_EnableBool(self, enable);
 
     Py_RETURN_NONE;
 }
 
-void Py3dComponent_EnableBool(struct Py3dComponent *self, bool enable) {
+void Py3dComponent_EnableBool(struct Py3dComponent *self, int enable) {
     self->enabled = enable;
 }
 
@@ -100,7 +103,7 @@ PyObject *Py3dComponent_IsVisible(struct Py3dComponent *self, PyObject *Py_UNUSE
     return PyBool_FromLong(Py3dComponent_IsVisibleBool(self));
 }
 
-bool Py3dComponent_IsVisibleBool(struct Py3dComponent *self) {
+int Py3dComponent_IsVisibleBool(struct Py3dComponent *self) {
     return self->visible;
 }
 
@@ -108,9 +111,8 @@ PyObject *Py3dComponent_MakeVisible(struct Py3dComponent *self, PyObject *args, 
     PyObject *makeVisibleObj = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
 
-    bool make_visible = Py_IsTrue(makeVisibleObj);
-    // TODO: ???
-    Py3dComponent_EnableBool(self, make_visible);
+    int make_visible = Py_IsTrue(makeVisibleObj);
+    Py3dComponent_MakeVisibleBool(self, make_visible);
 
     Py_RETURN_NONE;
 }
@@ -225,8 +227,8 @@ static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject
 
 PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     PyObject *parseDataDict = NULL;
-    struct Py3dResourceManager *py3DResourceManager = NULL;
-    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3DResourceManager) != 1) return NULL;
+    struct Py3dResourceManager *rm = NULL;
+    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &rm) != 1) return NULL;
 
     PyObject *nameObj = PyDict_GetItemString(parseDataDict, "name");
     if (nameObj == NULL || PyUnicode_Check(nameObj) != 1) {
