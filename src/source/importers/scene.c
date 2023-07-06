@@ -112,8 +112,18 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
         return NULL;
     }
 
+    json_object *scene_name = json_object_object_get(sceneDescriptor, "name");
+    if (scene_name == NULL || !json_object_is_type(scene_name, json_type_string)) {
+        PyErr_SetString(PyExc_ValueError, "Scene must have a string property called \"name\"");
+        return NULL;
+    }
+    const char *scene_name_cstr = json_object_get_string(scene_name);
+
+    trace_log("[SceneImporter]: Beginning scene import for \"%s\"", scene_name_cstr);
+
     struct Py3dScene *newScene = Py3dScene_New();
     if (newScene == NULL) return NULL;
+    Py3dScene_SetNameCStr(newScene, scene_name_cstr);
 
     struct Py3dResourceManager *manager = Py3dResourceManager_New();
 
@@ -150,6 +160,8 @@ struct Py3dScene *importScene(json_object *sceneDescriptor) {
         return NULL;
     }
     Py_CLEAR(activateCameraRet);
+
+    trace_log("[SceneImporter]: Scene import for \"%s\" has ended", scene_name_cstr);
 
     return newScene;
 }
