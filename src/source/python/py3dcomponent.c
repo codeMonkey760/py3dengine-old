@@ -117,7 +117,7 @@ PyObject *Py3dComponent_MakeVisible(struct Py3dComponent *self, PyObject *args, 
     Py_RETURN_NONE;
 }
 
-void Py3dComponent_MakeVisibleBool(struct Py3dComponent *self, bool make_visible) {
+void Py3dComponent_MakeVisibleBool(struct Py3dComponent *self, int make_visible) {
     self->visible = make_visible;
 }
 
