@@ -4,11 +4,11 @@
 #include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dgameobject.h"
+#include "python/py3dresourcemanager.h"
 #include "resources/shader.h"
 #include "resources/material.h"
 #include "resources/model.h"
 #include "util.h"
-#include "resource_manager.h"
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
@@ -70,7 +70,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     Py_RETURN_NONE;
 }
 
-static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct ResourceManager *rm) {
+static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct Py3dResourceManager *rm) {
     PyObject *curAttr = NULL;
     curAttr = PyDict_GetItemString(parseDataDict, name);
     if (curAttr == NULL) return NULL;
@@ -79,7 +79,7 @@ static struct BaseResource *lookupResource(const char *name, PyObject *parseData
     if (curAttr == NULL) return NULL;
 
     const char *modelName = PyUnicode_AsUTF8(curAttr);
-    struct BaseResource *ret = getResource(rm, modelName);
+    struct BaseResource *ret = Py3dResourceManager_GetResource(rm, modelName);
     Py_CLEAR(curAttr);
 
     if (ret == NULL) {
@@ -99,15 +99,9 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
     struct Py3dResourceManager *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3dResourceManager) != 1) return NULL;
 
-    struct ResourceManager *rm = py3dResourceManager->resourceManager;
-    if (rm == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Resource Manager argument is not well formed");
-        return NULL;
-    }
-
     struct BaseResource *curRes = NULL;
 
-    curRes = lookupResource("model", parseDataDict, rm);
+    curRes = lookupResource("model", parseDataDict, py3dResourceManager);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeModel(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not model");
@@ -117,7 +111,7 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
         curRes = NULL;
     }
 
-    curRes = lookupResource("shader", parseDataDict, rm);
+    curRes = lookupResource("shader", parseDataDict, py3dResourceManager);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeShader(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not shader");
@@ -127,7 +121,7 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
         curRes = NULL;
     }
 
-    curRes = lookupResource("material", parseDataDict, rm);
+    curRes = lookupResource("material", parseDataDict, py3dResourceManager);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeMaterial(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not material");
@@ -176,7 +170,7 @@ static PyTypeObject Py3dModelRenderer_Type = {
     .tp_dealloc = (destructor) Py3dModelRenderer_Dealloc,
 };
 
-bool PyInit_Py3dModelRenderer(PyObject *module) {
+int PyInit_Py3dModelRenderer(PyObject *module) {
     Py3dModelRenderer_Type.tp_base = &Py3dComponent_Type;
     if (PyType_Ready(&Py3dModelRenderer_Type) < 0) return false;
 
@@ -187,7 +181,7 @@ bool PyInit_Py3dModelRenderer(PyObject *module) {
     return true;
 }
 
-bool Py3dModelRenderer_FindCtor(PyObject *module) {
+int Py3dModelRenderer_FindCtor(PyObject *module) {
     if (PyObject_HasAttrString(module, "ModelRendererComponent") == 0) {
         critical_log("%s", "[Python]: Py3dModelRenderer has not been initialized properly");
 
