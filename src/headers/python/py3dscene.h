@@ -13,6 +13,7 @@ struct Py3dScene {
     PyObject_HEAD
     int enabled;
     int visible;
+    PyObject *name;
     PyObject *sceneGraph;
     PyObject *activeCamera;
     PyObject *resourceManager;
@@ -37,6 +38,8 @@ extern PyObject *Py3dScene_IsVisible(struct Py3dScene *self, PyObject *args, PyO
 extern int Py3dScene_IsVisibleBool(struct Py3dScene *scene);
 extern PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible);
+extern PyObject *Py3dScene_GetName(struct Py3dScene *self, PyObject *Py_UNUSED(ignored));
+extern void Py3dScene_SetNameCStr(struct Py3dScene *self, const char *newName);
 extern void Py3dScene_Start(struct Py3dScene *self);
 extern void Py3dScene_Update(struct Py3dScene *self, float dt);
 extern void Py3dScene_Render(struct Py3dScene *self);

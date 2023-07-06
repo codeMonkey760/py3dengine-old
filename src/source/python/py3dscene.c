@@ -53,6 +53,7 @@ static void finalizeCallbackTable(struct Py3dScene *self) {
 }
 
 static int Py3dScene_Clear(struct Py3dScene *self) {
+    Py_CLEAR(self->name);
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
     Py_CLEAR(self->resourceManager);
@@ -74,6 +75,7 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
 
     self->enabled = 1;
     self->visible = 1;
+    self->name = Py_NewRef(Py_None);
     self->sceneGraph = Py_NewRef(Py_None);
     self->activeCamera = Py_NewRef(Py_None);
     self->resourceManager = Py_NewRef(Py_None);
@@ -225,6 +227,23 @@ PyObject *Py3dScene_MakeVisible(struct Py3dScene *self, PyObject *args, PyObject
 
 void Py3dScene_MakeVisibleBool(struct Py3dScene *scene, int makeVisible) {
     scene->visible = makeVisible;
+}
+
+PyObject *Py3dScene_GetName(struct Py3dScene *self, PyObject *Py_UNUSED(ignored)) {
+    return Py_NewRef(self->name);
+}
+
+void Py3dScene_SetNameCStr(struct Py3dScene *self, const char *newName) {
+    if (!Py3dScene_Check((PyObject *) self) || newName == NULL) return;
+
+    PyObject *newNameObj = PyUnicode_FromString(newName);
+    if (newNameObj == NULL) {
+        handleException();
+        return;
+    }
+
+    Py_CLEAR(self->name);
+    self->name = newNameObj;
 }
 
 void Py3dScene_Start(struct Py3dScene *self) {
