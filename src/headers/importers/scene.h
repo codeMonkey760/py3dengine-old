@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 struct Py3dScene;
-
 extern struct Py3dScene *importScene(json_object *sceneDescriptor);
 
 #endif
