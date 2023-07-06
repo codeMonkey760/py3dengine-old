@@ -1,6 +1,3 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
 #include <json.h>
 
 #include <glad/gl.h>
@@ -22,7 +19,9 @@ static float fps = 0.0f;
 static float mpf = 0.0f;
 static float time_since_last_report = 0.0f;
 static bool print_report = true;
-static struct Py3dScene *startingScene = NULL;
+static PyObject *sceneList = NULL;
+static struct Py3dScene *activeScene = NULL;
+static struct Py3dScene *sceneAwaitingActivation = NULL;
 
 GLFWwindow *glfwWindow = NULL;
 
@@ -31,9 +30,9 @@ static void error_callback(int code, const char* description) {
 }
 
 static void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (startingScene == NULL) return;
+    if (activeScene == NULL) return;
 
-    Py3dScene_KeyEvent(startingScene, key, scancode, action, mods);
+    Py3dScene_KeyEvent(activeScene, key, scancode, action, mods);
 }
 
 static void resizeEngine();
@@ -81,6 +80,23 @@ static void resizeEngine() {
     glViewport(0, 0, newWidth, newHeight);
 }
 
+static void doSceneActivation() {
+    if (sceneAwaitingActivation == NULL) return;
+
+    if (activeScene != NULL) {
+        trace_log("[Engine]: Deactivating scene");
+        Py3dScene_Deactivate(activeScene);
+        Py_CLEAR(activeScene);
+    }
+
+    activeScene = sceneAwaitingActivation;
+    sceneAwaitingActivation = NULL;
+
+    setCursorMode(activeScene->cursorMode);
+    trace_log("[Engine]: Activating scene");
+    Py3dScene_Activate(activeScene);
+}
+
 void initializeEngine(int argc, char **argv){
     parseConfigFile("config.json");
 
@@ -125,34 +141,22 @@ void initializeEngine(int argc, char **argv){
     glfwSwapInterval(getConfigSwapInterval());
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-
-    const char *startingScenePath = getConfigStartingScene();
-    FILE *startingSceneFile = fopen(startingScenePath, "r");
-    if (startingSceneFile == NULL) {
-        critical_log("[Engine]: Unable to open \"%s\" as scene descriptor for parsing. Cannot initialize", startingScenePath);
-        return;
-    }
-
-    json_object *startingSceneJson = json_object_from_fd(fileno(startingSceneFile));
-    if (startingSceneJson == NULL) {
-        critical_log("%s", "[Engine]: Could not parse scene descriptor");
-        return;
-    }
-
-    startingScene = importScene(startingSceneJson);
-
-    json_object_put(startingSceneJson);
-
-    if (startingScene == NULL) {
-        critical_log("%s", "[Engine]: Scene parser raised exception while parsing");
-        handleException();
-        return;
-    }
-
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    Py3dScene_Start(startingScene);
+    sceneList = PyList_New(0);
+    PyObject *ret = loadScene(getConfigStartingScene());
+    if (ret == NULL) {
+        critical_log("[Engine]: Could not load starting scene");
+        handleException();
+    }
+    Py_CLEAR(ret);
+
+    if (PyList_Size(sceneList) != 1) {
+        critical_log("[Engine]: Could not schedule starting scene for activation");
+    } else {
+        sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(PyList_GetItem(sceneList, 0));
+    }
 }
 
 void runEngine() {
@@ -167,20 +171,43 @@ void runEngine() {
         updateStats(dt);
         printStats(dt);
 
-        Py3dScene_Update(startingScene, dt);
-        Py3dScene_Render(startingScene);
+        doSceneActivation();
+
+        Py3dScene_Update(activeScene, dt);
+        Py3dScene_Render(activeScene);
 
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
     }
 }
 
+static void endLoadedScenes() {
+    Py_ssize_t sceneListLen = PyList_Size(sceneList);
+    for (Py_ssize_t i = 0; i < sceneListLen; ++i) {
+        PyObject *curScene = PyList_GetItem(sceneList, i);
+        if (!Py3dScene_Check(curScene)) {
+            critical_log("[Engine]: Non scene object or null detected in scene list");
+            continue;
+        }
+
+        PyObject *curSceneNameObj = Py3dScene_GetName((struct Py3dScene *) curScene, NULL);
+        trace_log("[Engine]: Ending scene with name \"%s\"", PyUnicode_AsUTF8(curSceneNameObj));
+        Py_CLEAR(curSceneNameObj);
+
+        Py3dScene_End((struct Py3dScene *) curScene);
+    }
+}
+
 void finalizeEngine() {
-    Py3dScene_End(startingScene);
+    trace_log("[Engine]: Deactivating scene");
+    Py3dScene_Deactivate(activeScene);
+
+    endLoadedScenes();
 
     glfwDestroyWindow(glfwWindow);
 
-    Py_CLEAR(startingScene);
+    Py_CLEAR(activeScene);
+    Py_CLEAR(sceneList);
     forceGarbageCollection();
 
     trace_log("[Engine]: Post scene de-allocation python object dump");
@@ -206,6 +233,86 @@ void getRenderingTargetDimensions(int *width, int *height) {
     if (height != NULL) {
         (*height) = h;
     }
+}
+
+PyObject *loadScene(const char *scenePath) {
+    FILE *sceneFile = fopen(scenePath, "r");
+    if (sceneFile == NULL) {
+        PyErr_Format(PyExc_ValueError, "Unable to open \"%s\" as scene descriptor", scenePath);
+        return NULL;
+    }
+
+    json_object *sceneJson = json_object_from_fd(fileno(sceneFile));
+    if (sceneJson == NULL) {
+        PyErr_Format(PyExc_ValueError, "Could not parse \"%s\" as JSON", scenePath);
+        return NULL;
+    }
+
+    trace_log("[Engine]: Loading scene at \"%s\"", scenePath);
+
+    struct Py3dScene *scene = importScene(sceneJson);
+    json_object_put(sceneJson);
+    fclose(sceneFile);
+    sceneFile = NULL;
+    if (!Py3dScene_Check((PyObject *) scene)) {
+        error_log("[Engine]: Parsing scene at \"%s\" failed", scenePath);
+        Py_CLEAR(scene);
+        return NULL;
+    }
+    if (PyList_Append(sceneList, (PyObject *) scene) != 0) {
+        critical_log("[Engine]: Could not append scene to scene list");
+        Py_CLEAR(scene);
+        return NULL;
+    }
+
+    trace_log("[Engine]: Starting scene loaded from \"%s\"", scenePath);
+    Py3dScene_Start(scene);
+    Py_CLEAR(scene);
+
+    Py_RETURN_NONE;
+}
+
+PyObject *activateScene(const char *sceneName) {
+    if (sceneName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot activate scene without name");
+        return NULL;
+    }
+
+    if (sceneAwaitingActivation != NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot activate scene while another scene is awaiting activation");
+        return NULL;
+    }
+
+    PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
+    if (sceneName == NULL) return NULL;
+
+    Py_ssize_t sceneListLen = PyList_Size(sceneList);
+    for (Py_ssize_t i = 0; i < sceneListLen; ++i) {
+        PyObject *curScene = PyList_GetItem(sceneList, i);
+        if (!Py3dScene_Check(curScene)) {
+            critical_log("[Engine]: Non scene object or null detected in scene list");
+            continue;
+        }
+
+        PyObject *curSceneNameObj = Py3dScene_GetName((struct Py3dScene *) curScene, NULL);
+        int cmpRet = PyObject_RichCompareBool(sceneNameObj, curSceneNameObj, Py_EQ);
+        Py_CLEAR(curSceneNameObj);
+
+        // curScene was a borrowed ref, do not clear it
+        if (cmpRet == -1) {
+            handleException();
+            continue;
+        } else if (cmpRet == 0) {
+            continue;
+        } else {
+            trace_log("[Engine]: Scheduling scene named \"%s\" for activation", sceneName);
+            sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(curScene);
+            Py_RETURN_NONE;
+        }
+    }
+
+    PyErr_Format(PyExc_ValueError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
+    return NULL;
 }
 
 void markWindowShouldClose() {

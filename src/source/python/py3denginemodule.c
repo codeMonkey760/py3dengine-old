@@ -20,8 +20,38 @@ static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dEngine_LoadScene(PyObject *self, PyObject *args, PyObject *kwds) {
+    const char *scenePath = NULL;
+    if (PyArg_ParseTuple(args, "s", &scenePath) != 1) return NULL;
+
+    PyObject *ret = loadScene(scenePath);
+    if (ret == NULL) {
+        error_log("[Engine]: Could not load scene at path \"%s\"", scenePath);
+        return NULL;
+    }
+    Py_CLEAR(ret);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dEngine_ActivateScene(PyObject *self, PyObject *args, PyObject *kwds) {
+    const char *sceneName = NULL;
+    if (PyArg_ParseTuple(args, "s", &sceneName) != 1) return NULL;
+
+    PyObject *ret = activateScene(sceneName);
+    if (ret == NULL) {
+        error_log("[Engine]: Could not activate scene with name \"%s\"", sceneName);
+        return NULL;
+    }
+    Py_CLEAR(ret);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dEngine_Methods[] = {
     {"quit", (PyCFunction) Py3dEngine_Quit, METH_NOARGS, "Stop the engine and begin tear down"},
+    {"load_scene", (PyCFunction) Py3dEngine_LoadScene, METH_VARARGS, "Load the specified scene into the engine and prepare it for activation"},
+    {"activate_scene", (PyCFunction) Py3dEngine_ActivateScene, METH_VARARGS, "Deactivate the current scene and activate the scene with the specified name"},
     {NULL}
 };
 
