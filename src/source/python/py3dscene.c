@@ -183,7 +183,7 @@ void Py3dScene_Activate(struct Py3dScene *self) {
     // TODO: propagate the activation message to the scene graph
 }
 
-void P73dScene_Deactivate(struct Py3dScene *self) {
+void Py3dScene_Deactivate(struct Py3dScene *self) {
     //TODO: propagate the deactivation message to the scene graph
 }
 
