@@ -3,11 +3,10 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <stdbool.h>
 
-extern bool appendPy3dEngineModule();
-extern bool importPy3dEngineModule();
-extern bool initPy3dEngineObjects();
+extern int appendPy3dEngineModule();
+extern int importPy3dEngineModule();
+extern int initPy3dEngineObjects();
 extern PyObject *getPy3dEngineModule();
 extern void finalizePy3dEngineModule();
 

@@ -7,7 +7,7 @@
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dcollider.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
@@ -124,7 +124,7 @@ PyInit_py3dEngine(void) {
     return newModule;
 }
 
-bool appendPy3dEngineModule() {
+int appendPy3dEngineModule() {
     if (PyImport_AppendInittab("py3dengine", PyInit_py3dEngine) == -1) {
         critical_log("%s", "[Python]: Failed to extend built-in modules table with py3dengine module");
         return false;
@@ -133,7 +133,7 @@ bool appendPy3dEngineModule() {
     return true;
 }
 
-bool importPy3dEngineModule() {
+int importPy3dEngineModule() {
     module = PyImport_ImportModule("py3dengine");
     if (module == NULL) {
         critical_log("%s, [Python]: Could not import py3dengine");
@@ -144,7 +144,7 @@ bool importPy3dEngineModule() {
     return true;
 }
 
-bool initPy3dEngineObjects() {
+int initPy3dEngineObjects() {
     if (!Py3dGameObject_FindCtor(module)) {
         return false;
     }
