@@ -2,7 +2,7 @@
 #include "python/py3drenderingcontext.h"
 #include "python/py3dtransform.h"
 #include "python/py3dgameobject.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "python/python_util.h"
 #include "resources/sprite.h"
 #include "resources/model.h"
@@ -40,7 +40,7 @@ static struct Py3dTransform *getTransform(struct Py3dSpriteRenderer *self) {
     return (struct Py3dTransform *) transform;
 }
 
-static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct ResourceManager *rm) {
+static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct Py3dResourceManager *rm) {
     PyObject *curAttr = NULL;
     curAttr = PyDict_GetItemString(parseDataDict, name);
     if (curAttr == NULL) return NULL;
@@ -49,7 +49,7 @@ static struct BaseResource *lookupResource(const char *name, PyObject *parseData
     if (curAttr == NULL) return NULL;
 
     const char *modelName = PyUnicode_AsUTF8(curAttr);
-    struct BaseResource *ret = getResource(rm, modelName);
+    struct BaseResource *ret = Py3dResourceManager_GetResource(rm, modelName);
     Py_CLEAR(curAttr);
 
     if (ret == NULL) {
@@ -115,7 +115,7 @@ int Py3dSpriteRenderer_Check(PyObject *obj) {
     return ret;
 }
 
-struct Py3dSpriteRenderer *Py3dSpriteRenderer_Create() {
+struct Py3dSpriteRenderer *Py3dSpriteRenderer_New() {
     if (Py3dSpriteRenderer_Ctor == NULL) return NULL;
 
     PyObject *newObj = PyObject_CallNoArgs(Py3dSpriteRenderer_Ctor);
@@ -175,14 +175,8 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
     struct Py3dResourceManager *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3dResourceManager) != 1) return NULL;
 
-    struct ResourceManager *rm = py3dResourceManager->resourceManager;
-    if (rm == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Resource Manager argument is not well formed");
-        return NULL;
-    }
-
     struct BaseResource *curRes = NULL;
-    curRes = lookupResource("sprite", parseDataDict, rm);
+    curRes = lookupResource("sprite", parseDataDict, py3dResourceManager);
     if (curRes == NULL) return NULL;
     if (!isResourceTypeSprite(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Resource is not sprite");
@@ -192,7 +186,7 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
         curRes = NULL;
     }
 
-    curRes = getResource(rm, "QuadModelBuiltIn");
+    curRes = Py3dResourceManager_GetResource(py3dResourceManager, "QuadModelBuiltIn");
     if (!isResourceTypeModel(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Could not find Quad Model Built In resource");
         return NULL;
@@ -200,7 +194,7 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
     self->quad = (struct Model *) curRes;
     curRes = NULL;
 
-    curRes = getResource(rm, "SpriteShaderBuiltIn");
+    curRes = Py3dResourceManager_GetResource(py3dResourceManager, "SpriteShaderBuiltIn");
     if (!isResourceTypeShader(curRes)) {
         PyErr_SetString(PyExc_ValueError, "Could not find Sprite Shader Built In resource");
         return NULL;
