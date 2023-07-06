@@ -7,7 +7,7 @@
 #include "physics/collision.h"
 #include "python/py3dinput.h"
 #include "python/py3dgameobject.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "python/py3drenderingcontext.h"
 
 static PyObject *py3dSceneCtor = NULL;
@@ -27,6 +27,7 @@ static int traverseCallbackTable(struct Py3dScene *self, visitproc visit, void *
 static int Py3dScene_Traverse(struct Py3dScene *self, visitproc visit, void *arg) {
     Py_VISIT(self->sceneGraph);
     Py_VISIT(self->activeCamera);
+    Py_VISIT(self->resourceManager);
 
     return traverseCallbackTable(self, visit, arg);
 }
@@ -51,27 +52,10 @@ static void finalizeCallbackTable(struct Py3dScene *self) {
     }
 }
 
-static void clearResourceManager(struct Py3dScene *self) {
-    if (self == NULL || self->resourceManager == NULL) return;
-
-    if (!Py3dResourceManager_Check(self->resourceManager)) {
-        Py_CLEAR(self->resourceManager);
-        return;
-    }
-
-    struct Py3dResourceManager *rm = (struct Py3dResourceManager *) self->resourceManager;
-    if (rm->resourceManager != NULL) {
-        deleteResourceManager(&rm->resourceManager);
-    }
-    rm = NULL;
-
-    Py_CLEAR(self->resourceManager);
-}
-
 static int Py3dScene_Clear(struct Py3dScene *self) {
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
-    clearResourceManager(self);
+    Py_CLEAR(self->resourceManager);
     deallocPhysicsSpace(&self->space);
     finalizeCallbackTable(self);
 
