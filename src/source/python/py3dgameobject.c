@@ -25,7 +25,7 @@ struct Py3dGameObject {
 
 static PyObject *py3dGameObjectCtor = NULL;
 static PyObject *getCallable(PyObject *obj, const char *callableName);
-static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args);
+static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args);
 
 static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit, void *arg) {
     Py_VISIT(self->componentsList);
@@ -545,7 +545,7 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     return callable;
 }
 
-static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+static void passMessageToComponent(PyObject *component, int(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
     if (!Py3dComponent_Check(component)) {
         warning_log("[GameObject]: GameObject list has non component item.");
         return;
@@ -569,7 +569,7 @@ static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(str
     Py_CLEAR(messageHandler);
 }
 
-static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
     PyObject *transform = Py3dGameObject_GetTransform(self, NULL);
     passMessageToComponent(transform, acceptMessage, messageName, args);
     Py_CLEAR(transform);
