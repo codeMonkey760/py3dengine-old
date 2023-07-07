@@ -14,6 +14,8 @@
 #include "python/py3dscene.h"
 #include "engine.h"
 
+PyObject *Py3dErr_SceneActivationException = NULL;
+
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
     markWindowShouldClose();
 
@@ -151,6 +153,22 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    Py3dErr_SceneActivationException = PyErr_NewException("py3dengine.SceneActivationException", NULL, NULL);
+    if (Py3dErr_SceneActivationException == NULL) {
+        critical_log("%s", "[Python]: Failed to create SceneActivationException");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (PyModule_AddObject(newModule, "SceneActivationException", Py3dErr_SceneActivationException) == -1) {
+        critical_log("%s", "[Python]: Failed to attach SceneActivationException to py3dengine module");
+
+        Py_CLEAR(Py3dErr_SceneActivationException);
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
@@ -166,7 +184,7 @@ int appendPy3dEngineModule() {
 int importPy3dEngineModule() {
     module = PyImport_ImportModule("py3dengine");
     if (module == NULL) {
-        critical_log("%s, [Python]: Could not import py3dengine");
+        critical_log("%s", "[Python]: Could not import py3dengine");
         handleException();
         return false;
     }
@@ -223,6 +241,7 @@ PyObject *getPy3dEngineModule() {
 }
 
 void finalizePy3dEngineModule() {
+    Py_CLEAR(Py3dErr_SceneActivationException);
     Py3dTransform_FinalizeCtor();
     Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();

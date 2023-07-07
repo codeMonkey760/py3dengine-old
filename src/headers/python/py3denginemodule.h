@@ -4,6 +4,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+extern PyObject *Py3dErr_SceneActivationException;
+
 extern int appendPy3dEngineModule();
 extern int importPy3dEngineModule();
 extern int initPy3dEngineObjects();
