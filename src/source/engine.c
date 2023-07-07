@@ -14,6 +14,8 @@
 #include "physics/collision.h"
 #include "python/py3dscene.h"
 
+extern PyObject *Py3dErr_SceneActivationException;
+
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
 static float mpf = 0.0f;
@@ -311,7 +313,7 @@ PyObject *activateScene(const char *sceneName) {
         }
     }
 
-    PyErr_Format(PyExc_ValueError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
+    PyErr_Format(Py3dErr_SceneActivationException, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
     return NULL;
 }
 
