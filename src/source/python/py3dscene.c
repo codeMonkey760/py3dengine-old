@@ -178,13 +178,37 @@ struct Py3dScene *Py3dScene_New() {
 }
 
 void Py3dScene_Activate(struct Py3dScene *self) {
-    // TODO: call the engine and set this scene's cursor mode
+    if (!Py3dScene_Check((PyObject *) self)) return;
 
-    // TODO: propagate the activation message to the scene graph
+    setCursorMode(self->cursorMode);
+
+    if (!Py3dGameObject_Check(self->sceneGraph)) return;
+
+    PyObject *args = PyTuple_New(0);
+    PyObject *ret = Py3dGameObject_Activate(self->sceneGraph, args, NULL);
+    Py_CLEAR(args);
+
+    if (ret == NULL) {
+        warning_log("[Scene]: Propagating activate message to scene graph raised exception");
+        handleException();
+    }
+    Py_CLEAR(ret);
 }
 
 void Py3dScene_Deactivate(struct Py3dScene *self) {
-    //TODO: propagate the deactivation message to the scene graph
+    if (!Py3dScene_Check((PyObject *) self)) return;
+
+    if (!Py3dGameObject_Check(self->sceneGraph)) return;
+
+    PyObject *args = PyTuple_New(0);
+    PyObject *ret = Py3dGameObject_Deactivate(self->sceneGraph, args, NULL);
+    Py_CLEAR(args);
+
+    if (ret == NULL) {
+        warning_log("[Scene]: Propagating deactivate message to scene graph raised exception");
+        handleException();
+    }
+    Py_CLEAR(ret);
 }
 
 PyObject *Py3dScene_IsEnabled(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
