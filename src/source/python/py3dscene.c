@@ -57,8 +57,6 @@ static int Py3dScene_Clear(struct Py3dScene *self) {
     Py_CLEAR(self->sceneGraph);
     Py_CLEAR(self->activeCamera);
     Py_CLEAR(self->resourceManager);
-    deallocPhysicsSpace(&self->space);
-    finalizeCallbackTable(self);
 
     return 0;
 }
@@ -67,6 +65,8 @@ static void Py3dScene_Dealloc(struct Py3dScene *self) {
     trace_log("%s", "[Scene]: Deallocating Scene");
 
     Py3dScene_Clear(self);
+    deallocPhysicsSpace(&self->space);
+    finalizeCallbackTable(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
