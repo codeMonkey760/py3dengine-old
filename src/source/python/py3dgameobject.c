@@ -87,8 +87,10 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
     {"start", (PyCFunction) Py3dGameObject_Start, METH_VARARGS, "Propagate start message"},
+    {"activate", (PyCFunction) Py3dGameObject_Activate, METH_VARARGS, "Propagate activate message"},
     {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
     {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
+    {"deactivate", (PyCFunction) Py3dGameObject_Deactivate, METH_VARARGS, "Propagate deactivate message"},
     {"end", (PyCFunction) Py3dGameObject_End, METH_VARARGS, "Propagate end message"},
     {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
     {"get_child_by_name", (PyCFunction) Py3dGameObject_GetChildByName, METH_VARARGS, "Get a ref to the first child with the specified name"},
@@ -270,6 +272,10 @@ PyObject *Py3dGameObject_Start(struct Py3dGameObject *self, PyObject *args, PyOb
     return passMessage(self, NULL, "start", args);
 }
 
+PyObject *Py3dGameObject_Activate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return passMessage(self, NULL, "activate", args);
+}
+
 PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     if (self->enabled == false) Py_RETURN_NONE;
 
@@ -286,6 +292,10 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &renderingContext) != 1) return NULL;
 
     return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
+}
+
+PyObject *Py3dGameObject_Deactivate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return passMessage(self, NULL, "deactivate", args);
 }
 
 PyObject *Py3dGameObject_End(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
