@@ -154,7 +154,7 @@ void initializeEngine(int argc, char **argv){
     }
     Py_CLEAR(ret);
 
-    if (PyList_Size(sceneList) != 1) {
+    if (PyList_Size(sceneList) < 1) {
         critical_log("[Engine]: Could not schedule starting scene for activation");
     } else {
         sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(PyList_GetItem(sceneList, 0));
