@@ -1,15 +1,11 @@
 #include "python/py3dcomponent.h"
 
 #include <structmember.h>
-#include <ode/ode.h>
 
 #include "logger.h"
 #include "custom_string.h"
-#include "python/py3dgameobject.h"
-
 #include "python/python_util.h"
 #include "python/py3dresourcemanager.h"
-#include "physics/collision.h"
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
