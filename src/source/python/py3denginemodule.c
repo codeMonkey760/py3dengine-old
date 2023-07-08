@@ -14,7 +14,7 @@
 #include "python/py3dscene.h"
 #include "engine.h"
 
-PyObject *Py3dErr_SceneActivationException = NULL;
+PyObject *Py3dErr_SceneError = NULL;
 
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
     markWindowShouldClose();
@@ -50,10 +50,25 @@ static PyObject *Py3dEngine_ActivateScene(PyObject *self, PyObject *args, PyObje
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dEngine_UnloadScene(PyObject *self, PyObject *args, PyObject *kwds) {
+    const char *sceneName = NULL;
+    if (PyArg_ParseTuple(args, "s", &sceneName) != 1) return NULL;
+
+    PyObject *ret = unloadScene(sceneName);
+    if (ret == NULL) {
+        error_log("[Engine]: Could not unload scene with name \"%s\"", sceneName);
+        return NULL;
+    }
+    Py_CLEAR(ret);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dEngine_Methods[] = {
     {"quit", (PyCFunction) Py3dEngine_Quit, METH_NOARGS, "Stop the engine and begin tear down"},
     {"load_scene", (PyCFunction) Py3dEngine_LoadScene, METH_VARARGS, "Load the specified scene into the engine and prepare it for activation"},
     {"activate_scene", (PyCFunction) Py3dEngine_ActivateScene, METH_VARARGS, "Deactivate the current scene and activate the scene with the specified name"},
+    {"unload_scene", (PyCFunction) Py3dEngine_UnloadScene, METH_VARARGS, "Delete the scene with the specified name"},
     {NULL}
 };
 
@@ -153,18 +168,18 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-    Py3dErr_SceneActivationException = PyErr_NewException("py3dengine.SceneActivationException", NULL, NULL);
-    if (Py3dErr_SceneActivationException == NULL) {
-        critical_log("%s", "[Python]: Failed to create SceneActivationException");
+    Py3dErr_SceneError = PyErr_NewException("py3dengine.SceneError", NULL, NULL);
+    if (Py3dErr_SceneError == NULL) {
+        critical_log("%s", "[Python]: Failed to create SceneError");
 
         Py_CLEAR(newModule);
         return NULL;
     }
 
-    if (PyModule_AddObject(newModule, "SceneActivationException", Py3dErr_SceneActivationException) == -1) {
+    if (PyModule_AddObject(newModule, "SceneError", Py3dErr_SceneError) == -1) {
         critical_log("%s", "[Python]: Failed to attach SceneActivationException to py3dengine module");
 
-        Py_CLEAR(Py3dErr_SceneActivationException);
+        Py_CLEAR(Py3dErr_SceneError);
         Py_CLEAR(newModule);
         return NULL;
     }
@@ -241,7 +256,7 @@ PyObject *getPy3dEngineModule() {
 }
 
 void finalizePy3dEngineModule() {
-    Py_CLEAR(Py3dErr_SceneActivationException);
+    Py_CLEAR(Py3dErr_SceneError);
     Py3dTransform_FinalizeCtor();
     Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();

@@ -14,6 +14,7 @@ extern void finalizeEngine();
 extern void getRenderingTargetDimensions(int *width, int *height);
 extern PyObject *loadScene(const char *scenePath);
 extern PyObject *activateScene(const char *sceneName);
+extern PyObject *unloadScene(const char *sceneName);
 extern void markWindowShouldClose();
 extern int getCursorMode();
 extern void setCursorMode(int newMode);

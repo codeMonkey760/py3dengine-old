@@ -14,7 +14,7 @@
 #include "physics/collision.h"
 #include "python/py3dscene.h"
 
-extern PyObject *Py3dErr_SceneActivationException;
+extern PyObject *Py3dErr_SceneError;
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
@@ -94,7 +94,6 @@ static void doSceneActivation() {
     activeScene = sceneAwaitingActivation;
     sceneAwaitingActivation = NULL;
 
-    setCursorMode(activeScene->cursorMode);
     trace_log("[Engine]: Activating scene");
     Py3dScene_Activate(activeScene);
 }
@@ -281,7 +280,7 @@ PyObject *activateScene(const char *sceneName) {
     }
 
     if (sceneAwaitingActivation != NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot activate scene while another scene is awaiting activation");
+        PyErr_SetString(Py3dErr_SceneError, "Scene activation is unavailable while another scene is awaiting activation");
         return NULL;
     }
 
@@ -309,12 +308,78 @@ PyObject *activateScene(const char *sceneName) {
         } else {
             trace_log("[Engine]: Scheduling scene named \"%s\" for activation", sceneName);
             sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(curScene);
+            Py_CLEAR(sceneNameObj);
             Py_RETURN_NONE;
         }
     }
 
-    PyErr_Format(Py3dErr_SceneActivationException, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
+    Py_CLEAR(sceneNameObj);
+    PyErr_Format(Py3dErr_SceneError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
     return NULL;
+}
+
+PyObject *unloadScene(const char *sceneName) {
+    if (sceneName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot unload scene without name");
+        return NULL;
+    }
+
+    if (sceneAwaitingActivation != NULL) {
+        PyErr_SetString(Py3dErr_SceneError, "Scene unloading is unavailable while another scene is awaiting activation");
+        return NULL;
+    }
+
+    PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
+    if (sceneName == NULL) return NULL;
+
+    PyObject *activeSceneName = Py3dScene_GetName(activeScene, NULL);
+    int cmpRet = PyObject_RichCompareBool(sceneNameObj, activeSceneName, Py_EQ);
+    Py_CLEAR(activeSceneName);
+    if (cmpRet == -1) {
+        critical_log("[Engine]: Could not compare unloading scene name with active scene name");
+        Py_CLEAR(sceneNameObj);
+        return NULL;
+    } else if (cmpRet == 1) {
+        PyErr_SetString(Py3dErr_SceneError, "Cannot unload the currently active scene");
+        Py_CLEAR(sceneNameObj);
+        return NULL;
+    }
+
+    Py_ssize_t sceneListLen = PyList_Size(sceneList);
+    Py_ssize_t targetIndex = -1;
+    for (Py_ssize_t i = 0; i < sceneListLen; ++i) {
+        PyObject *curScene = PyList_GetItem(sceneList, i);
+        if (!Py3dScene_Check(curScene)) {
+            critical_log("[Engine]: Non scene object or null detected in scene list");
+            continue;
+        }
+
+        PyObject *curSceneNameObj = Py3dScene_GetName((struct Py3dScene *) curScene, NULL);
+        cmpRet = PyObject_RichCompareBool(sceneNameObj, curSceneNameObj, Py_EQ);
+        Py_CLEAR(curSceneNameObj);
+
+        // curScene was a borrowed ref, do not clear it
+        if (cmpRet == -1) {
+            handleException();
+            continue;
+        } else if (cmpRet == 0) {
+            continue;
+        } else {
+            targetIndex = i;
+            break;
+        }
+    }
+    Py_CLEAR(sceneNameObj);
+
+    if (targetIndex == -1) {
+        PyErr_Format(Py3dErr_SceneError, "Could not find scene with name \"%\" for unloading", sceneName);
+        return NULL;
+    }
+
+    Py3dScene_End((struct Py3dScene *) PyList_GetItem(sceneList, targetIndex));
+    PySequence_DelItem(sceneList, targetIndex);
+    forceGarbageCollection();
+    Py_RETURN_NONE;
 }
 
 void markWindowShouldClose() {
