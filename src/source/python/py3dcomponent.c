@@ -11,7 +11,9 @@ static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, v
 static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Start(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Activate(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Deactivate(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_End(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Collide(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_ColliderEnter(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
@@ -24,8 +26,10 @@ static PyMethodDef py3d_component_methods[] = {
         {"visible", (PyCFunction) Py3dComponent_IsVisible, METH_NOARGS, "Determine if a Component is visible"},
         {"make_visible", (PyCFunction) Py3dComponent_MakeVisible, METH_VARARGS, "Make a Component visible or invisible"},
         {"start", (PyCFunction) Py3dComponent_Start, METH_VARARGS, "Start event handler"},
+        {"activate", (PyCFunction) Py3dComponent_Activate, METH_VARARGS, "Activate event handler"},
         {"update", (PyCFunction) Py3dComponent_Update, METH_VARARGS, "Update event handler"},
         {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
+        {"deactivate", (PyCFunction) Py3dComponent_Deactivate, METH_VARARGS, "Deactivate event handler"},
         {"end", (PyCFunction) Py3dComponent_End, METH_VARARGS, "End event handler"},
         {"collide", (PyCFunction) Py3dComponent_Collide, METH_VARARGS, "Handle per tick collision events"},
         {"collider_enter", (PyCFunction) Py3dComponent_ColliderEnter, METH_VARARGS, "Handle collision enter events"},
@@ -197,11 +201,19 @@ static PyObject *Py3dComponent_Start(struct Py3dComponent *self, PyObject *args,
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dComponent_Activate(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
 PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dComponent_Deactivate(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
