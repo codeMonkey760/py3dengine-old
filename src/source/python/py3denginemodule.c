@@ -26,7 +26,7 @@ static PyObject *Py3dEngine_LoadScene(PyObject *self, PyObject *args, PyObject *
     const char *scenePath = NULL;
     if (PyArg_ParseTuple(args, "s", &scenePath) != 1) return NULL;
 
-    PyObject *ret = loadScene(scenePath);
+    PyObject *ret = (PyObject *) loadScene(scenePath);
     if (ret == NULL) {
         error_log("[Engine]: Could not load scene at path \"%s\"", scenePath);
         return NULL;

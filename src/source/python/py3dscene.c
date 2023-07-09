@@ -185,7 +185,7 @@ void Py3dScene_Activate(struct Py3dScene *self) {
     if (!Py3dGameObject_Check(self->sceneGraph)) return;
 
     PyObject *args = PyTuple_New(0);
-    PyObject *ret = Py3dGameObject_Activate(self->sceneGraph, args, NULL);
+    PyObject *ret = Py3dGameObject_Activate((struct Py3dGameObject *) self->sceneGraph, args, NULL);
     Py_CLEAR(args);
 
     if (ret == NULL) {
@@ -201,7 +201,7 @@ void Py3dScene_Deactivate(struct Py3dScene *self) {
     if (!Py3dGameObject_Check(self->sceneGraph)) return;
 
     PyObject *args = PyTuple_New(0);
-    PyObject *ret = Py3dGameObject_Deactivate(self->sceneGraph, args, NULL);
+    PyObject *ret = Py3dGameObject_Deactivate((struct Py3dGameObject *) self->sceneGraph, args, NULL);
     Py_CLEAR(args);
 
     if (ret == NULL) {

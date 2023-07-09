@@ -6,13 +6,15 @@
 
 #include <GLFW/glfw3.h>
 
+struct Py3dScene;
+
 extern GLFWwindow *glfwWindow;
 
 extern void initializeEngine(int argc, char **argv);
 extern void runEngine();
 extern void finalizeEngine();
 extern void getRenderingTargetDimensions(int *width, int *height);
-extern PyObject *loadScene(const char *scenePath);
+extern struct Py3dScene *loadScene(const char *scenePath);
 extern PyObject *activateScene(const char *sceneName);
 extern PyObject *unloadScene(const char *sceneName);
 extern void markWindowShouldClose();

@@ -21,7 +21,7 @@ static float fps = 0.0f;
 static float mpf = 0.0f;
 static float time_since_last_report = 0.0f;
 static bool print_report = true;
-static PyObject *sceneList = NULL;
+static PyObject *sceneDict = NULL;
 static struct Py3dScene *activeScene = NULL;
 static struct Py3dScene *sceneAwaitingActivation = NULL;
 
@@ -145,18 +145,13 @@ void initializeEngine(int argc, char **argv){
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    sceneList = PyList_New(0);
-    PyObject *ret = loadScene(getConfigStartingScene());
+    sceneDict = PyDict_New();
+    struct Py3dScene *ret = loadScene(getConfigStartingScene());
     if (ret == NULL) {
         critical_log("[Engine]: Could not load starting scene");
         handleException();
-    }
-    Py_CLEAR(ret);
-
-    if (PyList_Size(sceneList) < 1) {
-        critical_log("[Engine]: Could not schedule starting scene for activation");
     } else {
-        sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(PyList_GetItem(sceneList, 0));
+        sceneAwaitingActivation = ret;
     }
 }
 
@@ -183,9 +178,11 @@ void runEngine() {
 }
 
 static void endLoadedScenes() {
-    Py_ssize_t sceneListLen = PyList_Size(sceneList);
-    for (Py_ssize_t i = 0; i < sceneListLen; ++i) {
-        PyObject *curScene = PyList_GetItem(sceneList, i);
+    PyObject *sceneDictValues = PyDict_Values(sceneDict);
+
+    Py_ssize_t sceneDictLen = PyList_Size(sceneDictValues);
+    for (Py_ssize_t i = 0; i < sceneDictLen; ++i) {
+        PyObject *curScene = PyList_GetItem(sceneDictValues, i);
         if (!Py3dScene_Check(curScene)) {
             critical_log("[Engine]: Non scene object or null detected in scene list");
             continue;
@@ -197,6 +194,8 @@ static void endLoadedScenes() {
 
         Py3dScene_End((struct Py3dScene *) curScene);
     }
+
+    Py_CLEAR(sceneDictValues);
 }
 
 void finalizeEngine() {
@@ -208,7 +207,7 @@ void finalizeEngine() {
     glfwDestroyWindow(glfwWindow);
 
     Py_CLEAR(activeScene);
-    Py_CLEAR(sceneList);
+    Py_CLEAR(sceneDict);
     forceGarbageCollection();
 
     trace_log("[Engine]: Post scene de-allocation python object dump");
@@ -236,7 +235,7 @@ void getRenderingTargetDimensions(int *width, int *height) {
     }
 }
 
-PyObject *loadScene(const char *scenePath) {
+struct Py3dScene *loadScene(const char *scenePath) {
     FILE *sceneFile = fopen(scenePath, "r");
     if (sceneFile == NULL) {
         PyErr_Format(PyExc_ValueError, "Unable to open \"%s\" as scene descriptor", scenePath);
@@ -246,31 +245,69 @@ PyObject *loadScene(const char *scenePath) {
     json_object *sceneJson = json_object_from_fd(fileno(sceneFile));
     if (sceneJson == NULL) {
         PyErr_Format(PyExc_ValueError, "Could not parse \"%s\" as JSON", scenePath);
+        fclose(sceneFile);
         return NULL;
     }
 
-    trace_log("[Engine]: Loading scene at \"%s\"", scenePath);
+    const char *sceneName = peekSceneName(sceneJson);
+    if (sceneName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot load scene without name property");
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
+    if (sceneNameObj == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot load scene without name property");
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    int sceneDictHasName = PyDict_Contains(sceneDict, sceneNameObj);
+    if (sceneDictHasName == -1) {
+        Py_CLEAR(sceneNameObj);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    } else if (sceneDictHasName == 1) {
+        PyErr_Format(Py3dErr_SceneError, "Scene with name \"%s\" is already loaded", sceneName);
+        Py_CLEAR(sceneNameObj);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    trace_log("[Engine]: Loading scene with name \"%s\"", sceneName);
 
     struct Py3dScene *scene = importScene(sceneJson);
-    json_object_put(sceneJson);
-    fclose(sceneFile);
     sceneFile = NULL;
     if (!Py3dScene_Check((PyObject *) scene)) {
         error_log("[Engine]: Parsing scene at \"%s\" failed", scenePath);
+        Py_CLEAR(sceneNameObj);
         Py_CLEAR(scene);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
         return NULL;
     }
-    if (PyList_Append(sceneList, (PyObject *) scene) != 0) {
-        critical_log("[Engine]: Could not append scene to scene list");
+    if (PyDict_SetItem(sceneDict, sceneNameObj, (PyObject *) scene) != 0) {
+        critical_log("[Engine]: Could not store scene");
+        Py_CLEAR(sceneNameObj);
         Py_CLEAR(scene);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
         return NULL;
     }
+    Py_CLEAR(sceneNameObj);
 
-    trace_log("[Engine]: Starting scene loaded from \"%s\"", scenePath);
+    trace_log("[Engine]: Starting scene with name", sceneName);
     Py3dScene_Start(scene);
-    Py_CLEAR(scene);
 
-    Py_RETURN_NONE;
+    json_object_put(sceneJson);
+    fclose(sceneFile);
+
+    return scene;
 }
 
 PyObject *activateScene(const char *sceneName) {
@@ -284,38 +321,16 @@ PyObject *activateScene(const char *sceneName) {
         return NULL;
     }
 
-    PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
-    if (sceneName == NULL) return NULL;
-
-    Py_ssize_t sceneListLen = PyList_Size(sceneList);
-    for (Py_ssize_t i = 0; i < sceneListLen; ++i) {
-        PyObject *curScene = PyList_GetItem(sceneList, i);
-        if (!Py3dScene_Check(curScene)) {
-            critical_log("[Engine]: Non scene object or null detected in scene list");
-            continue;
-        }
-
-        PyObject *curSceneNameObj = Py3dScene_GetName((struct Py3dScene *) curScene, NULL);
-        int cmpRet = PyObject_RichCompareBool(sceneNameObj, curSceneNameObj, Py_EQ);
-        Py_CLEAR(curSceneNameObj);
-
-        // curScene was a borrowed ref, do not clear it
-        if (cmpRet == -1) {
-            handleException();
-            continue;
-        } else if (cmpRet == 0) {
-            continue;
-        } else {
-            trace_log("[Engine]: Scheduling scene named \"%s\" for activation", sceneName);
-            sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(curScene);
-            Py_CLEAR(sceneNameObj);
-            Py_RETURN_NONE;
-        }
+    PyObject *scene = PyDict_GetItemString(sceneDict, sceneName);
+    if (!Py3dScene_Check(scene)) {
+        PyErr_Format(Py3dErr_SceneError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
+        Py_CLEAR(scene);
+        return NULL;
     }
 
-    Py_CLEAR(sceneNameObj);
-    PyErr_Format(Py3dErr_SceneError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
-    return NULL;
+    trace_log("[Engine]: Scheduling scene named \"%s\" for activation", sceneName);
+    sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(scene);
+    Py_RETURN_NONE;
 }
 
 PyObject *unloadScene(const char *sceneName) {
@@ -345,39 +360,25 @@ PyObject *unloadScene(const char *sceneName) {
         return NULL;
     }
 
-    Py_ssize_t sceneListLen = PyList_Size(sceneList);
-    Py_ssize_t targetIndex = -1;
-    for (Py_ssize_t i = 0; i < sceneListLen; ++i) {
-        PyObject *curScene = PyList_GetItem(sceneList, i);
-        if (!Py3dScene_Check(curScene)) {
-            critical_log("[Engine]: Non scene object or null detected in scene list");
-            continue;
-        }
-
-        PyObject *curSceneNameObj = Py3dScene_GetName((struct Py3dScene *) curScene, NULL);
-        cmpRet = PyObject_RichCompareBool(sceneNameObj, curSceneNameObj, Py_EQ);
-        Py_CLEAR(curSceneNameObj);
-
-        // curScene was a borrowed ref, do not clear it
-        if (cmpRet == -1) {
-            handleException();
-            continue;
-        } else if (cmpRet == 0) {
-            continue;
-        } else {
-            targetIndex = i;
-            break;
-        }
-    }
-    Py_CLEAR(sceneNameObj);
-
-    if (targetIndex == -1) {
+    PyObject *target = PyDict_GetItem(sceneDict, sceneNameObj);
+    if (target == NULL) {
         PyErr_Format(Py3dErr_SceneError, "Could not find scene with name \"%\" for unloading", sceneName);
+        Py_CLEAR(sceneNameObj);
         return NULL;
     }
 
-    Py3dScene_End((struct Py3dScene *) PyList_GetItem(sceneList, targetIndex));
-    PySequence_DelItem(sceneList, targetIndex);
+    if (Py3dScene_Check(target)) {
+        Py3dScene_End((struct Py3dScene *) target);
+    } else {
+        warning_log("[Engine]: A non scene object was found in the scene dict under the key \"%s\"", sceneName);
+    }
+
+    if (PyDict_DelItem(sceneDict, sceneNameObj) != 0) {
+        warning_log("[Engine]: Unable to delete object with key \"%s\" from scene dict", sceneName);
+        handleException();
+    }
+    Py_CLEAR(sceneNameObj);
+
     forceGarbageCollection();
     Py_RETURN_NONE;
 }

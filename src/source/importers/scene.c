@@ -106,6 +106,15 @@ static void importResources(struct Py3dResourceManager *manager, json_object *re
     }
 }
 
+const char *peekSceneName(json_object *sceneDescriptor) {
+    if (sceneDescriptor == NULL) return NULL;
+
+    json_object *scene_name = json_object_object_get(sceneDescriptor, "name");
+    if (scene_name == NULL || !json_object_is_type(scene_name, json_type_string)) return NULL;
+
+    return json_object_get_string(scene_name);
+}
+
 struct Py3dScene *importScene(json_object *sceneDescriptor) {
     if (sceneDescriptor == NULL) {
         PyErr_SetString(PyExc_ValueError, "Scene descriptor must provide valid JSON");
