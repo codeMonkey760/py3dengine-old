@@ -282,7 +282,7 @@ struct Py3dScene *loadScene(const char *scenePath) {
     trace_log("[Engine]: Loading scene with name \"%s\"", sceneName);
 
     struct Py3dScene *scene = importScene(sceneJson);
-    sceneFile = NULL;
+
     if (!Py3dScene_Check((PyObject *) scene)) {
         error_log("[Engine]: Parsing scene at \"%s\" failed", scenePath);
         Py_CLEAR(sceneNameObj);
@@ -301,11 +301,12 @@ struct Py3dScene *loadScene(const char *scenePath) {
     }
     Py_CLEAR(sceneNameObj);
 
-    trace_log("[Engine]: Starting scene with name", sceneName);
+    trace_log("[Engine]: Starting scene with name \"%s\"", sceneName);
     Py3dScene_Start(scene);
 
     json_object_put(sceneJson);
     fclose(sceneFile);
+    sceneFile = NULL;
 
     return scene;
 }
