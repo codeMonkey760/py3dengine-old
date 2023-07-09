@@ -2,7 +2,7 @@
 #include "resources/texture.h"
 #include "resources/sprite.h"
 #include "importers/texture.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "logger.h"
 
 static int getIntegerFromJsonArray(json_object *array, size_t index, int *dst) {
@@ -15,8 +15,8 @@ static int getIntegerFromJsonArray(json_object *array, size_t index, int *dst) {
     return 1;
 }
 
-void importSprites(struct ResourceManager *manager, json_object *resourceDescriptor) {
-    if (manager == NULL || resourceDescriptor == NULL) return;
+void importSprites(struct Py3dResourceManager *manager, json_object *resourceDescriptor) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || resourceDescriptor == NULL) return;
 
     json_object *texture_name_json = json_object_object_get(resourceDescriptor, "filename");
     if (texture_name_json == NULL || !json_object_is_type(texture_name_json, json_type_string)) {
@@ -36,12 +36,12 @@ void importSprites(struct ResourceManager *manager, json_object *resourceDescrip
         return;
     }
 
-    struct BaseResource *spriteSheetResource = getResource(manager, texture_name);
+    struct BaseResource *spriteSheetResource = Py3dResourceManager_GetResource(manager, texture_name);
     struct Texture *spriteSheetTexture = NULL;
     if (!isResourceTypeTexture(spriteSheetResource)) {
         // TODO: what happens if we have a resource with the same name that's not a texture? Nuthin good
         importTexture(&spriteSheetTexture, resourceDescriptor);
-        storeResource(manager, (struct BaseResource *) spriteSheetTexture);
+        Py3dResourceManager_StoreResource(manager, (struct BaseResource *) spriteSheetTexture);
     } else {
         spriteSheetTexture = (struct Texture *) spriteSheetResource;
     }
@@ -72,7 +72,7 @@ void importSprites(struct ResourceManager *manager, json_object *resourceDescrip
         if (!initSprite(newSprite, spriteSheetTexture, bounds)) {
             deleteSprite(&newSprite);
         }
-        storeResource(manager, (struct BaseResource *) newSprite);
+        Py3dResourceManager_StoreResource(manager, (struct BaseResource *) newSprite);
         newSprite = NULL;
     }
 }

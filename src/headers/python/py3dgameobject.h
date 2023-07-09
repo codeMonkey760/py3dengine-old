@@ -8,13 +8,15 @@
 
 struct Py3dGameObject;
 struct Py3dCollisionEvent;
+struct Py3dScene;
+struct Py3dComponent;
 extern PyTypeObject Py3dGameObject_Type;
 
 extern int PyInit_Py3dGameObject(PyObject *module);
 extern int Py3dGameObject_FindCtor(PyObject *module);
 extern void Py3dGameObject_FinalizeCtor();
 extern int Py3dGameObject_Check(PyObject *obj);
-extern PyObject *Py3dGameObject_New();
+extern struct Py3dGameObject *Py3dGameObject_New(struct Py3dScene *newScene);
 extern PyObject *Py3dGameObject_IsEnabled(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern bool Py3dGameObject_IsEnabledBool(struct Py3dGameObject *self);
 extern PyObject *Py3dGameObject_Enable(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
@@ -29,8 +31,10 @@ extern PyObject *Py3dGameObject_SetName(struct Py3dGameObject *self, PyObject *a
 extern void Py3dGameObject_SetNameCStr(struct Py3dGameObject *self, const char *newName);
 extern PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern PyObject *Py3dGameObject_Start(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dGameObject_Activate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dGameObject_Deactivate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_End(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEvent *event);
 extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3dCollisionEvent *event);
@@ -42,11 +46,15 @@ extern PyObject *Py3dGameObject_GetChildByIndex(struct Py3dGameObject *self, PyO
 extern PyObject *Py3dGameObject_GetChildByIndexInt(struct Py3dGameObject *self, Py_ssize_t index);
 extern PyObject *Py3dGameObject_GetChildCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self);
+extern void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component);
 extern PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
+extern void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component);
+extern PyObject *Py3dGameObject_DetachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetComponentByType(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetComponentByIndex(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *self, Py_ssize_t index);
 extern PyObject *Py3dGameObject_GetComponentCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self);
+extern struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self);
 
 #endif

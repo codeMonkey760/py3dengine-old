@@ -8,7 +8,6 @@
 
 extern int appendPy3dInputModule();
 
-extern void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-extern void finalizeCallbackTable();
+extern int convertIntToGlfwKey(int key);
 
 #endif

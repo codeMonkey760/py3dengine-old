@@ -6,10 +6,6 @@
 #include "python/py3dgameobject.h"
 #include "logger.h"
 
-dWorldID world = NULL;
-dSpaceID space = NULL;
-struct CollisionState *collisionState = NULL;
-
 static struct Py3dCollider *getColliderFromGeom(dGeomID geom) {
     PyObject *obj = NULL;
 
@@ -94,22 +90,57 @@ static void passCollideMessage(
     Py_CLEAR(event);
 }
 
-int initCollisionEngine() {
-    if (!dInitODE2(0)) return 0;
+void allocPhysicsSpace(struct PhysicsSpace **spacePtr) {
+    if (spacePtr == NULL || (*spacePtr) != NULL) return;
 
-    world = dWorldCreate();
+    struct PhysicsSpace *newSpace = calloc(1, sizeof(struct PhysicsSpace));
+    if (newSpace == NULL) return;
 
-    space = dSimpleSpaceCreate(0);
-    if (space == NULL) return 0;
+    newSpace->collisionState = NULL;
+    newSpace->space = NULL;
+    newSpace->world = NULL;
+
+    (*spacePtr) = newSpace;
+    newSpace = NULL;
+}
+
+void initPhysicsSpace(struct PhysicsSpace *space) {
+    if (space == NULL) return;
+
+    space->world = dWorldCreate();
+    if (space->world == NULL) return;
+
+    space->space = dSimpleSpaceCreate(0);
+    if (space->space == NULL) return;
     //destroy geoms registered to this space when its destroyed
-    dSpaceSetCleanup(space, 1);
+    dSpaceSetCleanup(space->space, 1);
 
-    allocCollisionState(&collisionState);
+    allocCollisionState(&space->collisionState);
+}
 
-    return 1;
+void deallocPhysicsSpace(struct PhysicsSpace **spacePtr) {
+    if (spacePtr == NULL || (*spacePtr == NULL)) return;
+
+    struct PhysicsSpace *space = (*spacePtr);
+
+    deallocCollisionState(&space->collisionState);
+
+    dSpaceDestroy(space->space);
+    space->space = NULL;
+
+    dWorldDestroy(space->world);
+    space->world = NULL;
+
+    free(space);
+    space = NULL;
+    (*spacePtr) = NULL;
 }
 
 static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
+    if (data == NULL) return;
+
+    struct PhysicsSpace *space = (struct PhysicsSpace *) data;
+
     // TODO: right now only one space is used as a container, so collisions between spaces arent supported
     // but this could become an issue later
     if (dGeomIsSpace(o1) || dGeomIsSpace(o2)) return;
@@ -168,8 +199,8 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     }
 
     // add Collision to current collision state
-    addCollisionToState(collisionState, collider1, collider2);
-    addCollisionToState(collisionState, collider2, collider1);
+    addCollisionToState(space->collisionState, collider1, collider2);
+    addCollisionToState(space->collisionState, collider2, collider1);
 
     // create a tuple containing contact info
     PyObject *contactsTuple = PyTuple_New(num_contacts);
@@ -213,16 +244,18 @@ static void handleCollisionEvents(struct CollisionStateDiff *diff) {
     }
 }
 
-void handleCollisions() {
-    struct CollisionState *prevState = collisionState;
-    collisionState = NULL;
-    allocCollisionState(&collisionState);
+void handleCollisions(struct PhysicsSpace *space) {
+    if (space == NULL) return;
 
-    dSpaceCollide(space, NULL, (dNearCallback *) nearCallback);
+    struct CollisionState *prevState = space->collisionState;
+    space->collisionState = NULL;
+    allocCollisionState(&space->collisionState);
+
+    dSpaceCollide(space->space, space, (dNearCallback *) nearCallback);
 
     struct CollisionStateDiff *diff = NULL;
     allocCollisionStateDiff(&diff);
-    calculateCollisionStateDiff(diff, prevState, collisionState);
+    calculateCollisionStateDiff(diff, prevState, space->collisionState);
 
     deallocCollisionState(&prevState);
     handleCollisionEvents(diff);
@@ -230,31 +263,24 @@ void handleCollisions() {
     deallocCollisionStateDiff(&diff);
 }
 
-dBodyID createDynamicsBody() {
-    return dBodyCreate(world);
+dBodyID createDynamicsBody(struct PhysicsSpace *space) {
+    if (space == NULL) return NULL;
+
+    return dBodyCreate(space->world);
 }
 
 void destroyDynamicsBody(dBodyID body) {
+    if (body == NULL) return;
+
     dBodyDestroy(body);
     body = NULL;
 }
 
-void addGeomToWorldSpace(dGeomID newGeom) {
-    dSpaceAdd(space, newGeom);
+void addGeomToWorldSpace(struct PhysicsSpace *space, dGeomID newGeom) {
+    dSpaceAdd(space->space, newGeom);
 }
 
-void removeGeomFromWorldSpace(dGeomID geom) {
-    dSpaceRemove(space, geom);
+void removeGeomFromWorldSpace(struct PhysicsSpace *space, dGeomID geom) {
+    dSpaceRemove(space->space, geom);
 }
 
-void finalizeCollisionEngine() {
-    deallocCollisionState(&collisionState);
-
-    dSpaceDestroy(space);
-    space = NULL;
-
-    dWorldDestroy(world);
-    world = NULL;
-
-    dCloseODE();
-}

@@ -1,17 +1,19 @@
 #include "python/py3dcomponent.h"
 
+#include <structmember.h>
+
 #include "logger.h"
 #include "custom_string.h"
-#include "python/py3dgameobject.h"
-
 #include "python/python_util.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg);
 static int Py3dComponent_Clear(struct Py3dComponent *self);
 static int Py3dComponent_Init(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Start(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Activate(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
+static PyObject *Py3dComponent_Deactivate(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_End(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_Collide(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
 static PyObject *Py3dComponent_ColliderEnter(struct Py3dComponent *self, PyObject *args, PyObject *kwds);
@@ -24,8 +26,10 @@ static PyMethodDef py3d_component_methods[] = {
         {"visible", (PyCFunction) Py3dComponent_IsVisible, METH_NOARGS, "Determine if a Component is visible"},
         {"make_visible", (PyCFunction) Py3dComponent_MakeVisible, METH_VARARGS, "Make a Component visible or invisible"},
         {"start", (PyCFunction) Py3dComponent_Start, METH_VARARGS, "Start event handler"},
+        {"activate", (PyCFunction) Py3dComponent_Activate, METH_VARARGS, "Activate event handler"},
         {"update", (PyCFunction) Py3dComponent_Update, METH_VARARGS, "Update event handler"},
         {"render", (PyCFunction) Py3dComponent_Render, METH_VARARGS, "Render event handler"},
+        {"deactivate", (PyCFunction) Py3dComponent_Deactivate, METH_VARARGS, "Deactivate event handler"},
         {"end", (PyCFunction) Py3dComponent_End, METH_VARARGS, "End event handler"},
         {"collide", (PyCFunction) Py3dComponent_Collide, METH_VARARGS, "Handle per tick collision events"},
         {"collider_enter", (PyCFunction) Py3dComponent_ColliderEnter, METH_VARARGS, "Handle collision enter events"},
@@ -62,7 +66,7 @@ int PyInit_Py3dComponent(PyObject *module) {
 }
 
 int Py3dComponent_Check(PyObject *pyObj) {
-    if (pyObj == NULL) return false;
+    if (pyObj == NULL) return 0;
 
     int res = PyObject_IsInstance(pyObj, (PyObject *) &Py3dComponent_Type);
     if (res == -1) {
@@ -77,7 +81,7 @@ PyObject *Py3dComponent_IsEnabled(struct Py3dComponent *self, PyObject *Py_UNUSE
     return PyBool_FromLong(Py3dComponent_IsEnabledBool(self));
 }
 
-bool Py3dComponent_IsEnabledBool(struct Py3dComponent *self) {
+int Py3dComponent_IsEnabledBool(struct Py3dComponent *self) {
     return self->enabled;
 }
 
@@ -85,13 +89,13 @@ PyObject *Py3dComponent_Enable(struct Py3dComponent *self, PyObject *args, PyObj
     PyObject *enableObj = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &enableObj) != 1) return NULL;
 
-    bool enable = Py_IsTrue(enableObj);
+    int enable = Py_IsTrue(enableObj);
     Py3dComponent_EnableBool(self, enable);
 
     Py_RETURN_NONE;
 }
 
-void Py3dComponent_EnableBool(struct Py3dComponent *self, bool enable) {
+void Py3dComponent_EnableBool(struct Py3dComponent *self, int enable) {
     self->enabled = enable;
 }
 
@@ -99,7 +103,7 @@ PyObject *Py3dComponent_IsVisible(struct Py3dComponent *self, PyObject *Py_UNUSE
     return PyBool_FromLong(Py3dComponent_IsVisibleBool(self));
 }
 
-bool Py3dComponent_IsVisibleBool(struct Py3dComponent *self) {
+int Py3dComponent_IsVisibleBool(struct Py3dComponent *self) {
     return self->visible;
 }
 
@@ -107,14 +111,13 @@ PyObject *Py3dComponent_MakeVisible(struct Py3dComponent *self, PyObject *args, 
     PyObject *makeVisibleObj = NULL;
     if (PyArg_ParseTuple(args, "O!", &PyBool_Type, &makeVisibleObj) != 1) return NULL;
 
-    bool make_visible = Py_IsTrue(makeVisibleObj);
-    // TODO: ???
-    Py3dComponent_EnableBool(self, make_visible);
+    int make_visible = Py_IsTrue(makeVisibleObj);
+    Py3dComponent_MakeVisibleBool(self, make_visible);
 
     Py_RETURN_NONE;
 }
 
-void Py3dComponent_MakeVisibleBool(struct Py3dComponent *self, bool make_visible) {
+void Py3dComponent_MakeVisibleBool(struct Py3dComponent *self, int make_visible) {
     self->visible = make_visible;
 }
 
@@ -159,8 +162,6 @@ PyObject *Py3dComponent_GetOwner(struct Py3dComponent *self, PyObject *Py_UNUSED
     return self->owner;
 }
 
-
-
 static int Py3dComponent_Traverse(struct Py3dComponent *self, visitproc visit, void *arg) {
     Py_VISIT(self->owner);
 
@@ -200,11 +201,19 @@ static PyObject *Py3dComponent_Start(struct Py3dComponent *self, PyObject *args,
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dComponent_Activate(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
 PyObject *Py3dComponent_Update(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
 static PyObject *Py3dComponent_Render(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dComponent_Deactivate(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     Py_RETURN_NONE;
 }
 
@@ -226,8 +235,8 @@ static PyObject *Py3dComponent_ColliderExit(struct Py3dComponent *self, PyObject
 
 PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObject *kwds) {
     PyObject *parseDataDict = NULL;
-    struct Py3dResourceManager *py3DResourceManager = NULL;
-    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &py3DResourceManager) != 1) return NULL;
+    struct Py3dResourceManager *rm = NULL;
+    if (PyArg_ParseTuple(args, "O!O!", &PyDict_Type, &parseDataDict, &Py3dResourceManager_Type, &rm) != 1) return NULL;
 
     PyObject *nameObj = PyDict_GetItemString(parseDataDict, "name");
     if (nameObj == NULL || PyUnicode_Check(nameObj) != 1) {
@@ -251,3 +260,4 @@ PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObje
 
     Py_RETURN_NONE;
 }
+

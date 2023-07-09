@@ -9,11 +9,13 @@
 #include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dcollisionevent.h"
+#include "python/py3dscene.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
     bool enabled;
     bool visible;
+    struct Py3dScene *scene;
     PyObject *componentsList;
     PyObject *childrenList;
     PyObject *parent;
@@ -23,13 +25,14 @@ struct Py3dGameObject {
 
 static PyObject *py3dGameObjectCtor = NULL;
 static PyObject *getCallable(PyObject *obj, const char *callableName);
-static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args);
+static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args);
 
 static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit, void *arg) {
     Py_VISIT(self->componentsList);
     Py_VISIT(self->childrenList);
     Py_VISIT(self->parent);
     Py_VISIT(self->transform);
+    Py_VISIT(self->scene);
     return 0;
 }
 
@@ -39,6 +42,7 @@ static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
     Py_CLEAR(self->parent);
     Py_CLEAR(self->childrenList);
     Py_CLEAR(self->componentsList);
+    Py_CLEAR(self->scene);
     return 0;
 }
 
@@ -52,15 +56,25 @@ static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
 static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     trace_log("%s", "[GameObject]: Initializing Game Object");
 
+    struct Py3dScene *newScene = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dScene_Type, &newScene) != 1) {
+        return -1;
+    }
+
     self->enabled = true;
     self->visible = true;
     self->componentsList = PyList_New(0);
     self->childrenList = PyList_New(0);
     self->parent = Py_NewRef(Py_None);
     self->name = Py_NewRef(Py_None);
-    self->transform = (PyObject *) Py3dTransform_New();
+    self->scene = (struct Py3dScene *) Py_NewRef(newScene);
+    self->transform = (PyObject *) Py3dTransform_New(self);
 
     return 0;
+}
+
+static PyObject *Py3dGameObject_GetScenePython(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
+    return Py_NewRef(self->scene);
 }
 
 PyMethodDef Py3dGameObject_Methods[] = {
@@ -68,18 +82,22 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"enable", (PyCFunction) Py3dGameObject_Enable, METH_VARARGS, "Enable or disable a Game Object"},
     {"visible", (PyCFunction) Py3dGameObject_IsVisible, METH_NOARGS, "Determine if a Game Object is visible"},
     {"make_visible", (PyCFunction) Py3dGameObject_MakeVisible, METH_VARARGS, "Make a Game Object visible or invisible"},
+    {"get_scene", (PyCFunction) Py3dGameObject_GetScenePython, METH_NOARGS, "Get Game Object's scene"},
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
     {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
     {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
     {"start", (PyCFunction) Py3dGameObject_Start, METH_VARARGS, "Propagate start message"},
+    {"activate", (PyCFunction) Py3dGameObject_Activate, METH_VARARGS, "Propagate activate message"},
     {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
     {"render", (PyCFunction) Py3dGameObject_Render, METH_VARARGS, "Render Game Object"},
+    {"deactivate", (PyCFunction) Py3dGameObject_Deactivate, METH_VARARGS, "Propagate deactivate message"},
     {"end", (PyCFunction) Py3dGameObject_End, METH_VARARGS, "Propagate end message"},
     {"attach_child", (PyCFunction) Py3dGameObject_AttachChild, METH_VARARGS, "Attach a GameObject to another GameObject"},
     {"get_child_by_name", (PyCFunction) Py3dGameObject_GetChildByName, METH_VARARGS, "Get a ref to the first child with the specified name"},
     {"get_child_by_index", (PyCFunction) Py3dGameObject_GetChildByIndex, METH_VARARGS, "Get a ref to the child at the specified index"},
     {"get_child_count", (PyCFunction) Py3dGameObject_GetChildCount, METH_NOARGS, "Get the number of children this GameObject has"},
     {"attach_component", (PyCFunction) Py3dGameObject_AttachComponent, METH_VARARGS, "Attach a Component to a GameObject"},
+    {"detach_component", (PyCFunction) Py3dGameObject_DetachComponent, METH_VARARGS, "Detach a Component from a GameObject"},
     {"get_component_by_type", (PyCFunction) Py3dGameObject_GetComponentByType, METH_VARARGS, "Get a ref to the first Component of the specified type"},
     {"get_component_by_index", (PyCFunction) Py3dGameObject_GetComponentByIndex, METH_VARARGS, "Get a ref to the component at the specified index"},
     {"get_component_count", (PyCFunction) Py3dGameObject_GetComponentCount, METH_NOARGS, "Get the number of components this GameObject has"},
@@ -127,6 +145,8 @@ void Py3dGameObject_FinalizeCtor() {
 }
 
 int Py3dGameObject_Check(PyObject *obj) {
+    if (obj == NULL) return 0;
+
     int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dGameObject_Type);
     if (ret == -1) {
         handleException();
@@ -136,22 +156,31 @@ int Py3dGameObject_Check(PyObject *obj) {
     return ret;
 }
 
-PyObject *Py3dGameObject_New() {
+struct Py3dGameObject *Py3dGameObject_New(struct Py3dScene *newScene) {
     if (py3dGameObjectCtor == NULL) {
         critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
 
         return NULL;
     }
 
-    PyObject *py3dGameObject = PyObject_Call(py3dGameObjectCtor, PyTuple_New(0), NULL);
-    if (py3dGameObject == NULL) {
+    if (newScene == NULL) {
+        error_log("[GameObject]: Could not instantiate. Requires valid scene pointer.");
+
+        return NULL;
+    }
+
+    PyObject *args = Py_BuildValue("(O)", newScene);
+    PyObject *ret = PyObject_Call(py3dGameObjectCtor, args, NULL);
+    Py_CLEAR(args);
+    if (ret == NULL || !Py3dGameObject_Check(ret)) {
+        Py_CLEAR(ret);
         critical_log("%s", "[Python]: Failed to allocate GameObject in python interpreter");
         handleException();
 
         return NULL;
     }
 
-    return py3dGameObject;
+    return (struct Py3dGameObject *) ret;
 }
 
 PyObject *Py3dGameObject_IsEnabled(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
@@ -243,6 +272,10 @@ PyObject *Py3dGameObject_Start(struct Py3dGameObject *self, PyObject *args, PyOb
     return passMessage(self, NULL, "start", args);
 }
 
+PyObject *Py3dGameObject_Activate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return passMessage(self, NULL, "activate", args);
+}
+
 PyObject *Py3dGameObject_Update(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     if (self->enabled == false) Py_RETURN_NONE;
 
@@ -261,6 +294,10 @@ PyObject *Py3dGameObject_Render(struct Py3dGameObject *self, PyObject *args, PyO
     return passMessage(self, Py3dComponent_IsVisibleBool, "render", args);
 }
 
+PyObject *Py3dGameObject_Deactivate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return passMessage(self, NULL, "deactivate", args);
+}
+
 PyObject *Py3dGameObject_End(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
     return passMessage(self, NULL, "end", args);
 }
@@ -271,6 +308,7 @@ void Py3dGameObject_Collide(struct Py3dGameObject *self, struct Py3dCollisionEve
     PyObject *args = PyTuple_New(1);
     PyTuple_SetItem(args, 1, (PyObject *) event);
 
+    // TODO: this is a bug ... this message is propagated to children of this GO
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collide", args);
     if (ret == NULL) {
         handleException();
@@ -285,6 +323,7 @@ extern void Py3dGameObject_ColliderEnter(struct Py3dGameObject *self, struct Py3
 
     PyObject *args = Py_BuildValue("(O)", event);
 
+    // TODO: this is a bug ... this message is propagated to children of this GO
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_enter", args);
     if (ret == NULL) {
         handleException();
@@ -299,6 +338,7 @@ extern void Py3dGameObject_ColliderExit(struct Py3dGameObject *self, struct Py3d
 
     PyObject *args = Py_BuildValue("(O)", event);
 
+    // TODO: this is a bug ... this message is propagated to children of this GO
     PyObject *ret = passMessage(self, Py3dComponent_IsEnabledBool, "collider_exit", args);
     if (ret == NULL) {
         handleException();
@@ -409,16 +449,45 @@ Py_ssize_t Py3dGameObject_GetChildCountInt(struct Py3dGameObject *self) {
     return PySequence_Size(self->childrenList);
 }
 
-PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
-    PyObject *newComponent = NULL;
-    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
+void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component) {
+    if (Py3dGameObject_Check((PyObject *) self) != 1 || Py3dComponent_Check((PyObject *) component) != 1) return;
 
-    if (PyList_Append(self->componentsList, newComponent) != 0) {
-        return NULL;
+    // TODO: I think that PyList_Append is incrementing the ref count of component ... double check
+    if (PyList_Append(self->componentsList, (PyObject *) component) != 0) {
+        handleException();
+        return;
     }
 
-    ((struct Py3dComponent *) newComponent)->owner = (PyObject *) self;
-    Py_INCREF(self);
+    Py_CLEAR(component->owner);
+    component->owner = Py_NewRef((PyObject *) self);
+}
+
+PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dComponent *newComponent = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &newComponent) != 1) return NULL;
+
+    Py3dGameObject_AttachComponentInC(self, newComponent);
+
+    Py_RETURN_NONE;
+}
+
+void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component) {
+    if (Py3dGameObject_Check((PyObject *) self) != 1 || Py3dComponent_Check((PyObject *) component) != 1) return;
+
+    PyObject *methodName = PyUnicode_FromString("remove");
+    PyObject *ret = PyObject_CallMethodOneArg(self->componentsList, methodName, (PyObject *) component);
+    Py_CLEAR(methodName);
+    if (ret == NULL) {
+        handleException();
+    }
+    Py_CLEAR(ret);
+}
+
+extern PyObject *Py3dGameObject_DetachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dComponent *target = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dComponent_Type, &target) != 1) return NULL;
+
+    Py3dGameObject_DetachComponentInC(self, target);
 
     Py_RETURN_NONE;
 }
@@ -471,6 +540,10 @@ Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self) {
     return PySequence_Size(self->componentsList);
 }
 
+struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self) {
+    return self->scene;
+}
+
 static PyObject *getCallable(PyObject *obj, const char *callableName) {
     PyObject *callable = PyObject_GetAttrString(obj, callableName);
     if (callable == NULL) return NULL;
@@ -482,7 +555,7 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     return callable;
 }
 
-static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+static void passMessageToComponent(PyObject *component, int(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
     if (!Py3dComponent_Check(component)) {
         warning_log("[GameObject]: GameObject list has non component item.");
         return;
@@ -506,7 +579,7 @@ static void passMessageToComponent(PyObject *component, bool(*acceptMessage)(str
     Py_CLEAR(messageHandler);
 }
 
-static PyObject *passMessage(struct Py3dGameObject *self, bool (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
     PyObject *transform = Py3dGameObject_GetTransform(self, NULL);
     passMessageToComponent(transform, acceptMessage, messageName, args);
     Py_CLEAR(transform);

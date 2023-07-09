@@ -83,9 +83,12 @@ bool initializePython(int argc, char **argv) {
     if (!importPy3dEngineModule()) return false;
     if (!importPy3dMathModule()) return false;
     if (!importPy3dLoggerModule()) return false;
+    // input module does not need an import
 
     if (!initPy3dEngineObjects()) return false;
     if (!initPy3dMathObjects()) return false;
+    // logger module does not need init
+    // input module does not need init
 
     trace_log(
         "[Python]: Initialization successful: %s\n"
@@ -100,6 +103,8 @@ bool initializePython(int argc, char **argv) {
 }
 
 void finalizePython() {
+    // input module does not need finalization
+    // logger module does not need finalization
     finalizePy3dMathModule();
     finalizePy3dEngineModule();
 

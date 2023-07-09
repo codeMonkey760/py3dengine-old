@@ -23,7 +23,7 @@ extern int Py3dSpriteRenderer_FindCtor(PyObject *module);
 extern void Py3dSpriteRenderer_FinalizeCtor();
 
 extern int Py3dSpriteRenderer_Check(PyObject *obj);
-extern struct Py3dSpriteRenderer *Py3dSpriteRenderer_Create();
+extern struct Py3dSpriteRenderer *Py3dSpriteRenderer_New();
 extern PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds);
 

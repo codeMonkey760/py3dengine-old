@@ -1,5 +1,4 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#include <json.h>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -12,26 +11,30 @@
 #include "python/python_wrapper.h"
 #include "engine.h"
 #include "importers/scene.h"
-#include "python/py3dgameobject.h"
-#include "resource_manager.h"
-#include "python/py3dinput.h"
 #include "physics/collision.h"
+#include "python/py3dscene.h"
+
+extern PyObject *Py3dErr_SceneError;
 
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
 static float mpf = 0.0f;
 static float time_since_last_report = 0.0f;
 static bool print_report = true;
+static PyObject *sceneDict = NULL;
+static struct Py3dScene *activeScene = NULL;
+static struct Py3dScene *sceneAwaitingActivation = NULL;
 
 GLFWwindow *glfwWindow = NULL;
 
-struct ResourceManager *resourceManager = NULL;
-
-struct Py3dGameObject *root = NULL;
-struct Py3dGameObject *activeCamera = NULL;
-
 static void error_callback(int code, const char* description) {
     error_log("%s 0x%x %s\n", "GLFW error code", code, description);
+}
+
+static void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    if (activeScene == NULL) return;
+
+    Py3dScene_KeyEvent(activeScene, key, scancode, action, mods);
 }
 
 static void resizeEngine();
@@ -73,93 +76,26 @@ static void printStats(float dt) {
     }
 }
 
-static void updateEngine(float dt) {
-    updateStats(dt);
-    printStats(dt);
-
-    if (root == NULL) return;
-
-    PyObject *args = Py_BuildValue("(f)", dt);
-    if (args == NULL) {
-        handleException();
-        return;
-    }
-
-    PyObject *ret = Py3dGameObject_Update(root, args, NULL);
-    if (ret == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(ret);
-    Py_CLEAR(args);
-
-    handleCollisions();
-}
-
-static void renderEngine() {
-    if (root == NULL) return;
-
-    struct Py3dRenderingContext *rc = Py3dRenderingContext_New(activeCamera);
-    if (rc == NULL) {
-        handleException();
-        return;
-    }
-    PyObject *args = Py_BuildValue("(O)", rc);
-
-    PyObject *ret = Py3dGameObject_Render(root, args, NULL);
-    if (ret == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(ret);
-    Py_CLEAR(args);
-    Py_CLEAR(rc);
-}
-
-static void startEngine() {
-    PyObject *startCallable = PyObject_GetAttrString((PyObject *) root, "start");
-    if (startCallable == NULL || PyCallable_Check(startCallable) == 0) {
-        critical_log("[Engine]: Root GameObject must have callable attribute called \"start\"");
-        Py_CLEAR(startCallable);
-        handleException();
-        return;
-    }
-
-    PyObject *startArgs = PyTuple_New(0);
-    PyObject *startRet = PyObject_Call(startCallable, startArgs, NULL);
-    if (startRet == NULL) {
-        handleException();
-    }
-
-    Py_CLEAR(startRet);
-    Py_CLEAR(startCallable);
-    Py_CLEAR(startArgs);
-}
-
 static void resizeEngine() {
     int newWidth, newHeight;
     glfwGetFramebufferSize(glfwWindow, &newWidth, &newHeight);
     glViewport(0, 0, newWidth, newHeight);
 }
 
-static void endEngine() {
-    PyObject *endCallable = PyObject_GetAttrString((PyObject *) root, "end");
-    if (endCallable == NULL || PyCallable_Check(endCallable) == 0) {
-        critical_log("[Engine]: Root GameObject must have callable attribute called \"end\"");
-        Py_CLEAR(endCallable);
-        handleException();
-        return;
+static void doSceneActivation() {
+    if (sceneAwaitingActivation == NULL) return;
+
+    if (activeScene != NULL) {
+        trace_log("[Engine]: Deactivating scene");
+        Py3dScene_Deactivate(activeScene);
+        Py_CLEAR(activeScene);
     }
 
-    PyObject *endArgs = PyTuple_New(0);
-    PyObject *endRet = PyObject_Call(endCallable, endArgs, NULL);
-    if (endRet == NULL) {
-        handleException();
-    }
+    activeScene = sceneAwaitingActivation;
+    sceneAwaitingActivation = NULL;
 
-    Py_CLEAR(endRet);
-    Py_CLEAR(endCallable);
-    Py_CLEAR(endArgs);
+    trace_log("[Engine]: Activating scene");
+    Py3dScene_Activate(activeScene);
 }
 
 void initializeEngine(int argc, char **argv){
@@ -170,7 +106,7 @@ void initializeEngine(int argc, char **argv){
         return;
     }
 
-    if (!initCollisionEngine()) {
+    if (!dInitODE2(0)) {
         critical_log("%s", "[Engine]: Could not initialize collision engine");
         return;
     }
@@ -206,37 +142,17 @@ void initializeEngine(int argc, char **argv){
     glfwSwapInterval(getConfigSwapInterval());
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-
-    allocResourceManager(&resourceManager);
-    if (resourceManager == NULL) {
-        critical_log("%s", "[Engine]: Unable to allocate resource manager. Resource importing will fail");
-    }
-
-    const char *startingScenePath = getConfigStartingScene();
-    FILE *startingScene = fopen(startingScenePath, "r");
-    if (startingScene == NULL) {
-        critical_log("[Engine]: Unable to open \"%s\" as scene descriptor for parsing. Cannot initialize", startingScenePath);
-    }
-
-    importScene(resourceManager, &root, startingScene);
-
-    if (startingScene != NULL) {
-        fclose(startingScene);
-        startingScene = NULL;
-    }
-
-    activeCamera = (struct Py3dGameObject *) Py3dGameObject_GetChildByNameCStr(root, "Camera");
-    if (activeCamera == NULL) {
-        handleException();
-        warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
-    } else if (Py_IsNone((PyObject *) activeCamera)) {
-        warning_log("%s", "[Engine]: Active Camera could not be set after scene initialization.");
-    }
-
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    startEngine();
+    sceneDict = PyDict_New();
+    struct Py3dScene *ret = loadScene(getConfigStartingScene());
+    if (ret == NULL) {
+        critical_log("[Engine]: Could not load starting scene");
+        handleException();
+    } else {
+        sceneAwaitingActivation = ret;
+    }
 }
 
 void runEngine() {
@@ -248,24 +164,50 @@ void runEngine() {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        updateEngine(dt);
-        renderEngine();
+        updateStats(dt);
+        printStats(dt);
+
+        doSceneActivation();
+
+        Py3dScene_Update(activeScene, dt);
+        Py3dScene_Render(activeScene);
 
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
     }
 }
 
-void finalizeEngine() {
-    endEngine();
+static void endLoadedScenes() {
+    PyObject *sceneDictValues = PyDict_Values(sceneDict);
 
-    finalizeCallbackTable();
+    Py_ssize_t sceneDictLen = PyList_Size(sceneDictValues);
+    for (Py_ssize_t i = 0; i < sceneDictLen; ++i) {
+        PyObject *curScene = PyList_GetItem(sceneDictValues, i);
+        if (!Py3dScene_Check(curScene)) {
+            critical_log("[Engine]: Non scene object or null detected in scene list");
+            continue;
+        }
+
+        PyObject *curSceneNameObj = Py3dScene_GetName((struct Py3dScene *) curScene, NULL);
+        trace_log("[Engine]: Ending scene with name \"%s\"", PyUnicode_AsUTF8(curSceneNameObj));
+        Py_CLEAR(curSceneNameObj);
+
+        Py3dScene_End((struct Py3dScene *) curScene);
+    }
+
+    Py_CLEAR(sceneDictValues);
+}
+
+void finalizeEngine() {
+    trace_log("[Engine]: Deactivating scene");
+    Py3dScene_Deactivate(activeScene);
+
+    endLoadedScenes();
 
     glfwDestroyWindow(glfwWindow);
-    deleteResourceManager(&resourceManager);
 
-    Py_CLEAR(activeCamera);
-    Py_CLEAR(root);
+    Py_CLEAR(activeScene);
+    Py_CLEAR(sceneDict);
     forceGarbageCollection();
 
     trace_log("[Engine]: Post scene de-allocation python object dump");
@@ -275,7 +217,7 @@ void finalizeEngine() {
 
     finalizePython();
 
-    finalizeCollisionEngine();
+    dCloseODE();
 
     finalizeConfig();
 }
@@ -293,6 +235,163 @@ void getRenderingTargetDimensions(int *width, int *height) {
     }
 }
 
+struct Py3dScene *loadScene(const char *scenePath) {
+    FILE *sceneFile = fopen(scenePath, "r");
+    if (sceneFile == NULL) {
+        PyErr_Format(PyExc_ValueError, "Unable to open \"%s\" as scene descriptor", scenePath);
+        return NULL;
+    }
+
+    json_object *sceneJson = json_object_from_fd(fileno(sceneFile));
+    if (sceneJson == NULL) {
+        PyErr_Format(PyExc_ValueError, "Could not parse \"%s\" as JSON", scenePath);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    const char *sceneName = peekSceneName(sceneJson);
+    if (sceneName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot load scene without name property");
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
+    if (sceneNameObj == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot load scene without name property");
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    int sceneDictHasName = PyDict_Contains(sceneDict, sceneNameObj);
+    if (sceneDictHasName == -1) {
+        Py_CLEAR(sceneNameObj);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    } else if (sceneDictHasName == 1) {
+        PyErr_Format(Py3dErr_SceneError, "Scene with name \"%s\" is already loaded", sceneName);
+        Py_CLEAR(sceneNameObj);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+
+    trace_log("[Engine]: Loading scene with name \"%s\"", sceneName);
+
+    struct Py3dScene *scene = importScene(sceneJson);
+
+    if (!Py3dScene_Check((PyObject *) scene)) {
+        error_log("[Engine]: Parsing scene at \"%s\" failed", scenePath);
+        Py_CLEAR(sceneNameObj);
+        Py_CLEAR(scene);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+    if (PyDict_SetItem(sceneDict, sceneNameObj, (PyObject *) scene) != 0) {
+        critical_log("[Engine]: Could not store scene");
+        Py_CLEAR(sceneNameObj);
+        Py_CLEAR(scene);
+        json_object_put(sceneJson);
+        fclose(sceneFile);
+        return NULL;
+    }
+    Py_CLEAR(sceneNameObj);
+
+    trace_log("[Engine]: Starting scene with name \"%s\"", sceneName);
+    Py3dScene_Start(scene);
+
+    json_object_put(sceneJson);
+    fclose(sceneFile);
+    sceneFile = NULL;
+
+    return scene;
+}
+
+PyObject *activateScene(const char *sceneName) {
+    if (sceneName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot activate scene without name");
+        return NULL;
+    }
+
+    if (sceneAwaitingActivation != NULL) {
+        PyErr_SetString(Py3dErr_SceneError, "Scene activation is unavailable while another scene is awaiting activation");
+        return NULL;
+    }
+
+    PyObject *scene = PyDict_GetItemString(sceneDict, sceneName);
+    if (!Py3dScene_Check(scene)) {
+        PyErr_Format(Py3dErr_SceneError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
+        Py_CLEAR(scene);
+        return NULL;
+    }
+
+    trace_log("[Engine]: Scheduling scene named \"%s\" for activation", sceneName);
+    sceneAwaitingActivation = (struct Py3dScene *) Py_NewRef(scene);
+    Py_RETURN_NONE;
+}
+
+PyObject *unloadScene(const char *sceneName) {
+    if (sceneName == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot unload scene without name");
+        return NULL;
+    }
+
+    if (sceneAwaitingActivation != NULL) {
+        PyErr_SetString(Py3dErr_SceneError, "Scene unloading is unavailable while another scene is awaiting activation");
+        return NULL;
+    }
+
+    PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
+    if (sceneName == NULL) return NULL;
+
+    PyObject *activeSceneName = Py3dScene_GetName(activeScene, NULL);
+    int cmpRet = PyObject_RichCompareBool(sceneNameObj, activeSceneName, Py_EQ);
+    Py_CLEAR(activeSceneName);
+    if (cmpRet == -1) {
+        critical_log("[Engine]: Could not compare unloading scene name with active scene name");
+        Py_CLEAR(sceneNameObj);
+        return NULL;
+    } else if (cmpRet == 1) {
+        PyErr_SetString(Py3dErr_SceneError, "Cannot unload the currently active scene");
+        Py_CLEAR(sceneNameObj);
+        return NULL;
+    }
+
+    PyObject *target = PyDict_GetItem(sceneDict, sceneNameObj);
+    if (target == NULL) {
+        PyErr_Format(Py3dErr_SceneError, "Could not find scene with name \"%\" for unloading", sceneName);
+        Py_CLEAR(sceneNameObj);
+        return NULL;
+    }
+
+    if (Py3dScene_Check(target)) {
+        Py3dScene_End((struct Py3dScene *) target);
+    } else {
+        warning_log("[Engine]: A non scene object was found in the scene dict under the key \"%s\"", sceneName);
+    }
+
+    if (PyDict_DelItem(sceneDict, sceneNameObj) != 0) {
+        warning_log("[Engine]: Unable to delete object with key \"%s\" from scene dict", sceneName);
+        handleException();
+    }
+    Py_CLEAR(sceneNameObj);
+
+    forceGarbageCollection();
+    Py_RETURN_NONE;
+}
+
 void markWindowShouldClose() {
     glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
+}
+
+int getCursorMode() {
+    return glfwGetInputMode(glfwWindow, GLFW_CURSOR);
+}
+
+void setCursorMode(int newMode) {
+    glfwSetInputMode(glfwWindow, GLFW_CURSOR, newMode);
 }

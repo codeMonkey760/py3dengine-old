@@ -6,13 +6,14 @@
 #include "json_parser.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"
-#include "resource_manager.h"
 #include "importers/texture.h"
 #include "importers/shader.h"
 #include "importers/component.h"
 #include "importers/scene.h"
 #include "importers/sprite_sheet.h"
 #include "importers/builtins.h"
+#include "python/py3dscene.h"
+#include "python/py3dresourcemanager.h"
 
 static const char *getResourceExt(const char *resourcePath) {
     if (resourcePath == NULL || (*resourcePath) == 0) return NULL;
@@ -25,8 +26,8 @@ static const char *getResourceExt(const char *resourcePath) {
     return ((*curPos) == '.') ? curPos : NULL;
 }
 
-static void importResourceByDescriptor(struct ResourceManager *manager, const char *resourcePath) {
-    if (manager == NULL || resourcePath == NULL) return;
+static void importResourceByDescriptor(struct Py3dResourceManager *manager, const char *resourcePath) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || resourcePath == NULL) return;
 
     json_object *resourceDescriptor = json_object_from_file(resourcePath);
     if (resourceDescriptor == NULL) {
@@ -46,17 +47,17 @@ static void importResourceByDescriptor(struct ResourceManager *manager, const ch
     if (strcmp(typeName, "Texture") == 0) {
         struct BaseResource *newTexture = NULL;
         importTexture((struct Texture **) &newTexture, resourceDescriptor);
-        storeResource(manager, newTexture);
+        Py3dResourceManager_StoreResource(manager, newTexture);
         newTexture = NULL;
     } else if (strcmp(typeName, "Shader") == 0) {
         struct BaseResource *newShader = NULL;
         importShader((struct Shader **) &newShader, resourceDescriptor);
-        storeResource(manager, newShader);
+        Py3dResourceManager_StoreResource(manager, newShader);
         newShader = NULL;
     } else if (strcmp(typeName, "Component") == 0) {
         struct BaseResource *newScript = NULL;
         importComponent((struct PythonScript **) &newScript, resourceDescriptor);
-        storeResource(manager, newScript);
+        Py3dResourceManager_StoreResource(manager, newScript);
         newScript = NULL;
     } else if (strcmp(typeName, "SpriteSheet") == 0) {
         importSprites(manager, resourceDescriptor);
@@ -68,7 +69,9 @@ static void importResourceByDescriptor(struct ResourceManager *manager, const ch
     resourceDescriptor = NULL;
 }
 
-static void importResourceByPath(struct ResourceManager *manager, const char *resourcePath) {
+static void importResourceByPath(struct Py3dResourceManager *manager, const char *resourcePath) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || resourcePath == NULL) return;
+
     const char *ext = getResourceExt(resourcePath);
     if (ext == NULL) return;
 
@@ -83,8 +86,8 @@ static void importResourceByPath(struct ResourceManager *manager, const char *re
     }
 }
 
-static void importResources(struct ResourceManager *manager, json_object *resourceArray) {
-    if (manager == NULL || resourceArray == NULL) return;
+static void importResources(struct Py3dResourceManager *manager, json_object *resourceArray) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || resourceArray == NULL) return;
 
     if (!json_object_is_type(resourceArray, json_type_array)) {
         error_log("%s", "[SceneImporter]: \"resources\" field must be of type array");
@@ -103,33 +106,71 @@ static void importResources(struct ResourceManager *manager, json_object *resour
     }
 }
 
-void importScene(struct ResourceManager *manager, struct Py3dGameObject **rootPtr, FILE *sceneDescriptor) {
-    if (manager == NULL || rootPtr == NULL || (*rootPtr) != NULL || sceneDescriptor == NULL) return;
+const char *peekSceneName(json_object *sceneDescriptor) {
+    if (sceneDescriptor == NULL) return NULL;
 
-    json_object *json_root = json_object_from_fd(fileno(sceneDescriptor));
-    if (json_root == NULL) {
-        critical_log("%s", "[SceneImporter]: Could not parse scene descriptor");
-        return;
+    json_object *scene_name = json_object_object_get(sceneDescriptor, "name");
+    if (scene_name == NULL || !json_object_is_type(scene_name, json_type_string)) return NULL;
+
+    return json_object_get_string(scene_name);
+}
+
+struct Py3dScene *importScene(json_object *sceneDescriptor) {
+    if (sceneDescriptor == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Scene descriptor must provide valid JSON");
+        return NULL;
     }
+
+    json_object *scene_name = json_object_object_get(sceneDescriptor, "name");
+    if (scene_name == NULL || !json_object_is_type(scene_name, json_type_string)) {
+        PyErr_SetString(PyExc_ValueError, "Scene must have a string property called \"name\"");
+        return NULL;
+    }
+    const char *scene_name_cstr = json_object_get_string(scene_name);
+
+    trace_log("[SceneImporter]: Beginning scene import for \"%s\"", scene_name_cstr);
+
+    struct Py3dScene *newScene = Py3dScene_New();
+    if (newScene == NULL) return NULL;
+    Py3dScene_SetNameCStr(newScene, scene_name_cstr);
+
+    struct Py3dResourceManager *manager = Py3dResourceManager_New();
+
+    Py3dScene_SetResourceManager(newScene, (PyObject *) manager);
+    Py3dResourceManager_SetOwnerInC(manager, (struct Py3dScene *) newScene);
 
     importBuiltInResources(manager);
 
-    json_object *resourceArray = json_object_object_get(json_root, "resources");
+    json_object *resourceArray = json_object_object_get(sceneDescriptor, "resources");
     importResources(manager, resourceArray);
 
-    json_object *scene_root = json_object_object_get(json_root, "scene_root");
+    json_object *scene_root = json_object_object_get(sceneDescriptor, "scene_root");
     if (scene_root == NULL || !json_object_is_type(scene_root, json_type_object)) {
-        critical_log("%s", "[SceneImporter]: Scene must have an object property called \"scene_root\"");
-        json_object_put(json_root);
-        return;
+        PyErr_SetString(PyExc_ValueError, "Scene must have an object property called \"scene_root\"");
+        Py_CLEAR(newScene);
+        return NULL;
     }
 
     struct Py3dGameObject *rootGO = NULL;
-    parseGameObject(scene_root, NULL, &rootGO, manager);
+    if (!parseGameObject(scene_root, NULL, &rootGO, newScene, manager)) {
+        PyErr_SetString(PyExc_ValueError, "Unable to parse scene");
+        Py_CLEAR(newScene);
+        Py_CLEAR(rootGO);
+        return NULL;
+    }
 
-    (*rootPtr) = rootGO;
+    Py3dScene_SetSceneGraph(newScene, (PyObject *) rootGO);
     rootGO = NULL;
 
-    json_object_put(json_root);
-    json_root = NULL;
+    PyObject *activateCameraRet = Py3dScene_ActivateCameraByNameCStr(newScene, "Camera");
+    if (activateCameraRet == NULL) {
+        Py_CLEAR(newScene);
+        // rootGO and manager are owned by newScene, clean up unnecessary
+        return NULL;
+    }
+    Py_CLEAR(activateCameraRet);
+
+    trace_log("[SceneImporter]: Scene import for \"%s\" has ended", scene_name_cstr);
+
+    return newScene;
 }

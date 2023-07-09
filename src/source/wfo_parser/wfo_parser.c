@@ -8,7 +8,7 @@
 #include "wfo_parser/vertex_data_list.h"
 #include "wfo_parser/object_list.h"
 #include "wfo_parser/wfo_parser.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "resources/material.h"
 #include "resources/texture.h"
 #include "resources/model.h"
@@ -195,7 +195,9 @@ static void generateVertexBuffer(
     (*dstSize) = vbSizeInVertices;
 }
 
-void importWaveFrontFile(struct ResourceManager *manager, const char *filePath) {
+void importWaveFrontFile(struct Py3dResourceManager *manager, const char *filePath) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || filePath == NULL) return;
+
     FILE *wfoFile = fopen(filePath, "r");
     if (wfoFile == NULL) {
         error_log("[WfoParser]: Could not open \"%s\" for reading", filePath);
@@ -207,8 +209,8 @@ void importWaveFrontFile(struct ResourceManager *manager, const char *filePath) 
     wfoFile = NULL;
 }
 
-void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo) {
-    if (manager == NULL || wfo == NULL) return;
+void parseWaveFrontFile(struct Py3dResourceManager *manager, FILE *wfo) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || wfo == NULL) return;
 
     char lineBuffer[LINE_BUFFER_SIZE_IN_ELEMENTS+1];
     char *curPos = NULL;
@@ -306,7 +308,7 @@ void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo) {
         vb = NULL;
 
         trace_log("[WfoParser]: Storing material named \"%s\"", curNode->name);
-        storeResource(manager, (struct BaseResource *) newModel);
+        Py3dResourceManager_StoreResource(manager, (struct BaseResource *) newModel);
         newModel = NULL;
 
         curNode = curNode->next;
@@ -327,7 +329,9 @@ void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo) {
     deleteObjectListNode(&objectList);
 }
 
-void importMaterialFile(struct ResourceManager *manager, const char *filePath) {
+void importMaterialFile(struct Py3dResourceManager *manager, const char *filePath) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || filePath == NULL) return;
+
     FILE *mtlFile = fopen(filePath, "r");
     if (mtlFile == NULL) {
         error_log("[WfoParser]: Could not open \"%s\" for reading", filePath);
@@ -339,8 +343,8 @@ void importMaterialFile(struct ResourceManager *manager, const char *filePath) {
     mtlFile = NULL;
 }
 
-void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
-    if (manager == NULL || mtl == NULL) return;
+void parseMaterialFile(struct Py3dResourceManager *manager, FILE *mtl) {
+    if (Py3dResourceManager_Check((PyObject *) manager) != 1 || mtl == NULL) return;
 
     char lineBuffer[LINE_BUFFER_SIZE_IN_ELEMENTS+1];
     char *curPos;
@@ -368,7 +372,7 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
             readStringFromLine(curPos, nameBuffer, NAME_BUFFER_SIZE_IN_ELEMENTS);
             if (curMaterial != NULL) {
                 trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getResourceName(curMaterial)));
-                storeResource(manager, curMaterial);
+                Py3dResourceManager_StoreResource(manager, curMaterial);
                 curMaterial = NULL;
             }
             trace_log("[WfoParser]: Allocating new material named \"%s\"", nameBuffer);
@@ -396,7 +400,7 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
             clearCharBuffer(fileNameBuffer, FILE_NAME_BUFFER_SIZE_IN_ELEMENTS+1);
             readStringFromLine(curPos, fileNameBuffer, FILE_NAME_BUFFER_SIZE_IN_ELEMENTS);
 
-            struct BaseResource *diffuse_map = getResource(manager, fileNameBuffer);
+            struct BaseResource *diffuse_map = Py3dResourceManager_GetResource(manager, fileNameBuffer);
             if (!isResourceTypeTexture(diffuse_map)) {
                 error_log("[WfoParser]: Material specifies non existent texture named \"%s\" as a diffuse map", fileNameBuffer);
             } else {
@@ -415,7 +419,7 @@ void parseMaterialFile(struct ResourceManager *manager, FILE *mtl) {
 
     if (curMaterial != NULL) {
         trace_log("[WfoParser]: Storing material named \"%s\"", getChars(getResourceName(curMaterial)));
-        storeResource(manager, curMaterial);
+        Py3dResourceManager_StoreResource(manager, curMaterial);
         curMaterial = NULL;
     }
 }

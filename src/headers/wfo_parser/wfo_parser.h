@@ -3,11 +3,11 @@
 
 #include <stdio.h>
 
-struct ResourceManager;
+struct Py3dResourceManager;
 
-extern void importWaveFrontFile(struct ResourceManager *manager, const char *filePath);
-extern void parseWaveFrontFile(struct ResourceManager *manager, FILE *wfo);
-extern void importMaterialFile(struct ResourceManager *manager, const char *filePath);
-extern void parseMaterialFile(struct ResourceManager *manager, FILE *mtl);
+extern void importWaveFrontFile(struct Py3dResourceManager *manager, const char *filePath);
+extern void parseWaveFrontFile(struct Py3dResourceManager *manager, FILE *wfo);
+extern void importMaterialFile(struct Py3dResourceManager *manager, const char *filePath);
+extern void parseMaterialFile(struct Py3dResourceManager *manager, FILE *mtl);
 
 #endif

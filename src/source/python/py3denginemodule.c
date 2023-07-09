@@ -7,11 +7,14 @@
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dcollider.h"
-#include "resource_manager.h"
+#include "python/py3dresourcemanager.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
+#include "python/py3dscene.h"
 #include "engine.h"
+
+PyObject *Py3dErr_SceneError = NULL;
 
 static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds) {
     markWindowShouldClose();
@@ -19,8 +22,53 @@ static PyObject *Py3dEngine_Quit(PyObject *self, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dEngine_LoadScene(PyObject *self, PyObject *args, PyObject *kwds) {
+    const char *scenePath = NULL;
+    if (PyArg_ParseTuple(args, "s", &scenePath) != 1) return NULL;
+
+    PyObject *ret = (PyObject *) loadScene(scenePath);
+    if (ret == NULL) {
+        error_log("[Engine]: Could not load scene at path \"%s\"", scenePath);
+        return NULL;
+    }
+    Py_CLEAR(ret);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dEngine_ActivateScene(PyObject *self, PyObject *args, PyObject *kwds) {
+    const char *sceneName = NULL;
+    if (PyArg_ParseTuple(args, "s", &sceneName) != 1) return NULL;
+
+    PyObject *ret = activateScene(sceneName);
+    if (ret == NULL) {
+        error_log("[Engine]: Could not activate scene with name \"%s\"", sceneName);
+        return NULL;
+    }
+    Py_CLEAR(ret);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *Py3dEngine_UnloadScene(PyObject *self, PyObject *args, PyObject *kwds) {
+    const char *sceneName = NULL;
+    if (PyArg_ParseTuple(args, "s", &sceneName) != 1) return NULL;
+
+    PyObject *ret = unloadScene(sceneName);
+    if (ret == NULL) {
+        error_log("[Engine]: Could not unload scene with name \"%s\"", sceneName);
+        return NULL;
+    }
+    Py_CLEAR(ret);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Py3dEngine_Methods[] = {
     {"quit", (PyCFunction) Py3dEngine_Quit, METH_NOARGS, "Stop the engine and begin tear down"},
+    {"load_scene", (PyCFunction) Py3dEngine_LoadScene, METH_VARARGS, "Load the specified scene into the engine and prepare it for activation"},
+    {"activate_scene", (PyCFunction) Py3dEngine_ActivateScene, METH_VARARGS, "Deactivate the current scene and activate the scene with the specified name"},
+    {"unload_scene", (PyCFunction) Py3dEngine_UnloadScene, METH_VARARGS, "Delete the scene with the specified name"},
     {NULL}
 };
 
@@ -113,10 +161,33 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dScene(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach Scene to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    Py3dErr_SceneError = PyErr_NewException("py3dengine.SceneError", NULL, NULL);
+    if (Py3dErr_SceneError == NULL) {
+        critical_log("%s", "[Python]: Failed to create SceneError");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (PyModule_AddObject(newModule, "SceneError", Py3dErr_SceneError) == -1) {
+        critical_log("%s", "[Python]: Failed to attach SceneActivationException to py3dengine module");
+
+        Py_CLEAR(Py3dErr_SceneError);
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     return newModule;
 }
 
-bool appendPy3dEngineModule() {
+int appendPy3dEngineModule() {
     if (PyImport_AppendInittab("py3dengine", PyInit_py3dEngine) == -1) {
         critical_log("%s", "[Python]: Failed to extend built-in modules table with py3dengine module");
         return false;
@@ -125,10 +196,10 @@ bool appendPy3dEngineModule() {
     return true;
 }
 
-bool importPy3dEngineModule() {
+int importPy3dEngineModule() {
     module = PyImport_ImportModule("py3dengine");
     if (module == NULL) {
-        critical_log("%s, [Python]: Could not import py3dengine");
+        critical_log("%s", "[Python]: Could not import py3dengine");
         handleException();
         return false;
     }
@@ -136,7 +207,7 @@ bool importPy3dEngineModule() {
     return true;
 }
 
-bool initPy3dEngineObjects() {
+int initPy3dEngineObjects() {
     if (!Py3dGameObject_FindCtor(module)) {
         return false;
     }
@@ -173,6 +244,10 @@ bool initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dScene_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -181,6 +256,7 @@ PyObject *getPy3dEngineModule() {
 }
 
 void finalizePy3dEngineModule() {
+    Py_CLEAR(Py3dErr_SceneError);
     Py3dTransform_FinalizeCtor();
     Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();
@@ -190,4 +266,5 @@ void finalizePy3dEngineModule() {
     Py3dCollider_FinalizeCtor();
     Py3dContactPoint_FinalizeCtor();
     Py3dCollisionEvent_FinalizeCtor();
+    Py3dScene_FinalizeCtor();
 }

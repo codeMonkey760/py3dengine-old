@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-struct ResourceManager;
-struct Py3dGameObject;
-extern void importScene(struct ResourceManager *manager, struct Py3dGameObject **rootPtr, FILE *sceneDescriptor);
+struct Py3dScene;
+extern const char *peekSceneName(json_object *sceneDescriptor);
+extern struct Py3dScene *importScene(json_object *sceneDescriptor);
 
 #endif

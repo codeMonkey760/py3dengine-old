@@ -4,15 +4,36 @@
 #include "python/py3dtransform.h"
 #include "logger.h"
 #include "physics/collision.h"
+#include "python/py3dscene.h"
 
 static PyObject *Py3dCollider_Ctor = NULL;
+
+static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dCollider *self) {
+    if (Py3dCollider_Check((PyObject *) self) != 1) return NULL;
+
+    struct Py3dGameObject *owner = (struct Py3dGameObject *) Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
+    if (Py3dGameObject_Check((PyObject *) owner) != 1) {
+        critical_log("%s", "[ColliderComponent]: ColliderComponent does not have an owner");
+        Py_CLEAR(owner);
+        return NULL;
+    }
+
+    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
+    Py_CLEAR(owner);
+    if (Py3dScene_Check((PyObject *) scene) != 1) {
+        critical_log("%s", "[ColliderComponent]: Owner Game Object is not attached to a scene graph");
+        return NULL;
+    }
+
+    return scene->space;
+}
 
 static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
     PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
 
     if (!Py3dGameObject_Check(owner)) {
         Py_CLEAR(owner);
-        PyErr_SetString(PyExc_ValueError, "Py3dCollider component has no owner");
+        PyErr_SetString(PyExc_ValueError, "ColliderComponent component has no owner");
 
         return NULL;
     }
@@ -21,7 +42,7 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
     Py_CLEAR(owner);
     if (!Py3dTransform_Check(transform)) {
         Py_CLEAR(transform);
-        PyErr_SetString(PyExc_ValueError, "Py3dCollider owner has no transform");
+        PyErr_SetString(PyExc_ValueError, "ColliderComponent owner has no transform");
 
         return NULL;
     }
@@ -32,8 +53,6 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
 static void deleteGeom(struct Py3dCollider *self) {
     if (self->geomId == NULL) return;
 
-    dGeomSetBody(self->geomId, 0);
-    removeGeomFromWorldSpace(self->geomId);
     dGeomDestroy(self->geomId);
     self->geomId = NULL;
 }
@@ -123,9 +142,18 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
         return NULL;
     }
 
+    struct PhysicsSpace *space = getOwnersPhysicsSpace(self);
+    if (space == NULL) {
+        PyErr_SetString(PyExc_ValueError, "[ColliderComponent]: Could not obtain owners physics space");
+        critical_log("[ColliderComponent]: Could not attach new ode geom to scene physics space");
+        dGeomDestroy(newGeom);
+        newGeom = NULL;
+        return NULL;
+    }
+
     dGeomSetData(newGeom, self);
     dGeomSetBody(newGeom, transform->dynamicsBody);
-    addGeomToWorldSpace(newGeom);
+    addGeomToWorldSpace(space, newGeom);
     deleteGeom(self);
     self->geomId = newGeom;
 
@@ -275,6 +303,8 @@ struct Py3dCollider *Py3dCollider_New() {
 }
 
 int Py3dCollider_Check(PyObject *obj) {
+    if (obj == NULL) return 0;
+
     int ret = PyObject_IsInstance(obj, (PyObject *) &Py3dCollider_Type);
     if (ret == -1) {
         handleException();

@@ -4,6 +4,8 @@
 #include "python/python_util.h"
 #include "util.h"
 #include "logger.h"
+#include "python/py3dgameobject.h"
+#include "python/py3dscene.h"
 
 static PyObject *py3dTransformCtor = NULL;
 
@@ -208,8 +210,26 @@ static PyMethodDef Py3dTransform_Methods[] = {
     {NULL},
 };
 
+static struct PhysicsSpace *Py3dTransform_GetPhysicsSpace(struct Py3dTransform *self) {
+    struct Py3dGameObject *owner = (struct Py3dGameObject *) Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
+    if (owner == NULL) return NULL;
+
+    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
+    Py_CLEAR(owner);
+
+    if (scene == NULL) return NULL;
+
+    return scene->space;
+}
+
 static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObject *kwds) {
     if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
+
+    struct Py3dGameObject *newOwner = NULL;
+    PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &newOwner);
+
+    Py_CLEAR(self->base.owner);
+    self->base.owner = Py_NewRef(newOwner);
 
     Vec3Fill(self->position, 0.0f);
     QuaternionIdentity(self->orientation);
@@ -218,7 +238,15 @@ static int Py3dTransform_Init(struct Py3dTransform *self, PyObject *args, PyObje
     Mat4Identity(self->wMatrixCache);
     Mat4Identity(self->witMatrixCache);
     Mat4Identity(self->viewMatrixCache);
-    self->dynamicsBody = createDynamicsBody();
+
+    struct PhysicsSpace *space = Py3dTransform_GetPhysicsSpace(self);
+    if (space == NULL) {
+        warning_log("[Transform]: Could not create dynamics body, querying for physics space pointer returned NULL");
+    } else {
+        // TODO: can init be called more than once? If so, we leak this dynamics body
+        self->dynamicsBody = createDynamicsBody(space);
+    }
+    space = NULL;
 
     return 0;
 }
@@ -271,22 +299,32 @@ void Py3dTransform_FinalizeCtor() {
     Py_CLEAR(py3dTransformCtor);
 }
 
-struct Py3dTransform *Py3dTransform_New() {
+struct Py3dTransform *Py3dTransform_New(struct Py3dGameObject *newOwner) {
     if (py3dTransformCtor == NULL) {
         critical_log("%s", "[Python]: Py3dTransform has not been initialized properly");
 
         return NULL;
     }
 
-    PyObject *py3dtransform = PyObject_CallNoArgs(py3dTransformCtor);
-    if (py3dtransform == NULL) {
-        critical_log("%s", "[Python]: Failed to allocate Transform in python interpreter");
+    if (newOwner == NULL) {
+        error_log("[GameObject]: Transform requires game object to be instantiated");
+
+        return NULL;
+    }
+
+    PyObject *args = Py_BuildValue("(O)", newOwner);
+
+    PyObject *ret = PyObject_Call(py3dTransformCtor, args, NULL);
+    Py_CLEAR(args);
+    if (ret == NULL || !Py3dTransform_Check(ret)) {
+        Py_CLEAR(ret);
+        critical_log("%s", "[GameObject]: Failed to allocate Transform component");
         handleException();
 
         return NULL;
     }
 
-    return (struct Py3dTransform *) py3dtransform;
+    return (struct Py3dTransform *) ret;
 }
 
 int Py3dTransform_Check(PyObject  *obj) {
