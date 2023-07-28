@@ -56,19 +56,6 @@ if(NOT soil_POPULATED)
     )
 endif()
 
-if (NOT PY3D_TEST_PROJECT_LOCATION)
-    set(PY3D_TEST_PROJECT_LOCATION https://github.com/codemonkey760/py3dengine-test.git)
-endif()
-FetchContent_Declare(
-    test_project
-    GIT_REPOSITORY ${PY3D_TEST_PROJECT_LOCATION}
-    GIT_TAG master
-)
-FetchContent_GetProperties(test_project)
-if(NOT test_project_POPULATED)
-    FetchContent_Populate(test_project)
-endif()
-
 find_package(Python COMPONENTS Development)
 
 include_directories(src/headers)
@@ -132,9 +119,13 @@ target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(py3dengine glfw Python::Python json-c soil ode)
 
+if (NOT PY3D_TEST_PROJECT_LOCATION)
+    message(FATAL_ERROR, "Please set 'PY3D_TEST_PROJECT_LOCATION'")
+endif()
+
 add_custom_command(
     TARGET
     py3dengine
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${test_project_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PY3D_TEST_PROJECT_LOCATION} ${CMAKE_CURRENT_BINARY_DIR}
 )
