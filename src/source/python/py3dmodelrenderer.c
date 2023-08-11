@@ -54,6 +54,28 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     setShaderMatrixUniform(self->shader, "gWITMtx", getTransformWITMtx(transform), 4);
     setShaderTextureUniform(self->shader, "gDiffuseMap", self->material->_diffuseMap);
 
+    float data[3] = {0.0f};
+
+    data[0] = 0.8f; data[1] = data[2] = 0.5f;
+    setShaderFloatArrayUniform(self->shader, "gDiffuseLight", data, 3);
+    data[0] = 0.8f; data[1] = data[2] = 0.5f;
+    setShaderFloatArrayUniform(self->shader, "gSpecLight", data, 3);
+    data[0] = 0.2f; data[1] = data[2] = 0.1f;
+    setShaderFloatArrayUniform(self->shader, "gAmbientLight", data, 3);
+    data[0] = data[1] = 10.0f; data[2] = -10.0f;
+    setShaderFloatArrayUniform(self->shader, "gLightPos", data, 3);
+    data[0] = 512.0f;
+    setShaderFloatArrayUniform(self->shader, "gSpecPower", data, 1);
+    data[0] = 3.0f;
+    setShaderFloatArrayUniform(self->shader, "gLightInt", data, 1);
+    data[0] = 0.0f; data[1] = 0.01f; data[2] = 0.01f;
+    setShaderFloatArrayUniform(self->shader, "gLightAtt", data, 3);
+
+    data[0] = data[1] = data[2] = 1.0f;
+    setShaderFloatArrayUniform(self->shader, "gSpecMaterial", data, 3);
+    data[0] = data[1] = data[2] = 1.0f;
+    setShaderFloatArrayUniform(self->shader, "gAmbientMaterial", data, 3);
+
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
     Mat4Mult(wvpMtx, getTransformWorldMtx(transform), rc->vpMtx);
