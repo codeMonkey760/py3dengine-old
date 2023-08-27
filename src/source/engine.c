@@ -395,3 +395,15 @@ int getCursorMode() {
 void setCursorMode(int newMode) {
     glfwSetInputMode(glfwWindow, GLFW_CURSOR, newMode);
 }
+
+float getFPS() {
+    return fps;
+}
+
+float getMS() {
+    return mpf;
+}
+
+float getUptime() {
+    return elapsed_time;
+}
