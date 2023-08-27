@@ -37,6 +37,7 @@ PyTypeObject Py3dTextRenderer_Type = {
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_init = (initproc) Py3dTextRenderer_Init,
+    .tp_new = PyType_GenericNew,
     .tp_methods = Py3dTextRenderer_Methods,
     .tp_dealloc = (destructor) Py3dTextRenderer_Dealloc,
 };
@@ -116,6 +117,7 @@ static void Py3dTextRenderer_Dealloc(struct Py3dTextRenderer *self) {
     self->shader = NULL;
     self->char_map = NULL;
     Py_CLEAR(self->text);
+    Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }
 
 static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height) {
