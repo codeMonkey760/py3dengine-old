@@ -5,7 +5,6 @@
 
 #include "logger.h"
 #include "config.h"
-#include "util.h"
 #include "python/py3drenderingcontext.h"
 #include "python/python_util.h"
 #include "python/python_wrapper.h"
@@ -19,8 +18,6 @@ extern PyObject *Py3dErr_SceneError;
 static float elapsed_time = 0.0f;
 static float fps = 0.0f;
 static float mpf = 0.0f;
-static float time_since_last_report = 0.0f;
-static bool print_report = true;
 static PyObject *sceneDict = NULL;
 static struct Py3dScene *activeScene = NULL;
 static struct Py3dScene *sceneAwaitingActivation = NULL;
@@ -51,7 +48,7 @@ static void updateStats(float dt) {
     frame_count++;
     since_last_calc += dt;
 
-    if (print_report && since_last_calc >= 1.0f) {
+    if (since_last_calc >= 1.0f) {
         float _ms = (since_last_calc / (float) frame_count) * 1000.0f;
         float _fps = (float) frame_count;
 
@@ -62,17 +59,6 @@ static void updateStats(float dt) {
 
         fps = _fps;
         mpf = _ms;
-    }
-}
-
-static void printStats(float dt) {
-    time_since_last_report += dt;
-    if (time_since_last_report >= 1.0f) {
-        time_since_last_report = clampValue(time_since_last_report, 1.0f);
-
-        if (print_report) {
-            trace_log("UP_TIME: %.2f FPS %.2f MS %.2f", elapsed_time, fps, mpf);
-        }
     }
 }
 
@@ -165,7 +151,6 @@ void runEngine() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         updateStats(dt);
-        printStats(dt);
 
         doSceneActivation();
 
