@@ -143,6 +143,7 @@ static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int 
     if (justify == TEXT_JUSTIFY_LEFT) {
         x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f;
     } else if (justify == TEXT_JUSTIFY_RIGHT){
+        // TODO: this is completely wrong, multiline text has lines vertically reversed
         x = 1.0f - glyph_width_in_units - (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f);
     }
     float y = (((float) row * -1) * glyph_height_in_units) - (glyph_height_in_units / 2.0f) + 1.0f;
