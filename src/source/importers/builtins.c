@@ -104,6 +104,13 @@ void importBuiltInResources(struct Py3dResourceManager *rm) {
     Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
     script = NULL;
 
+    importBuiltinComponent(&script, "TextRendererComponent");
+    if (script == NULL) {
+        error_log("%s", "[BuiltInImporter]: Unable to load TextRendererComponent builtin");
+    }
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
+    script = NULL;
+
     importQuadModel(rm);
     importSpriteShader(rm);
 }

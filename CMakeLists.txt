@@ -100,6 +100,7 @@ add_executable(
     src/source/python/py3dcollisionevent.c
     src/source/python/py3dscene.c
     src/source/python/py3dresourcemanager.c
+    src/source/python/py3dtextrenderer.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c

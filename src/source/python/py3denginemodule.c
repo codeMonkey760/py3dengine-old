@@ -12,6 +12,7 @@
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
 #include "python/py3dscene.h"
+#include "python/py3dtextrenderer.h"
 #include "engine.h"
 
 PyObject *Py3dErr_SceneError = NULL;
@@ -163,6 +164,13 @@ PyInit_py3dEngine(void) {
 
     if (!PyInit_Py3dScene(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Scene to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (!PyInit_Py3dTextRenderer(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach TextRendererComponent to py3dengine module");
 
         Py_CLEAR(newModule);
         return NULL;
