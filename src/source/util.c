@@ -12,6 +12,15 @@ void Mat4Identity(float a[16]) {
     }
 }
 
+void Mat3Identity(float a[9]) {
+    int i;
+    if (a == NULL) return;
+
+    for (i = 0; i < 9; ++i) {
+        a[i] = (i % 4 == 0) ? 1.0f : 0.0f;
+    }
+}
+
 void Mat4TranslationF(float a[16], float x, float y, float z) {
     float v[4] = {x, y, z, 0.0f};
 
