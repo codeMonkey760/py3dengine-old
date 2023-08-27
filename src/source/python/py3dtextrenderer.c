@@ -9,6 +9,9 @@
 #include "util.h"
 #include "engine.h"
 
+#define TEXT_JUSTIFY_LEFT 0
+#define TEXT_JUSTIFY_RIGHT 1
+
 struct Py3dTextRenderer {
     struct Py3dComponent base;
     struct Model *quad;
@@ -16,6 +19,7 @@ struct Py3dTextRenderer {
     struct Texture *char_map;
     PyObject *text;
     float color[4];
+    int text_justify;
 };
 
 static PyMethodDef Py3dTextRenderer_Methods[] = {
@@ -23,6 +27,7 @@ static PyMethodDef Py3dTextRenderer_Methods[] = {
     {"parse", (PyCFunction) Py3dTextRenderer_Parse, METH_VARARGS, "Parse function for TextRendererComponent"},
     {"set_text", (PyCFunction) Py3dTextRenderer_SetText, METH_VARARGS, "Set the text to render"},
     {"set_color", (PyCFunction) Py3dTextRenderer_SetColor, METH_VARARGS, "Set the text color"},
+    {"set_text_justify", (PyCFunction) Py3dTextRenderer_SetTextJustify, METH_VARARGS, "Set text justification"},
     {NULL}
 };
 
@@ -108,6 +113,7 @@ static int Py3dTextRenderer_Init(struct Py3dTextRenderer *self, PyObject *args, 
     self->color[1] = 0.0f;
     self->color[2] = 0.0f;
     self->color[3] = 0.0f;
+    self->text_justify = TEXT_JUSTIFY_LEFT;
 
     return 0;
 }
@@ -120,7 +126,7 @@ static void Py3dTextRenderer_Dealloc(struct Py3dTextRenderer *self) {
     Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }
 
-static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height) {
+static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height, int justify) {
     int screen_width = 0, screen_height = 0;
     getRenderingTargetDimensions(&screen_width, &screen_height);
 
@@ -133,7 +139,12 @@ static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int 
     Mat4ScalingF(S, glyph_width_in_units, glyph_height_in_units, 1.0f);
 
     float T[16];
-    float x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f;
+    float x;
+    if (justify == TEXT_JUSTIFY_LEFT) {
+        x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f;
+    } else if (justify == TEXT_JUSTIFY_RIGHT){
+        x = 1.0f - glyph_width_in_units - (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f);
+    }
     float y = (((float) row * -1) * glyph_height_in_units) - (glyph_height_in_units / 2.0f) + 1.0f;
     Mat4TranslationF(T, x, y, 0.0f);
 
@@ -194,19 +205,36 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
     float texMtx[9];
     int col = 0, row = 0;
 
-    for (Py_ssize_t i = 0; i < textLen; ++i) {
-        const char curChar = text[i];
+    if (self->text_justify == TEXT_JUSTIFY_LEFT) {
+        for (Py_ssize_t i = 0; i < textLen; ++i) {
+            const char curChar = text[i];
 
-        if (isprint(curChar)) {
-            calcCharWVPMtx(wvpMtx, row, col, 8, 16);
-            setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
+            if (isprint(curChar)) {
+                calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_LEFT);
+                setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 
-            calcCharTexMtx(texMtx, curChar, 8, 16);
-            setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
+                calcCharTexMtx(texMtx, curChar, 8, 16);
+                setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
 
-            renderModel(self->quad);
+                renderModel(self->quad);
+            }
+            advanceCursor(curChar, &col, &row);
         }
-        advanceCursor(curChar, &col, &row);
+    } else if (self->text_justify == TEXT_JUSTIFY_RIGHT) {
+        for (Py_ssize_t i = textLen-1; i >= 0; --i) {
+            const char curChar = text[i];
+
+            if (isprint(curChar)) {
+                calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_RIGHT);
+                setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
+
+                calcCharTexMtx(texMtx, curChar, 8, 16);
+                setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
+
+                renderModel(self->quad);
+            }
+            advanceCursor(curChar, &col, &row);
+        }
     }
 
     unbindModel(self->quad);
@@ -266,6 +294,14 @@ PyObject *Py3dTextRenderer_Parse(struct Py3dTextRenderer *self, PyObject *args, 
     if (setColorRet == NULL) return NULL;
     Py_CLEAR(setColorRet);
 
+    PyObject *justify = PyDict_GetItemString(parseDataDict, "justify");
+    if (justify == NULL) return NULL;
+    PyObject *setJustifyArgs = Py_BuildValue("(O)", justify);
+    PyObject *setJustifyRet = Py3dTextRenderer_SetTextJustify(self, setJustifyArgs, NULL);
+    Py_CLEAR(setJustifyArgs);
+    if (setJustifyRet == NULL) return NULL;
+    Py_CLEAR(setJustifyRet);
+
     Py_RETURN_NONE;
 }
 
@@ -290,6 +326,22 @@ PyObject *Py3dTextRenderer_SetColor(struct Py3dTextRenderer *self, PyObject *arg
     self->color[1] = g;
     self->color[2] = b;
     self->color[3] = a;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dTextRenderer_SetTextJustify(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
+    const char *newMode = NULL;
+    if (PyArg_ParseTuple(args, "s", &newMode) != 1) return NULL;
+
+    if (strcmp(newMode, "left") == 0) {
+        self->text_justify = TEXT_JUSTIFY_LEFT;
+    } else if (strcmp(newMode, "right") == 0) {
+        self->text_justify = TEXT_JUSTIFY_RIGHT;
+    } else {
+        PyErr_Format(PyExc_ValueError, "Unknown text justification mode \"%s\"", newMode);
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
