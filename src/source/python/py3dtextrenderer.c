@@ -132,7 +132,7 @@ static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int 
 
     float T[16];
     float x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f;
-    float y = (((float) row) * glyph_height_in_units) - (glyph_height_in_units / 2.0f);
+    float y = (((float) row * -1) * glyph_height_in_units) - (glyph_height_in_units / 2.0f) + 1.0f;
     Mat4TranslationF(T, x, y, 0.0f);
 
     Mat4Mult(out, S, T);
