@@ -32,7 +32,11 @@ const char *spriteFragShader =
 "layout(location = 0) out vec4 outputColor;\n"
 "\n"
 "void main() {\n"
-"   outputColor = vec4(texture(gSprite, texCoord).rgb * gMixColor, 1.0);"
+"   vec4 spriteColor = texture(gSprite, texCoord);\n"
+"   if (spriteColor.a < 0.5) {\n"
+"      discard;\n"
+"   }\n"
+"   outputColor = vec4(spriteColor.rgb * gMixColor, 1.0);\n"
 "}\n";
 
 static void importQuadModel(struct Py3dResourceManager *rm) {
