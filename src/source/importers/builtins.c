@@ -27,12 +27,22 @@ const char *spriteFragShader =
 "in vec2 texCoord;\n"
 "\n"
 "uniform vec3 gMixColor;\n"
+"uniform vec4 gBackgroundColor;\n"
 "uniform sampler2D gSprite;\n"
 "\n"
 "layout(location = 0) out vec4 outputColor;\n"
 "\n"
 "void main() {\n"
-"   outputColor = vec4(texture(gSprite, texCoord).rgb * gMixColor, 1.0);"
+"   vec4 spriteColor = texture(gSprite, texCoord);\n"
+"   if (spriteColor.a < 0.5) {\n"
+"      if (gBackgroundColor.a < 0.5) {\n"
+"         discard;\n"
+"      } else {\n"
+"         outputColor = gBackgroundColor;\n"
+"      }\n"
+"   } else {\n"
+"      outputColor = vec4(spriteColor.rgb * gMixColor, 1.0);\n"
+"   }\n"
 "}\n";
 
 static void importQuadModel(struct Py3dResourceManager *rm) {
@@ -100,6 +110,13 @@ void importBuiltInResources(struct Py3dResourceManager *rm) {
     importBuiltinComponent(&script, "ColliderComponent");
     if (script == NULL) {
         error_log("%s", "[BuiltInImporter]: Unable to load ColliderComponent builtin");
+    }
+    Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
+    script = NULL;
+
+    importBuiltinComponent(&script, "TextRendererComponent");
+    if (script == NULL) {
+        error_log("%s", "[BuiltInImporter]: Unable to load TextRendererComponent builtin");
     }
     Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
     script = NULL;

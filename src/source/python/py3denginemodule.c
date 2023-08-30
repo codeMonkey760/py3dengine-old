@@ -12,6 +12,7 @@
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
 #include "python/py3dscene.h"
+#include "python/py3dtextrenderer.h"
 #include "engine.h"
 
 PyObject *Py3dErr_SceneError = NULL;
@@ -64,11 +65,26 @@ static PyObject *Py3dEngine_UnloadScene(PyObject *self, PyObject *args, PyObject
     Py_RETURN_NONE;
 }
 
+static PyObject *Py3dEngine_GetFPS(PyObject *self, PyObject *args, PyObject *kwds) {
+    return PyFloat_FromDouble(getFPS());
+}
+
+static PyObject *Py3dEngine_GetMS(PyObject *self, PyObject *args, PyObject *kwds) {
+    return PyFloat_FromDouble(getMS());
+}
+
+static PyObject *Py3dEngine_GetUptime(PyObject *self, PyObject *args, PyObject *kwds) {
+    return PyFloat_FromDouble(getUptime());
+}
+
 static PyMethodDef Py3dEngine_Methods[] = {
     {"quit", (PyCFunction) Py3dEngine_Quit, METH_NOARGS, "Stop the engine and begin tear down"},
     {"load_scene", (PyCFunction) Py3dEngine_LoadScene, METH_VARARGS, "Load the specified scene into the engine and prepare it for activation"},
     {"activate_scene", (PyCFunction) Py3dEngine_ActivateScene, METH_VARARGS, "Deactivate the current scene and activate the scene with the specified name"},
     {"unload_scene", (PyCFunction) Py3dEngine_UnloadScene, METH_VARARGS, "Delete the scene with the specified name"},
+    {"get_fps", (PyCFunction) Py3dEngine_GetFPS, METH_VARARGS, "Get the \"Frames Per Second\" value from the last time stats were calculated"},
+    {"get_ms", (PyCFunction) Py3dEngine_GetMS, METH_VARARGS, "Get the \"Milliseconds Per Frame\" value from the last time stats were calculated"},
+    {"get_uptime", (PyCFunction) Py3dEngine_GetUptime, METH_VARARGS, "Get the current engine uptime in seconds"},
     {NULL}
 };
 
@@ -163,6 +179,13 @@ PyInit_py3dEngine(void) {
 
     if (!PyInit_Py3dScene(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Scene to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
+    if (!PyInit_Py3dTextRenderer(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach TextRendererComponent to py3dengine module");
 
         Py_CLEAR(newModule);
         return NULL;
