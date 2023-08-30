@@ -132,7 +132,7 @@ static void Py3dTextRenderer_Dealloc(struct Py3dTextRenderer *self) {
     Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }
 
-static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height, int justify) {
+static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height, int justify, int charsUntilLineEnd) {
     int screen_width = 0, screen_height = 0;
     getRenderingTargetDimensions(&screen_width, &screen_height);
 
@@ -148,9 +148,8 @@ static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int 
     float x;
     if (justify == TEXT_JUSTIFY_LEFT) {
         x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f;
-    } else if (justify == TEXT_JUSTIFY_RIGHT){
-        // TODO: this is completely wrong, multiline text has lines vertically reversed
-        x = 1.0f - glyph_width_in_units - (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f);
+    } else if (justify == TEXT_JUSTIFY_RIGHT) {
+        x = 1.0f - (((float) charsUntilLineEnd) * glyph_width_in_units) + (glyph_width_in_units / 2.0f);
     }
     float y = (((float) row * -1) * glyph_height_in_units) - (glyph_height_in_units / 2.0f) + 1.0f;
     Mat4TranslationF(T, x, y, 0.0f);
@@ -185,52 +184,15 @@ static void advanceCursor(char c, int *col, int *row) {
     }
 }
 
-static void renderTextLeftJustify(struct Py3dTextRenderer *self) {
-    float wvpMtx[16];
-    float texMtx[9];
-    int col = 0, row = 0;
+static int countCharsUntilLineEnd(const char *curChar) {
+    int charCount = 0;
 
-    Py_ssize_t textLen = 0;
-    const char *text = PyUnicode_AsUTF8AndSize(self->text, &textLen);
-
-    for (Py_ssize_t i = 0; i < textLen; ++i) {
-        const char curChar = text[i];
-
-        if (isprint(curChar)) {
-            calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_LEFT);
-            setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
-
-            calcCharTexMtx(texMtx, curChar, 8, 16);
-            setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
-
-            renderModel(self->quad);
-        }
-        advanceCursor(curChar, &col, &row);
+    while ( (*curChar) != 0 && (*curChar) != '\n' ) {
+        charCount++;
+        ++curChar;
     }
-}
 
-static void renderTextRightJustify(struct Py3dTextRenderer *self) {
-    float wvpMtx[16];
-    float texMtx[9];
-    int col = 0, row = 0;
-
-    Py_ssize_t textLen = 0;
-    const char *text = PyUnicode_AsUTF8AndSize(self->text, &textLen);
-
-    for (Py_ssize_t i = textLen-1; i >= 0; --i) {
-        const char curChar = text[i];
-
-        if (isprint(curChar)) {
-            calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_RIGHT);
-            setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
-
-            calcCharTexMtx(texMtx, curChar, 8, 16);
-            setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
-
-            renderModel(self->quad);
-        }
-        advanceCursor(curChar, &col, &row);
-    }
+    return charCount;
 }
 
 PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
@@ -254,10 +216,27 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
 
     bindModel(self->quad);
 
-    if (self->text_justify == TEXT_JUSTIFY_LEFT) {
-        renderTextLeftJustify(self);
-    } else if (self->text_justify == TEXT_JUSTIFY_RIGHT) {
-        renderTextRightJustify(self);
+    float wvpMtx[16];
+    float texMtx[9];
+    int col = 0, row = 0;
+
+    Py_ssize_t textLen = 0;
+    const char *text = PyUnicode_AsUTF8AndSize(self->text, &textLen);
+
+    for (Py_ssize_t i = 0; i < textLen; ++i) {
+        const char curChar = text[i];
+        int charsUntilLineEnd = countCharsUntilLineEnd(&text[i]);
+
+        if (isprint(curChar)) {
+            calcCharWVPMtx(wvpMtx, row, col, 8, 16, self->text_justify, charsUntilLineEnd);
+            setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
+
+            calcCharTexMtx(texMtx, curChar, 8, 16);
+            setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
+
+            renderModel(self->quad);
+        }
+        advanceCursor(curChar, &col, &row);
     }
 
     unbindModel(self->quad);
