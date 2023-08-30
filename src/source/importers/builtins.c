@@ -27,6 +27,7 @@ const char *spriteFragShader =
 "in vec2 texCoord;\n"
 "\n"
 "uniform vec3 gMixColor;\n"
+"uniform vec4 gBackgroundColor;\n"
 "uniform sampler2D gSprite;\n"
 "\n"
 "layout(location = 0) out vec4 outputColor;\n"
@@ -34,9 +35,14 @@ const char *spriteFragShader =
 "void main() {\n"
 "   vec4 spriteColor = texture(gSprite, texCoord);\n"
 "   if (spriteColor.a < 0.5) {\n"
-"      discard;\n"
+"      if (gBackgroundColor.a < 0.5) {\n"
+"         discard;\n"
+"      } else {\n"
+"         outputColor = gBackgroundColor;\n"
+"      }\n"
+"   } else {\n"
+"      outputColor = vec4(spriteColor.rgb * gMixColor, 1.0);\n"
 "   }\n"
-"   outputColor = vec4(spriteColor.rgb * gMixColor, 1.0);\n"
 "}\n";
 
 static void importQuadModel(struct Py3dResourceManager *rm) {

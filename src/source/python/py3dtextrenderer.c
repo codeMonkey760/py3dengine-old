@@ -20,6 +20,7 @@ struct Py3dTextRenderer {
     PyObject *text;
     float color[4];
     int text_justify;
+    float background[4];
 };
 
 static PyMethodDef Py3dTextRenderer_Methods[] = {
@@ -28,6 +29,7 @@ static PyMethodDef Py3dTextRenderer_Methods[] = {
     {"set_text", (PyCFunction) Py3dTextRenderer_SetText, METH_VARARGS, "Set the text to render"},
     {"set_color", (PyCFunction) Py3dTextRenderer_SetColor, METH_VARARGS, "Set the text color"},
     {"set_text_justify", (PyCFunction) Py3dTextRenderer_SetTextJustify, METH_VARARGS, "Set text justification"},
+    {"set_background_color", (PyCFunction) Py3dTextRenderer_SetBackgroundColor, METH_VARARGS, "Set the background color"},
     {NULL}
 };
 
@@ -114,6 +116,10 @@ static int Py3dTextRenderer_Init(struct Py3dTextRenderer *self, PyObject *args, 
     self->color[2] = 0.0f;
     self->color[3] = 0.0f;
     self->text_justify = TEXT_JUSTIFY_LEFT;
+    self->background[0] = 0.0f;
+    self->background[1] = 0.0f;
+    self->background[2] = 0.0f;
+    self->background[3] = 0.0f;
 
     return 0;
 }
@@ -198,6 +204,7 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
     enableShader(self->shader);
 
     setShaderFloatArrayUniform(self->shader, "gMixColor", self->color, 3);
+    setShaderFloatArrayUniform(self->shader, "gBackgroundColor", self->background, 4);
     setShaderTextureUniform(self->shader, "gSprite", self->char_map);
 
     bindModel(self->quad);
@@ -303,6 +310,15 @@ PyObject *Py3dTextRenderer_Parse(struct Py3dTextRenderer *self, PyObject *args, 
     if (setJustifyRet == NULL) return NULL;
     Py_CLEAR(setJustifyRet);
 
+    PyObject *background = PyDict_GetItemString(parseDataDict, "background");
+    if (background != NULL) {
+        PyObject *setBackgroundArgs = PySequence_Tuple(background);
+        PyObject *setBackgroundRet = Py3dTextRenderer_SetBackgroundColor(self, setBackgroundArgs, NULL);
+        Py_CLEAR(setBackgroundArgs);
+        if (setBackgroundRet == NULL) return NULL;
+        Py_CLEAR(setBackgroundRet);
+    }
+
     Py_RETURN_NONE;
 }
 
@@ -343,6 +359,18 @@ PyObject *Py3dTextRenderer_SetTextJustify(struct Py3dTextRenderer *self, PyObjec
         PyErr_Format(PyExc_ValueError, "Unknown text justification mode \"%s\"", newMode);
         return NULL;
     }
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dTextRenderer_SetBackgroundColor(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
+    float r, g, b, a;
+    if (PyArg_ParseTuple(args, "ffff", &r, &g, &b, &a) != 1) return NULL;
+
+    self->background[0] = r;
+    self->background[1] = g;
+    self->background[2] = b;
+    self->background[3] = a;
 
     Py_RETURN_NONE;
 }
