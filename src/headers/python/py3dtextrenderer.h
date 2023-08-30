@@ -20,5 +20,6 @@ extern PyObject *Py3dTextRenderer_SetText(struct Py3dTextRenderer *self, PyObjec
 extern PyObject *Py3dTextRenderer_SetColor(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dTextRenderer_SetTextJustify(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dTextRenderer_SetBackgroundColor(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dTextRenderer_SetMargin(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds);
 
 #endif

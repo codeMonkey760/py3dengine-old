@@ -21,6 +21,7 @@ struct Py3dTextRenderer {
     float color[4];
     int text_justify;
     float background[4];
+    float margin[4];
 };
 
 static PyMethodDef Py3dTextRenderer_Methods[] = {
@@ -30,6 +31,7 @@ static PyMethodDef Py3dTextRenderer_Methods[] = {
     {"set_color", (PyCFunction) Py3dTextRenderer_SetColor, METH_VARARGS, "Set the text color"},
     {"set_text_justify", (PyCFunction) Py3dTextRenderer_SetTextJustify, METH_VARARGS, "Set text justification"},
     {"set_background_color", (PyCFunction) Py3dTextRenderer_SetBackgroundColor, METH_VARARGS, "Set the background color"},
+    {"set_margin", (PyCFunction) Py3dTextRenderer_SetMargin, METH_VARARGS, "Set text margin"},
     {NULL}
 };
 
@@ -120,6 +122,10 @@ static int Py3dTextRenderer_Init(struct Py3dTextRenderer *self, PyObject *args, 
     self->background[1] = 0.0f;
     self->background[2] = 0.0f;
     self->background[3] = 0.0f;
+    self->margin[0] = 0.0f;
+    self->margin[1] = 0.0f;
+    self->margin[2] = 0.0f;
+    self->margin[3] = 0.0f;
 
     return 0;
 }
@@ -132,7 +138,7 @@ static void Py3dTextRenderer_Dealloc(struct Py3dTextRenderer *self) {
     Py3dComponent_Dealloc((struct Py3dComponent *) self);
 }
 
-static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height, int justify, int charsUntilLineEnd) {
+static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height, int justify, int charsUntilLineEnd, float *margin) {
     int screen_width = 0, screen_height = 0;
     getRenderingTargetDimensions(&screen_width, &screen_height);
 
@@ -141,17 +147,21 @@ static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int 
     float glyph_width_in_units = ((float) font_width) / quad_width_in_pixels;
     float glyph_height_in_units = ((float) font_height) / quad_height_in_pixels;
 
+    float margin_top_in_units = margin[0] / (((float) screen_height) / 2.0f);
+    float margin_left_in_units = margin[3] / (((float) screen_width) / 2.0f);
+    float margin_right_in_units = margin[1] / (((float) screen_width) / 2.0f);
+
     float S[16];
     Mat4ScalingF(S, glyph_width_in_units, glyph_height_in_units, 1.0f);
 
     float T[16];
     float x;
     if (justify == TEXT_JUSTIFY_LEFT) {
-        x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f;
+        x = (((float) col) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - 1.0f + margin_left_in_units;
     } else if (justify == TEXT_JUSTIFY_RIGHT) {
-        x = 1.0f - (((float) charsUntilLineEnd) * glyph_width_in_units) + (glyph_width_in_units / 2.0f);
+        x = 1.0f - (((float) charsUntilLineEnd) * glyph_width_in_units) + (glyph_width_in_units / 2.0f) - margin_right_in_units;
     }
-    float y = (((float) row * -1) * glyph_height_in_units) - (glyph_height_in_units / 2.0f) + 1.0f;
+    float y = (((float) row * -1) * glyph_height_in_units) - (glyph_height_in_units / 2.0f) + 1.0f - margin_top_in_units;
     Mat4TranslationF(T, x, y, 0.0f);
 
     Mat4Mult(out, S, T);
@@ -229,7 +239,7 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
         int charsUntilLineEnd = countCharsUntilLineEnd(&text[i]);
 
         if (isprint(curChar)) {
-            calcCharWVPMtx(wvpMtx, row, col, 8, 16, self->text_justify, charsUntilLineEnd);
+            calcCharWVPMtx(wvpMtx, row, col, 8, 16, self->text_justify, charsUntilLineEnd, self->margin);
             setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 
             calcCharTexMtx(texMtx, curChar, 8, 16);
@@ -314,6 +324,15 @@ PyObject *Py3dTextRenderer_Parse(struct Py3dTextRenderer *self, PyObject *args, 
         Py_CLEAR(setBackgroundRet);
     }
 
+    PyObject *margin = PyDict_GetItemString(parseDataDict, "margin");
+    if (margin != NULL) {
+        PyObject *setMarginArgs = PySequence_Tuple(margin);
+        PyObject *setMarginRet = Py3dTextRenderer_SetMargin(self, setMarginArgs, NULL);
+        Py_CLEAR(setMarginArgs);
+        if (setMarginRet == NULL) return NULL;
+        Py_CLEAR(setMarginRet);
+    }
+
     Py_RETURN_NONE;
 }
 
@@ -366,6 +385,18 @@ PyObject *Py3dTextRenderer_SetBackgroundColor(struct Py3dTextRenderer *self, PyO
     self->background[1] = g;
     self->background[2] = b;
     self->background[3] = a;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dTextRenderer_SetMargin(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
+    float t, r, b, l;
+    if (PyArg_ParseTuple(args, "ffff", &t, &r, &b, &l) != 1) return NULL;
+
+    self->margin[0] = t;
+    self->margin[1] = r;
+    self->margin[2] = b;
+    self->margin[3] = l;
 
     Py_RETURN_NONE;
 }
