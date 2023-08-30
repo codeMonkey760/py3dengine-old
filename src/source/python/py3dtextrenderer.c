@@ -159,6 +159,7 @@ static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int 
 
 static void calcCharTexMtx(float out[9], char c, int font_width, int font_height) {
     float glyph_width_in_units = ((float) font_width) / 1024.0f;
+    float glyph_height_in_units = ((float) font_height / 16.0f);
     int spaces = c - ' ';
     float offset = ((float) spaces) * glyph_width_in_units;
 
@@ -167,7 +168,7 @@ static void calcCharTexMtx(float out[9], char c, int font_width, int font_height
     out[2] = 0.0f;
 
     out[3] = 0.0f;
-    out[4] = 1.0f; // TODO: this might be too tall
+    out[4] = glyph_height_in_units;
     out[5] = 0.0f;
 
     out[6] = offset;
