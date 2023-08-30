@@ -20,5 +20,8 @@ extern PyObject *unloadScene(const char *sceneName);
 extern void markWindowShouldClose();
 extern int getCursorMode();
 extern void setCursorMode(int newMode);
+extern float getFPS();
+extern float getMS();
+extern float getUptime();
 
 #endif

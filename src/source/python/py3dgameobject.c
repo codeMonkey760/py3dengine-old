@@ -522,7 +522,7 @@ PyObject *Py3dGameObject_GetComponentByIndex(struct Py3dGameObject *self, PyObje
     index = PyNumber_AsSsize_t(indexAsObj, PyExc_IndexError);
     if (index == -1) return NULL;
 
-   return Py3dGameObject_GetChildByIndexInt(self, index);
+   return Py3dGameObject_GetComponentByIndexInt(self, index);
 }
 
 PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *self, Py_ssize_t index) {
