@@ -185,6 +185,54 @@ static void advanceCursor(char c, int *col, int *row) {
     }
 }
 
+static void renderTextLeftJustify(struct Py3dTextRenderer *self) {
+    float wvpMtx[16];
+    float texMtx[9];
+    int col = 0, row = 0;
+
+    Py_ssize_t textLen = 0;
+    const char *text = PyUnicode_AsUTF8AndSize(self->text, &textLen);
+
+    for (Py_ssize_t i = 0; i < textLen; ++i) {
+        const char curChar = text[i];
+
+        if (isprint(curChar)) {
+            calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_LEFT);
+            setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
+
+            calcCharTexMtx(texMtx, curChar, 8, 16);
+            setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
+
+            renderModel(self->quad);
+        }
+        advanceCursor(curChar, &col, &row);
+    }
+}
+
+static void renderTextRightJustify(struct Py3dTextRenderer *self) {
+    float wvpMtx[16];
+    float texMtx[9];
+    int col = 0, row = 0;
+
+    Py_ssize_t textLen = 0;
+    const char *text = PyUnicode_AsUTF8AndSize(self->text, &textLen);
+
+    for (Py_ssize_t i = textLen-1; i >= 0; --i) {
+        const char curChar = text[i];
+
+        if (isprint(curChar)) {
+            calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_RIGHT);
+            setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
+
+            calcCharTexMtx(texMtx, curChar, 8, 16);
+            setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
+
+            renderModel(self->quad);
+        }
+        advanceCursor(curChar, &col, &row);
+    }
+}
+
 PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
     if (self->quad == NULL || self->shader == NULL || self->char_map == NULL) {
         PyErr_SetString(PyExc_ValueError, "TextRendererComponent is not correctly configured");
@@ -198,9 +246,6 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
     struct Py3dRenderingContext *rc = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
-    Py_ssize_t textLen = 0;
-    const char *text = PyUnicode_AsUTF8AndSize(self->text, &textLen);
-
     enableShader(self->shader);
 
     setShaderFloatArrayUniform(self->shader, "gMixColor", self->color, 3);
@@ -209,40 +254,10 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
 
     bindModel(self->quad);
 
-    float wvpMtx[16];
-    float texMtx[9];
-    int col = 0, row = 0;
-
     if (self->text_justify == TEXT_JUSTIFY_LEFT) {
-        for (Py_ssize_t i = 0; i < textLen; ++i) {
-            const char curChar = text[i];
-
-            if (isprint(curChar)) {
-                calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_LEFT);
-                setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
-
-                calcCharTexMtx(texMtx, curChar, 8, 16);
-                setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
-
-                renderModel(self->quad);
-            }
-            advanceCursor(curChar, &col, &row);
-        }
+        renderTextLeftJustify(self);
     } else if (self->text_justify == TEXT_JUSTIFY_RIGHT) {
-        for (Py_ssize_t i = textLen-1; i >= 0; --i) {
-            const char curChar = text[i];
-
-            if (isprint(curChar)) {
-                calcCharWVPMtx(wvpMtx, row, col, 8, 16, TEXT_JUSTIFY_RIGHT);
-                setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
-
-                calcCharTexMtx(texMtx, curChar, 8, 16);
-                setShaderMatrixUniform(self->shader, "gTexMtx", texMtx, 3);
-
-                renderModel(self->quad);
-            }
-            advanceCursor(curChar, &col, &row);
-        }
+        renderTextRightJustify(self);
     }
 
     unbindModel(self->quad);
