@@ -2,7 +2,6 @@
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
 #include "python/py3dcomponent.h"
-#include "python/py3dtransform.h"
 #include "python/py3dmodelrenderer.h"
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
@@ -121,13 +120,6 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-    if (!PyInit_Py3dTransform(newModule)) {
-        critical_log("%s", "[Python]: Failed to attach Transform to py3dengine module");
-
-        Py_CLEAR(newModule);
-        return NULL;
-    }
-
     if (!PyInit_Py3dRenderingContext(newModule)) {
         critical_log("%s", "[Python]: Failed to attach RenderingContext to py3dengine module");
 
@@ -235,10 +227,6 @@ int initPy3dEngineObjects() {
         return false;
     }
 
-    if (!Py3dTransform_FindCtor(module)) {
-        return false;
-    }
-
     if (!Py3dRenderingContext_FindCtor(module)) {
         return false;
     }
@@ -280,7 +268,6 @@ PyObject *getPy3dEngineModule() {
 
 void finalizePy3dEngineModule() {
     Py_CLEAR(Py3dErr_SceneError);
-    Py3dTransform_FinalizeCtor();
     Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();
     finalizePy3dResourceManagerCtor();

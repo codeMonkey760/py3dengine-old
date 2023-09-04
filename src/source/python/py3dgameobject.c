@@ -6,10 +6,12 @@
 #include "python/py3dgameobject.h"
 #include "python/python_util.h"
 #include "python/py3dcomponent.h"
-#include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dcollisionevent.h"
 #include "python/py3dscene.h"
+#include "math/vector3.h"
+#include "math/quaternion.h"
+#include "util.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
@@ -20,7 +22,14 @@ struct Py3dGameObject {
     PyObject *childrenList;
     PyObject *parent;
     PyObject *name;
-    PyObject *transform;
+    // TODO: these will be defined in world space until matrix chaining has been implemented
+    // Then they will be defined relative to the parent game object's space
+    PyObject *position;
+    PyObject *orientation;
+    PyObject *scale;
+    int matrixCacheDirty;
+    float wMatrixCache[16];
+    float witMatrixCache[16];
 };
 
 static PyObject *py3dGameObjectCtor = NULL;
@@ -31,13 +40,14 @@ static int Py3dGameObject_Traverse(struct Py3dGameObject *self, visitproc visit,
     Py_VISIT(self->componentsList);
     Py_VISIT(self->childrenList);
     Py_VISIT(self->parent);
-    Py_VISIT(self->transform);
     Py_VISIT(self->scene);
     return 0;
 }
 
 static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
-    Py_CLEAR(self->transform);
+    Py_CLEAR(self->scale);
+    Py_CLEAR(self->orientation);
+    Py_CLEAR(self->position);
     Py_CLEAR(self->name);
     Py_CLEAR(self->parent);
     Py_CLEAR(self->childrenList);
@@ -68,7 +78,12 @@ static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyOb
     self->parent = Py_NewRef(Py_None);
     self->name = Py_NewRef(Py_None);
     self->scene = (struct Py3dScene *) Py_NewRef(newScene);
-    self->transform = (PyObject *) Py3dTransform_New(self);
+    self->position = (PyObject *) Py3dVector3_New(0.0f, 0.0f, 0.0f);
+    self->orientation = (PyObject *) Py3dQuaternion_New(0.0f, 0.0f, 0.0f, 1.0f);
+    self->scale = (PyObject *) Py3dVector3_New(1.0f, 1.0f, 1.0f);
+    self->matrixCacheDirty = 0;
+    Mat4Identity(self->wMatrixCache);
+    Mat4Identity(self->witMatrixCache);
 
     return 0;
 }
@@ -85,7 +100,6 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"get_scene", (PyCFunction) Py3dGameObject_GetScenePython, METH_NOARGS, "Get Game Object's scene"},
     {"get_name", (PyCFunction) Py3dGameObject_GetName, METH_NOARGS, "Get Game Object's name"},
     {"set_name", (PyCFunction) Py3dGameObject_SetName, METH_VARARGS, "Set Game Object's name"},
-    {"get_transform", (PyCFunction) Py3dGameObject_GetTransform, METH_NOARGS, "Get Game Object's transform"},
     {"start", (PyCFunction) Py3dGameObject_Start, METH_VARARGS, "Propagate start message"},
     {"activate", (PyCFunction) Py3dGameObject_Activate, METH_VARARGS, "Propagate activate message"},
     {"update", (PyCFunction) Py3dGameObject_Update, METH_VARARGS, "Update Game Object"},
@@ -101,6 +115,15 @@ PyMethodDef Py3dGameObject_Methods[] = {
     {"get_component_by_type", (PyCFunction) Py3dGameObject_GetComponentByType, METH_VARARGS, "Get a ref to the first Component of the specified type"},
     {"get_component_by_index", (PyCFunction) Py3dGameObject_GetComponentByIndex, METH_VARARGS, "Get a ref to the component at the specified index"},
     {"get_component_count", (PyCFunction) Py3dGameObject_GetComponentCount, METH_NOARGS, "Get the number of components this GameObject has"},
+    {"get_position", (PyCFunction) Py3dGameObject_GetPosition, METH_NOARGS, "Get position"},
+    {"move", (PyCFunction) Py3dGameObject_Move, METH_VARARGS, "Move the game object by displacement value"},
+    {"set_position", (PyCFunction) Py3dGameObject_SetPosition, METH_VARARGS, "Set the position to absolute value"},
+    {"get_orientation", (PyCFunction) Py3dGameObject_GetOrientation, METH_NOARGS, "Get orientation"},
+    {"rotate", (PyCFunction) Py3dGameObject_Rotate, METH_VARARGS, "Rotate the game object by displacement value"},
+    {"set_orientation", (PyCFunction) Py3dGameObject_SetOrientation, METH_VARARGS, "Set the orientation to absolute value"},
+    {"get_scale", (PyCFunction) Py3dGameObject_GetScale, METH_NOARGS, "Get scale"},
+    {"stretch", (PyCFunction) Py3dGameObject_Stretch, METH_VARARGS, "Stretch the transform by factor value"},
+    {"set_scale", (PyCFunction) Py3dGameObject_SetScale, METH_VARARGS, "Set the scale to absolute value"},
     {NULL}
 };
 
@@ -260,12 +283,6 @@ extern void Py3dGameObject_SetNameCStr(struct Py3dGameObject *self, const char *
 
     Py_DECREF(self->name);
     self->name = newNameObj;
-}
-
-PyObject *Py3dGameObject_GetTransform(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored)) {
-    Py_INCREF(self->transform);
-
-    return (PyObject *) self->transform;
 }
 
 PyObject *Py3dGameObject_Start(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -580,10 +597,6 @@ static void passMessageToComponent(PyObject *component, int(*acceptMessage)(stru
 }
 
 static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
-    PyObject *transform = Py3dGameObject_GetTransform(self, NULL);
-    passMessageToComponent(transform, acceptMessage, messageName, args);
-    Py_CLEAR(transform);
-
     Py_ssize_t componentCount = PySequence_Size(self->componentsList);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
         PyObject *curComponent = Py_NewRef(PyList_GetItem(self->componentsList, i));
@@ -624,3 +637,165 @@ static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(s
 
     Py_RETURN_NONE;
 }
+
+const float *Py3dGameObject_GetPositionFA(struct Py3dGameObject *self) {
+    return ((struct Py3dVector3 *) self->position)->elements;
+}
+
+PyObject *Py3dGameObject_GetPosition(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return Py_NewRef(self->position);
+}
+
+PyObject *Py3dGameObject_Move(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dVector3 *displacement = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &displacement) != 1) return NULL;
+
+    PyObject *result = PyNumber_Add((PyObject *) self->position, (PyObject *) displacement);
+    if (result == NULL) return NULL;
+
+    Py_CLEAR(self->position);
+    self->position = result; // New Ref acquired from PyNumber_Add call
+
+    self->matrixCacheDirty = 1;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dGameObject_SetPosition(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dVector3 *newPosition = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &newPosition) != 1) return NULL;
+
+    Py_CLEAR(self->position);
+    self->position = Py_NewRef(newPosition);
+
+    self->matrixCacheDirty = 1;
+
+    Py_RETURN_NONE;
+}
+
+const float *Py3dGameObject_GetOrientationFA(struct Py3dGameObject *self) {
+    return ((struct Py3dQuaternion *) self->orientation)->elements;
+}
+
+PyObject *Py3dGameObject_GetOrientation(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return Py_NewRef(self->orientation);
+}
+PyObject *Py3dGameObject_Rotate(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dQuaternion *displacement = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dQuaternion_Type, &displacement) != 1) return NULL;
+
+    PyObject *result = PyNumber_Multiply((PyObject *) self->orientation,(PyObject *) displacement);
+    if (result == NULL) return NULL;
+
+    Py_CLEAR(self->orientation);
+    self->orientation = result; // New Ref acquired from PyNumber_Multiply call
+
+    self->matrixCacheDirty = 1;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dGameObject_SetOrientation(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dQuaternion *newOrientation = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dQuaternion_Type, &newOrientation) != 1) return NULL;
+
+    Py_CLEAR(self->orientation);
+    self->orientation = Py_NewRef(newOrientation);
+
+    self->matrixCacheDirty = 1;
+
+    Py_RETURN_NONE;
+}
+
+const float *Py3dGameObject_GetScaleFA(struct Py3dGameObject *self) {
+    return ((struct Py3dVector3 *) self->scale)->elements;
+}
+
+PyObject *Py3dGameObject_GetScale(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    return Py_NewRef(self->orientation);
+}
+PyObject *Py3dGameObject_Stretch(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dVector3 *factor = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &factor) != 1) return NULL;
+
+    PyObject *result = PyNumber_Multiply((PyObject *) self->orientation,(PyObject *) factor);
+    if (result == NULL) return NULL;
+
+    Py_CLEAR(self->scale);
+    self->scale = result; // New Ref acquired from PyNumber_Multiply call
+
+    self->matrixCacheDirty = 1;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dGameObject_SetScale(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
+    struct Py3dVector3 *newScale = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &newScale) != 1) return NULL;
+
+    Py_CLEAR(self->scale);
+    self->scale = Py_NewRef(newScale);
+
+    self->matrixCacheDirty = 1;
+
+    Py_RETURN_NONE;
+}
+
+static void refreshMatrixCaches(struct Py3dGameObject *self) {
+    if (self->matrixCacheDirty == 0) return;
+
+    // TODO: all of this nasty matrix multiplication can be removed for a substantial optimization
+    // work out the needed component multiplication on paper so that we can remove all of the
+    // multiplying by 1 and 0
+    float sMtx[16] = {0.0f};
+
+    Mat4ScalingFA(sMtx, Py3dGameObject_GetScaleFA(self));
+
+    float rMtx[16] = {0.0f};
+    Mat4RotationQuaternionFA(rMtx, Py3dGameObject_GetOrientationFA(self));
+
+    float tMtx[16] = {0.0f};
+    Mat4TranslationFA(tMtx, Py3dGameObject_GetPositionFA(self));
+
+    float wMtx[16] = {0.0f};
+    Mat4Mult(wMtx, sMtx, rMtx);
+    Mat4Mult(wMtx, wMtx, tMtx);
+
+    Mat4Copy(self->wMatrixCache, wMtx);
+
+    Mat4Inverse(self->witMatrixCache, wMtx);
+    Mat4Transpose(self->witMatrixCache, self->witMatrixCache);
+
+    self->matrixCacheDirty = 0;
+}
+
+const float *Py3dGameObject_GetWorldMatrix(struct Py3dGameObject *self) {
+    refreshMatrixCaches(self);
+
+    return self->wMatrixCache;
+}
+
+const float *Py3dGameObject_GetWITMatrix(struct Py3dGameObject *self) {
+    refreshMatrixCaches(self);
+
+    return self->witMatrixCache;
+}
+
+void Py3dGameObject_CalculateViewMatrix(struct Py3dGameObject *self, float dst[16]) {
+    if (dst == NULL) return;
+
+    float camTarget[3] = {0.0f, 0.0f, 1.0f};
+    float camUp[3] = {0.0f, 1.0f, 0.0f};
+
+    const float *pos = Py3dGameObject_GetPositionFA(self);
+    const float *orientation = Py3dGameObject_GetOrientationFA(self);
+
+    // TODO: this can probably be optimized as well
+    QuaternionVec3Rotation(camTarget, orientation, camTarget);
+    Vec3Add(camTarget, pos, camTarget);
+
+    QuaternionVec3Rotation(camUp, orientation, camUp);
+
+    Mat4LookAtLH(dst, pos, camTarget, camUp);
+}
+

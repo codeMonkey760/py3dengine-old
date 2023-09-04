@@ -1,7 +1,6 @@
 #include "python/py3dcollider.h"
 #include "python/python_util.h"
 #include "python/py3dgameobject.h"
-#include "python/py3dtransform.h"
 #include "logger.h"
 #include "physics/collision.h"
 #include "python/py3dscene.h"
@@ -28,7 +27,7 @@ static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dCollider *self) {
     return scene->space;
 }
 
-static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
+static struct Py3dGameObject *getOwner(struct Py3dCollider *self) {
     PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
 
     if (!Py3dGameObject_Check(owner)) {
@@ -38,16 +37,7 @@ static struct Py3dTransform *getTransform(struct Py3dCollider *self) {
         return NULL;
     }
 
-    PyObject *transform = Py3dGameObject_GetTransform((struct Py3dGameObject *) owner, NULL);
-    Py_CLEAR(owner);
-    if (!Py3dTransform_Check(transform)) {
-        Py_CLEAR(transform);
-        PyErr_SetString(PyExc_ValueError, "ColliderComponent owner has no transform");
-
-        return NULL;
-    }
-
-    return (struct Py3dTransform *) transform;
+    return (struct Py3dGameObject *) owner;
 }
 
 static void deleteGeom(struct Py3dCollider *self) {
@@ -134,14 +124,6 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
         return NULL;
     }
 
-    struct Py3dTransform *transform = getTransform(self);
-    if (transform == NULL) {
-        critical_log("[ColliderComponent]: Could not attach new ode geom to py3dtransform dynamic body");
-        dGeomDestroy(newGeom);
-        newGeom = NULL;
-        return NULL;
-    }
-
     struct PhysicsSpace *space = getOwnersPhysicsSpace(self);
     if (space == NULL) {
         PyErr_SetString(PyExc_ValueError, "[ColliderComponent]: Could not obtain owners physics space");
@@ -152,12 +134,10 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
     }
 
     dGeomSetData(newGeom, self);
-    dGeomSetBody(newGeom, transform->dynamicsBody);
+    // TODO: fix physics: dGeomSetBody(newGeom, transform->dynamicsBody);
     addGeomToWorldSpace(space, newGeom);
     deleteGeom(self);
     self->geomId = newGeom;
-
-    Py_CLEAR(transform);
 
     Py_RETURN_NONE;
 }

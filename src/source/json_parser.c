@@ -2,15 +2,15 @@
 #include <json.h>
 
 #include "logger.h"
-#include "util.h"
 #include "json_parser.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dresourcemanager.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"
 #include "python/py3dcomponent.h"
-#include "python/py3dtransform.h"
 #include "python/python_util.h"
+#include "math/vector3.h"
+#include "math/quaternion.h"
 
 static PyObject *createPyDictFromJsonObject(json_object *json);
 static PyObject *createPyListFromJsonArray(json_object *json);
@@ -40,6 +40,69 @@ static bool parseVec(json_object *json, const char *name, float dst[4], size_t v
     }
 
     return true;
+}
+
+static PyObject *parseVector3(json_object *json) {
+    if (json == NULL || !json_object_is_type(json, json_type_object)) return NULL;
+
+    json_object *x = fetchProperty(json, "x", json_type_double);
+    if (x == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Vector3 has no x component");
+        return NULL;
+    }
+
+    json_object *y = fetchProperty(json, "y", json_type_double);
+    if (y == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Vector3 has no y component");
+        return NULL;
+    }
+
+    json_object *z = fetchProperty(json, "z", json_type_double);
+    if (z == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Vector3 has no z component");
+        return NULL;
+    }
+
+    return (PyObject *) Py3dVector3_New(
+        (float) json_object_get_double(x),
+        (float) json_object_get_double(y),
+        (float) json_object_get_double(z)
+    );
+}
+
+static PyObject *parseQuaternion(json_object *json) {
+    if (json == NULL || !json_object_is_type(json, json_type_object)) return NULL;
+
+    json_object *x = fetchProperty(json, "x", json_type_double);
+    if (x == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Quaternion has no x component");
+        return NULL;
+    }
+
+    json_object *y = fetchProperty(json, "y", json_type_double);
+    if (y == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Quaternion has no y component");
+        return NULL;
+    }
+
+    json_object *z = fetchProperty(json, "z", json_type_double);
+    if (z == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Quaternion has no z component");
+        return NULL;
+    }
+
+    json_object *w = fetchProperty(json, "w", json_type_double);
+    if (w == NULL) {
+        PyErr_SetString(PyExc_AttributeError, "Quaternion has no w component");
+        return NULL;
+    }
+
+    return (PyObject *) Py3dQuaternion_New(
+        (float) json_object_get_double(x),
+        (float) json_object_get_double(y),
+        (float) json_object_get_double(z),
+        (float) json_object_get_double(w)
+    );
 }
 
 static PyObject *createPyValueFromJsonObject(json_object *json) {
@@ -122,29 +185,6 @@ static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *
     return true;
 }
 
-bool parseTransformComponent(json_object *json, PyObject *component) {
-    if (json == NULL || component == NULL || Py3dTransform_Check(component) != 1) return false;
-
-    struct Py3dTransform *transform = (struct Py3dTransform *) component;
-
-    float dataBuffer[4];
-    memset(dataBuffer, 0, sizeof(float) * 4);
-
-    if (parseVec(json, "position", dataBuffer, 3) == false) return false;
-    Vec3Copy(transform->position, dataBuffer);
-
-    if (parseVec(json, "orientation", dataBuffer, 4) == false) return false;
-    QuaternionCopy(transform->orientation, dataBuffer);
-
-    if (parseVec(json, "scale", dataBuffer, 3) == false) return false;
-    Vec3Copy(transform->scale, dataBuffer);
-
-    transform->matrixCacheDirty = true;
-    transform->viewMatrixCacheDirty = true;
-
-    return true;
-}
-
 static bool parsePythonComponent(
     struct Py3dComponent *pyComponent,
     json_object *json,
@@ -189,9 +229,6 @@ bool parseGameObject(
     json_object *json_name = fetchProperty(json, "name", json_type_string);
     if (json_name == NULL) return false;
 
-    json_object *json_transform = fetchProperty(json, "transform", json_type_object);
-    if (json_transform == NULL) return false;
-
     json_object *json_components_array = fetchProperty(json, "components", json_type_array);
     if (json_components_array == NULL) return false;
 
@@ -200,6 +237,10 @@ bool parseGameObject(
 
     json_object *json_enabled = fetchProperty(json, "enabled", json_type_boolean);
     json_object *json_visible = fetchProperty(json, "visible", json_type_boolean);
+
+    json_object *json_position = fetchProperty(json, "position", json_type_object);
+    json_object *json_orientation = fetchProperty(json, "orientation", json_type_object);
+    json_object *json_scale = fetchProperty(json, "scale", json_type_object);
 
     struct Py3dGameObject *newGO = NULL;
     newGO = (struct Py3dGameObject *) Py3dGameObject_New(scene);
@@ -213,9 +254,51 @@ bool parseGameObject(
     if (json_visible != NULL) {
         Py3dGameObject_MakeVisibleBool(newGO, json_object_get_boolean(json_visible));
     }
-    PyObject *transform = Py3dGameObject_GetTransform(newGO, NULL);
-    parseTransformComponent(json_transform, transform);
-    Py_CLEAR(transform);
+    if (json_position != NULL) {
+        PyObject *newPos = parseVector3(json_position);
+        if (newPos == NULL) {
+            warning_log("[JsonParser]: Could not parse position of Game Object with name \"%s\"", gameObjectName);
+            handleException();
+            Py_CLEAR(newPos);
+        } else {
+            PyObject *ret = PyObject_CallMethod((PyObject *) newGO, "set_position", "(O)", newPos);
+            if (ret == NULL) {
+                warning_log("[JsonParser]: Could not set position of Game Object with name \"%s\"", gameObjectName);
+                handleException();
+            }
+            Py_CLEAR(ret);
+        }
+    }
+    if (json_orientation != NULL) {
+        PyObject *newOrientation = parseQuaternion(json_orientation);
+        if (newOrientation == NULL) {
+            warning_log("[JsonParser]: Could not parse orientation of Game Object with name \"%s\"", gameObjectName);
+            handleException();
+            Py_CLEAR(newOrientation);
+        } else {
+            PyObject *ret = PyObject_CallMethod((PyObject *) newGO, "set_orientation", "(O)", newOrientation);
+            if (ret == NULL) {
+                warning_log("[JsonParser]: Could not set orientation of Game Object with name \"%s\"", gameObjectName);
+                handleException();
+            }
+            Py_CLEAR(ret);
+        }
+    }
+    if (json_scale != NULL) {
+        PyObject *newScale = parseVector3(json_scale);
+        if (newScale == NULL) {
+            warning_log("[JsonParser]: Could not parse scale of Game Object with name \"%s\"", gameObjectName);
+            handleException();
+            Py_CLEAR(newScale);
+        } else {
+            PyObject *ret = PyObject_CallMethod((PyObject *) newGO, "set_scale", "(O)", newScale);
+            if (ret == NULL) {
+                warning_log("[JsonParser]: Could not set scale of Game Object with name \"%s\"", gameObjectName);
+                handleException();
+            }
+            Py_CLEAR(ret);
+        }
+    }
 
     size_t json_components_array_length = json_object_array_length(json_components_array);
     for (size_t i = 0; i < json_components_array_length; ++i) {

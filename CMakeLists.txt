@@ -90,7 +90,6 @@ add_executable(
     src/source/python/python_wrapper.c
     src/source/python/py3dcomponent.c
     src/source/python/py3dgameobject.c
-    src/source/python/py3dtransform.c
     src/source/python/py3dmodelrenderer.c
     src/source/python/py3drenderingcontext.c
     src/source/python/py3dspriterenderer.c
