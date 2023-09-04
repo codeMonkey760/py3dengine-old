@@ -27,7 +27,7 @@ void Mat4TranslationF(float a[16], float x, float y, float z) {
     Mat4TranslationFA(a, v);
 }
 
-void Mat4TranslationFA(float a[16], float v[3]) {
+void Mat4TranslationFA(float a[16], const float v[3]) {
     if (a == NULL || v == NULL) return;
 
     Mat4Identity(a);
@@ -45,7 +45,7 @@ void Mat4ScalingF(float a[16], float x, float y, float z) {
     a[10] = z;
 }
 
-void Mat4ScalingFA(float a[16], float v[3]) {
+void Mat4ScalingFA(float a[16], const float v[3]) {
     if (a == NULL || v == NULL) return;
 
     Mat4Identity(a);
@@ -148,7 +148,7 @@ void Mat4RotationQuaternionF(float m[16], float x, float y, float z, float w) {
     Mat4RotationQuaternionFA(m, q);
 }
 
-void Mat4RotationQuaternionFA(float m[16], float q[4]) {
+void Mat4RotationQuaternionFA(float m[16], const float q[4]) {
     if (m == NULL || q == NULL) return;
 
     float x = q[0];
@@ -399,7 +399,7 @@ void Vec3Fill(float out[3], float value) {
     }
 }
 
-void Vec3Add(float out[3], float a[3], float b[3]) {
+void Vec3Add(float out[3], const float a[3], const float b[3]) {
     int i;
     if (out == NULL || a == NULL || b == NULL) return;
 
@@ -408,7 +408,7 @@ void Vec3Add(float out[3], float a[3], float b[3]) {
     }
 }
 
-void Vec3Subtract(float out[3], float a[3], float b[3]) {
+void Vec3Subtract(float out[3], const float a[3], const float b[3]) {
     int i;
     if (out == NULL || a == NULL || b == NULL) return;
 
@@ -426,7 +426,7 @@ void Vec3Copy(float dst[3], const float src[3]) {
     }
 }
 
-float Vec3Dot(float a[3], float b[3]) {
+float Vec3Dot(const float a[3], const float b[3]) {
     if (a == NULL || b == NULL) return 0.0f;
 
     return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
@@ -443,7 +443,7 @@ void Vec3Normalize(float v[3]) {
     v[2] /= len;
 }
 
-void Vec3Cross(float out[3], float u[3], float v[3]) {
+void Vec3Cross(float out[3], const float u[3], const float v[3]) {
     if (u == NULL || v == NULL || out == NULL) return;
     float temp[3] = {0.0f};
     int i;
@@ -457,7 +457,7 @@ void Vec3Cross(float out[3], float u[3], float v[3]) {
     }
 }
 
-void Vec3Scalar(float out[3], float u[3], float s) {
+void Vec3Scalar(float out[3], const float u[3], const float s) {
     if (u == NULL || out == NULL) return;
     int i;
 
@@ -494,7 +494,7 @@ void QuaternionCopy(float dst[4], float src[4]) {
     }
 }
 
-void QuaternionVec3Rotation(float v[3], float q[4], float out[3]) {
+void QuaternionVec3Rotation(const float v[3], const float q[4], float out[3]) {
     if (v == NULL || q == NULL || out == NULL) return;
 
     float temp[3] = {0.0f};
@@ -588,13 +588,13 @@ float clampValue(float value, float max_value) {
     return value;
 }
 
-void Mat4LookAtLH(float out[16], float camPosW[3], float camTargetW[3], float camUpW[3]) {
+void Mat4LookAtLH(float out[16], const float camPosW[3], const float camTargetW[3], const float camUpW[3]) {
     if (
-            out == NULL ||
-            camPosW == NULL ||
-            camTargetW == NULL ||
-            camUpW == NULL
-            ) {
+        out == NULL ||
+        camPosW == NULL ||
+        camTargetW == NULL ||
+        camUpW == NULL
+    ) {
         return;
     }
 
