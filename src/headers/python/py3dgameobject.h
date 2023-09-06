@@ -3,6 +3,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <ode/ode.h>
 
 #include <stdbool.h>
 
@@ -55,6 +56,7 @@ extern PyObject *Py3dGameObject_GetComponentByIndexInt(struct Py3dGameObject *se
 extern PyObject *Py3dGameObject_GetComponentCount(struct Py3dGameObject *self, PyObject *Py_UNUSED(ignored));
 extern Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self);
 extern struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self);
+extern dBodyID Py3dGameObject_GetDynamicsBody(struct Py3dGameObject *self);
 
 extern const float *Py3dGameObject_GetPositionFA(struct Py3dGameObject *self);
 extern PyObject *Py3dGameObject_GetPosition(struct Py3dGameObject *self, PyObject *args, PyObject *kwds);

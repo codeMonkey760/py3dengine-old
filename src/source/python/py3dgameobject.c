@@ -12,7 +12,7 @@
 #include "math/vector3.h"
 #include "math/quaternion.h"
 #include "util.h"
-#include <physics/collision.h>
+#include "physics/collision.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
@@ -565,6 +565,10 @@ Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self) {
 
 struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self) {
     return self->scene;
+}
+
+dBodyID Py3dGameObject_GetDynamicsBody(struct Py3dGameObject *self) {
+    return self->dynamicsBody;
 }
 
 static PyObject *getCallable(PyObject *obj, const char *callableName) {
