@@ -7,21 +7,15 @@
 
 static PyObject *Py3dCollider_Ctor = NULL;
 
-static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dCollider *self) {
-    if (Py3dCollider_Check((PyObject *) self) != 1) return NULL;
-
-    struct Py3dGameObject *owner = (struct Py3dGameObject *) Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
-    if (Py3dGameObject_Check((PyObject *) owner) != 1) {
-        critical_log("%s", "[ColliderComponent]: ColliderComponent does not have an owner");
-        Py_CLEAR(owner);
+static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dGameObject *owner) {
+    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
+    if (Py3dScene_Check((PyObject *) scene) != 1) {
+        PyErr_SetString(PyExc_ValueError, "ColliderComponent's owner is not attached to a scene");
         return NULL;
     }
 
-    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
-    Py_CLEAR(owner);
-    if (Py3dScene_Check((PyObject *) scene) != 1) {
-        critical_log("%s", "[ColliderComponent]: Owner Game Object is not attached to a scene graph");
-        return NULL;
+    if (scene->space == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Scene has no physics space");
     }
 
     return scene->space;
@@ -124,20 +118,25 @@ static PyObject *Py3dCollider_SetShape(struct Py3dCollider *self, PyObject *args
         return NULL;
     }
 
-    struct PhysicsSpace *space = getOwnersPhysicsSpace(self);
+    struct Py3dGameObject *owner = getOwner(self);
+    if (owner == NULL) return NULL;
+
+    struct PhysicsSpace *space = getOwnersPhysicsSpace(owner);
     if (space == NULL) {
         PyErr_SetString(PyExc_ValueError, "[ColliderComponent]: Could not obtain owners physics space");
         critical_log("[ColliderComponent]: Could not attach new ode geom to scene physics space");
         dGeomDestroy(newGeom);
         newGeom = NULL;
+        Py_CLEAR(owner);
         return NULL;
     }
 
     dGeomSetData(newGeom, self);
-    // TODO: fix physics: dGeomSetBody(newGeom, transform->dynamicsBody);
+    dGeomSetBody(newGeom, Py3dGameObject_GetDynamicsBody(owner));
     addGeomToWorldSpace(space, newGeom);
     deleteGeom(self);
     self->geomId = newGeom;
+    Py_CLEAR(owner);
 
     Py_RETURN_NONE;
 }
