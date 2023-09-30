@@ -1,6 +1,3 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3dgameobject.h"
@@ -154,4 +151,43 @@ void dumpPythonObjects() {
     Py_CLEAR(gcGetObjectsRet);
 
     trace_log("[Python]: Ending python object dump");
+}
+
+// Please be aware that this returns a borrowed reference
+PyObject *Py3d_GetTypeFromTuple(PyObject *tuple, Py_ssize_t index, PyTypeObject *type) {
+    if (tuple == NULL || PyTuple_Check(tuple) != 1) {
+        PyErr_SetString(PyExc_ValueError, "Invalid tuple supplied to Py3d_GetTypeFromTuple");
+        return NULL;
+    }
+
+    PyObject *item = PyTuple_GetItem(tuple, index);
+    if (item == NULL) return NULL;
+
+    if (type == NULL || PyType_Check(type) != 1) return item;
+
+    int typeCheck = PyObject_IsInstance(item, (PyObject *) type);
+    if (typeCheck == -1) return NULL;
+
+    if (typeCheck == 0) {
+        PyErr_SetString(PyExc_ValueError, "Item at supplied index does not match expected type");
+        return NULL;
+    }
+
+    return item;
+}
+
+struct Py3dGameObject *Py3d_GetComponentOwner(struct Py3dComponent *component) {
+    PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) component, NULL);
+    if (Py_IsNone(owner)) {
+        Py_CLEAR(owner);
+        return NULL;
+    }
+
+    if (!Py3dGameObject_Check(owner)) {
+        Py_CLEAR(owner);
+        critical_log("[Utility]: Py3dComponent has an owner that is not a GameObject");
+        return NULL;
+    }
+
+    return (struct Py3dGameObject *) owner;
 }

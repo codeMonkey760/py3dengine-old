@@ -1,5 +1,4 @@
 #include "python/py3drenderingcontext.h"
-#include "python/py3dtransform.h"
 #include "python/python_util.h"
 #include "logger.h"
 #include "python/py3dgameobject.h"
@@ -177,13 +176,8 @@ static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject
     memset(self->vpMtx, 0, 16 * sizeof(float));
     memset(self->cameraPositionW, 0, 3 * sizeof(float));
 
-    PyObject *cameraArg = NULL;
-    if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &cameraArg) != 1) return -1;
-    struct Py3dGameObject *activeCamera = (struct Py3dGameObject *) cameraArg;
-
-    PyObject *getTransformRet = Py3dGameObject_GetTransform(activeCamera, NULL);
-    if (getTransformRet == NULL) return -1;
-    struct Py3dTransform *transform = (struct Py3dTransform *) getTransformRet;
+    struct Py3dGameObject *activeCamera = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dGameObject_Type, &activeCamera) != 1) return -1;
 
     struct PerspectiveCamera camera;
     if (extractPerspectiveCameraFromGameObject(activeCamera, &camera) != 1) return -1;
@@ -193,11 +187,12 @@ static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject
     int width = 0, height = 0;
     getRenderingTargetDimensions(&width, &height);
 
+    float vMtx[16] = {0.0f};
     float pMtx[16] = {0.0f};
+    Py3dGameObject_CalculateViewMatrix(activeCamera, vMtx);
     buildPerspectiveMatrix(pMtx, &camera, width, height);
-    Mat4Mult(self->vpMtx, getTransformViewMtx(transform), pMtx);
-    Vec3Copy(self->cameraPositionW, transform->position);
-    Py_CLEAR(transform);
+    Mat4Mult(self->vpMtx, vMtx, pMtx);
+    Vec3Copy(self->cameraPositionW, Py3dGameObject_GetPositionFA(activeCamera));
 
     return 0;
 }

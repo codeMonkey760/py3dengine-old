@@ -2,11 +2,10 @@
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
 #include "python/py3dcomponent.h"
-#include "python/py3dtransform.h"
 #include "python/py3dmodelrenderer.h"
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
-#include "python/py3dcollider.h"
+#include "python/py3drigidbody.h"
 #include "python/py3dresourcemanager.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dcontactpoint.h"
@@ -121,13 +120,6 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-    if (!PyInit_Py3dTransform(newModule)) {
-        critical_log("%s", "[Python]: Failed to attach Transform to py3dengine module");
-
-        Py_CLEAR(newModule);
-        return NULL;
-    }
-
     if (!PyInit_Py3dRenderingContext(newModule)) {
         critical_log("%s", "[Python]: Failed to attach RenderingContext to py3dengine module");
 
@@ -156,7 +148,7 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-    if (!PyInit_Py3dCollider(newModule)) {
+    if (!PyInit_Py3dRigidBody(newModule)) {
         critical_log("%s", "[Python]: Failed to attach ColliderComponent to py3dengine module");
 
         Py_CLEAR(newModule);
@@ -235,10 +227,6 @@ int initPy3dEngineObjects() {
         return false;
     }
 
-    if (!Py3dTransform_FindCtor(module)) {
-        return false;
-    }
-
     if (!Py3dRenderingContext_FindCtor(module)) {
         return false;
     }
@@ -252,10 +240,6 @@ int initPy3dEngineObjects() {
     }
 
     if (!Py3dSpriteRenderer_FindCtor(module)) {
-        return false;
-    }
-
-    if (!Py3dCollider_FindCtor(module)) {
         return false;
     }
 
@@ -280,13 +264,11 @@ PyObject *getPy3dEngineModule() {
 
 void finalizePy3dEngineModule() {
     Py_CLEAR(Py3dErr_SceneError);
-    Py3dTransform_FinalizeCtor();
     Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();
     finalizePy3dResourceManagerCtor();
     Py3dModelRenderer_FinalizeCtor();
     Py3dSpriteRenderer_FinalizeCtor();
-    Py3dCollider_FinalizeCtor();
     Py3dContactPoint_FinalizeCtor();
     Py3dCollisionEvent_FinalizeCtor();
     Py3dScene_FinalizeCtor();
