@@ -12,7 +12,6 @@
 #include "math/vector3.h"
 #include "math/quaternion.h"
 #include "util.h"
-#include "physics/collision.h"
 
 struct Py3dGameObject {
     PyObject_HEAD
@@ -31,7 +30,6 @@ struct Py3dGameObject {
     int matrixCacheDirty;
     float wMatrixCache[16];
     float witMatrixCache[16];
-    dBodyID dynamicsBody;
 };
 
 static PyObject *py3dGameObjectCtor = NULL;
@@ -61,9 +59,6 @@ static int Py3dGameObject_Clear(struct Py3dGameObject *self) {
 static void Py3dGameObject_Dealloc(struct Py3dGameObject *self) {
     trace_log("%s", "[GameObject]: Deallocating GameObject");
 
-    destroyDynamicsBody(self->dynamicsBody);
-    self->dynamicsBody = NULL;
-
     Py3dGameObject_Clear(self);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
@@ -89,7 +84,6 @@ static int Py3dGameObject_Init(struct Py3dGameObject *self, PyObject *args, PyOb
     self->matrixCacheDirty = 0;
     Mat4Identity(self->wMatrixCache);
     Mat4Identity(self->witMatrixCache);
-    self->dynamicsBody = createDynamicsBody(newScene->space);
 
     return 0;
 }
@@ -567,10 +561,6 @@ struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self) {
     return self->scene;
 }
 
-dBodyID Py3dGameObject_GetDynamicsBody(struct Py3dGameObject *self) {
-    return self->dynamicsBody;
-}
-
 static PyObject *getCallable(PyObject *obj, const char *callableName) {
     PyObject *callable = PyObject_GetAttrString(obj, callableName);
     if (callable == NULL) return NULL;
@@ -753,19 +743,6 @@ PyObject *Py3dGameObject_SetScale(struct Py3dGameObject *self, PyObject *args, P
 
 static void refreshMatrixCaches(struct Py3dGameObject *self) {
     if (self->matrixCacheDirty == 0) return;
-
-    // TODO: updating ode data structs has nothing to do with the matrix caches but the timing is perfect, rename the function to be more generic
-    const float *pos = Py3dGameObject_GetPositionFA(self);
-    dBodySetPosition(self->dynamicsBody, pos[0], pos[1], pos[2]);
-
-    const float *orientation = Py3dGameObject_GetOrientationFA(self);
-    dQuaternion odeOrientation;
-    odeOrientation[0] = orientation[3];
-    odeOrientation[1] = orientation[0];
-    odeOrientation[2] = orientation[1];
-    odeOrientation[3] = orientation[2];
-
-    dBodySetQuaternion(self->dynamicsBody, odeOrientation);
 
     // TODO: all of this nasty matrix multiplication can be removed for a substantial optimization
     // work out the needed component multiplication on paper so that we can remove all of the
