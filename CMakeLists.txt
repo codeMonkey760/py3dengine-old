@@ -94,7 +94,6 @@ add_executable(
     src/source/python/py3drenderingcontext.c
     src/source/python/py3dspriterenderer.c
     src/source/python/py3dinput.c
-    src/source/python/py3dcollider.c
     src/source/python/py3dcontactpoint.c
     src/source/python/py3dcollisionevent.c
     src/source/python/py3dscene.c
