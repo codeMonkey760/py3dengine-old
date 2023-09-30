@@ -200,7 +200,7 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 
     // add Collision to current collision state
     addCollisionToState(space->collisionState, rb1, rb2);
-    addCollisionToState(space->collisionState, rb1, rb2);
+    addCollisionToState(space->collisionState, rb2, rb1);
 
     // create a tuple containing contact info
     PyObject *contactsTuple = PyTuple_New(num_contacts);

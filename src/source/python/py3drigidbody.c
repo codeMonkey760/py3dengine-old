@@ -145,8 +145,8 @@ static int fetchNumericArguments(PyObject *args, Py_ssize_t numArgs, dReal *dst)
     }
 
     // index starts at one, arg 0 is assumed to be the shape name
-    for (Py_ssize_t i = 1; i < numArgs; ++i) {
-        if (!convertPyObjectToReal(Py3d_GetTypeFromTuple(args, i, NULL), &dst[i])) {
+    for (Py_ssize_t i = 1; i <= numArgs; ++i) {
+        if (!convertPyObjectToReal(Py3d_GetTypeFromTuple(args, i, NULL), &dst[i-1])) {
             PyErr_Format(PyExc_ValueError, "Argument %d must be a number", i);
             return 0;
         }
@@ -219,7 +219,7 @@ PyObject *Py3dRigidBody_SetShape(struct Py3dRigidBody *self, PyObject *args, PyO
     allocBody(self, space);
     dGeomSetBody(newGeom, self->dynamicsBody);
     addGeomToWorldSpace(space, newGeom);
-    deleteGeom(self);
+    //deleteGeom(self);
     self->geomId = newGeom;
     Py_CLEAR(owner);
 
