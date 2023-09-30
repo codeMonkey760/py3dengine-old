@@ -3,8 +3,8 @@
 #include "physics/collision_state.h"
 
 struct CollisionStateEntry {
-    struct Py3dCollider *key;
-    struct Py3dCollider *value;
+    struct Py3dRigidBody *key;
+    struct Py3dRigidBody *value;
     struct CollisionStateEntry *next;
 };
 
@@ -59,7 +59,7 @@ void deallocCollisionState(struct CollisionState **statePtr) {
     (*statePtr) = NULL;
 }
 
-void addCollisionToState(struct CollisionState *state, struct Py3dCollider *key, struct Py3dCollider *value) {
+void addCollisionToState(struct CollisionState *state, struct Py3dRigidBody *key, struct Py3dRigidBody *value) {
     if (state == NULL || key == NULL || value == NULL) return;
 
     struct CollisionStateEntry *curNode = state->head, *prevNode = NULL;
@@ -84,12 +84,12 @@ void addCollisionToState(struct CollisionState *state, struct Py3dCollider *key,
     }
 }
 
-static int stateHasCollision(struct CollisionState *state, struct Py3dCollider *c1, struct Py3dCollider *c2) {
-    if (state == NULL || c1 == NULL || c2 == NULL) return 0;
+static int stateHasCollision(struct CollisionState *state, struct Py3dRigidBody *rb1, struct Py3dRigidBody *rb2) {
+    if (state == NULL || rb1 == NULL || rb2 == NULL) return 0;
 
     struct CollisionStateEntry *curNode = state->head;
     while (curNode != NULL) {
-        if (curNode->key == c1 && curNode->value == c2) {
+        if (curNode->key == rb1 && curNode->value == rb2) {
             return 1;
         }
 
@@ -105,8 +105,8 @@ static void allocCollisionStateDiffEntry(struct CollisionStateDiffEntry **entryP
     struct CollisionStateDiffEntry *newEntry = calloc(1, sizeof(struct CollisionStateDiffEntry));
     if (newEntry == NULL) return;
 
-    newEntry->c1 = NULL;
-    newEntry->c2 = NULL;
+    newEntry->rb1 = NULL;
+    newEntry->rb2 = NULL;
     newEntry->isAddition = 0;
     newEntry->next = NULL;
 
@@ -119,20 +119,20 @@ static void deallocCollisionStateDiffEntry(struct CollisionStateDiffEntry **entr
 
     struct CollisionStateDiffEntry *entry = (*entryPtr);
     deallocCollisionStateDiffEntry(&entry->next);
-    entry->c1 = NULL;
-    entry->c2 = NULL;
+    entry->rb1 = NULL;
+    entry->rb2 = NULL;
 
     free(entry);
     entry = NULL;
     (*entryPtr) = NULL;
 }
 
-static void addCollisionToStateDiff(struct CollisionStateDiff *diff, struct Py3dCollider *c1, struct Py3dCollider *c2, int isAddition) {
-    if (diff == NULL || c1 == NULL || c2 == NULL) return;
+static void addCollisionToStateDiff(struct CollisionStateDiff *diff, struct Py3dRigidBody *rb1, struct Py3dRigidBody *rb2, int isAddition) {
+    if (diff == NULL || rb1 == NULL || rb2 == NULL) return;
 
     struct CollisionStateDiffEntry *prevNode = NULL, *curNode = diff->head;
     while (curNode != NULL) {
-        if (curNode->c1 == c1 && curNode->c2 == c2 && curNode->isAddition == isAddition) return;
+        if (curNode->rb1 == rb1 && curNode->rb2 == rb2 && curNode->isAddition == isAddition) return;
 
         prevNode = curNode;
         curNode = curNode->next;
@@ -142,8 +142,8 @@ static void addCollisionToStateDiff(struct CollisionStateDiff *diff, struct Py3d
     allocCollisionStateDiffEntry(&newNode);
     if (newNode == NULL) return;
 
-    newNode->c1 = c1;
-    newNode->c2 = c2;
+    newNode->rb1 = rb1;
+    newNode->rb2 = rb2;
     newNode->isAddition = isAddition;
 
     if (prevNode == NULL) {

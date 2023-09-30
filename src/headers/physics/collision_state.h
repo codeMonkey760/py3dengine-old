@@ -1,7 +1,7 @@
 #ifndef PY3DENGINE_COLLISION_STATE_H
 #define PY3DENGINE_COLLISION_STATE_H
 
-struct Py3dCollider;
+struct Py3dRigidBody;
 struct CollisionStateEntry;
 
 struct CollisionState {
@@ -9,8 +9,8 @@ struct CollisionState {
 };
 
 struct CollisionStateDiffEntry {
-    struct Py3dCollider *c1;
-    struct Py3dCollider *c2;
+    struct Py3dRigidBody *rb1;
+    struct Py3dRigidBody *rb2;
     int isAddition;
     struct CollisionStateDiffEntry *next;
 };
@@ -21,7 +21,7 @@ struct CollisionStateDiff {
 
 extern void allocCollisionState(struct CollisionState **statePtr);
 extern void deallocCollisionState(struct CollisionState **statePtr);
-extern void addCollisionToState(struct CollisionState *state, struct Py3dCollider *key, struct Py3dCollider *value);
+extern void addCollisionToState(struct CollisionState *state, struct Py3dRigidBody *key, struct Py3dRigidBody *value);
 
 extern void allocCollisionStateDiff(struct CollisionStateDiff **diffPtr);
 extern void deallocCollisionStateDiff(struct CollisionStateDiff **diffPtr);
