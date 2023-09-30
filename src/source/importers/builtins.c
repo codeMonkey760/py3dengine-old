@@ -107,7 +107,7 @@ void importBuiltInResources(struct Py3dResourceManager *rm) {
     Py3dResourceManager_StoreResource(rm, (struct BaseResource *) script);
     script = NULL;
 
-    importBuiltinComponent(&script, "ColliderComponent");
+    importBuiltinComponent(&script, "RigidBodyComponent");
     if (script == NULL) {
         error_log("%s", "[BuiltInImporter]: Unable to load ColliderComponent builtin");
     }
