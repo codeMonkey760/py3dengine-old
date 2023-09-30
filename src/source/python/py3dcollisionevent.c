@@ -5,22 +5,22 @@
 static PyObject *Py3dCollisionEvent_Ctor = NULL;
 
 static int Py3dCollisionEvent_Init(struct Py3dCollisionEvent *self, PyObject *args, PyObject *kwds) {
-    self->collider1 = Py_NewRef(Py_None);
-    self->collider2 = Py_NewRef(Py_None);
+    self->rigidBody1 = Py_NewRef(Py_None);
+    self->rigidBody2 = Py_NewRef(Py_None);
     self->contactsTuple = Py_NewRef(Py_None);
 
     return 0;
 }
 
 static void Py3dCollisionEvent_Dealloc(struct Py3dCollisionEvent *self) {
-    Py_CLEAR(self->collider1);
-    Py_CLEAR(self->collider2);
+    Py_CLEAR(self->rigidBody1);
+    Py_CLEAR(self->rigidBody2);
     Py_CLEAR(self->contactsTuple);
 }
 
 static PyGetSetDef Py3dCollisionEvent_GetSet[] = {
-    {"collider1", (getter) Py3dCollisionEvent_GetCollider1, NULL, "Retrieve the first collider involved in the collision"},
-    {"collider2", (getter) Py3dCollisionEvent_GetCollider2, NULL, "Retrieve the second collider involved in the collision"},
+    {"rigidBody1", (getter) Py3dCollisionEvent_GetRigidBody1, NULL, "Retrieve the first RigidBodyComponent involved in the collision"},
+    {"rigidBody2", (getter) Py3dCollisionEvent_GetRigidBody2, NULL, "Retrieve the second RigidBodyComponent involved in the collision"},
     {"contacts", (getter) Py3dCollisionEvent_GetContacts, NULL, "Retrieve a tuple containing the contact points"},
     {NULL}
 };
@@ -95,12 +95,12 @@ int Py3dCollisionEvent_Check(PyObject *obj) {
     return ret;
 }
 
-PyObject *Py3dCollisionEvent_GetCollider1(struct Py3dCollisionEvent *self, void *closure) {
-    return Py_NewRef(self->collider1);
+PyObject *Py3dCollisionEvent_GetRigidBody1(struct Py3dCollisionEvent *self, void *closure) {
+    return Py_NewRef(self->rigidBody1);
 }
 
-PyObject *Py3dCollisionEvent_GetCollider2(struct Py3dCollisionEvent *self, void *closure) {
-    return Py_NewRef(self->collider2);
+PyObject *Py3dCollisionEvent_GetRigidBody2(struct Py3dCollisionEvent *self, void *closure) {
+    return Py_NewRef(self->rigidBody2);
 }
 
 PyObject *Py3dCollisionEvent_GetContacts(struct Py3dCollisionEvent *self, void *closure) {
