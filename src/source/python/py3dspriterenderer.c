@@ -1,6 +1,5 @@
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
-#include "python/py3dtransform.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dresourcemanager.h"
 #include "python/python_util.h"
@@ -17,35 +16,24 @@ static PyObject *Py3dSpriteRenderer_Ctor = NULL;
 static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds);
 static void Py3dSpriteRenderer_Dealloc(struct Py3dSpriteRenderer *self);
 
-static struct Py3dTransform *getTransform(struct Py3dSpriteRenderer *self) {
+static struct Py3dGameObject *getOwner(struct Py3dSpriteRenderer *self) {
     PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
     if (owner == NULL) {
         return NULL;
-    } else if (Py_IsNone(owner)) {
+    } else if (!Py3dGameObject_Check(owner)) {
         Py_CLEAR(owner);
         PyErr_SetString(PyExc_ValueError, "Cannot render a component that is detached from scene graph");
         return NULL;
     }
 
-    PyObject *transform = Py3dGameObject_GetTransform((struct Py3dGameObject *) owner, NULL);
-    Py_CLEAR(owner);
-    if (transform == NULL) {
-        return NULL;
-    } else if (Py_IsNone(transform)) {
-        Py_CLEAR(transform);
-        PyErr_SetString(PyExc_ValueError, "Cannot render a component who's parent does not have a transform");
-        return NULL;
-    }
-
-    return (struct Py3dTransform *) transform;
+    return (struct Py3dGameObject *) owner;
 }
 
 static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct Py3dResourceManager *rm) {
     PyObject *curAttr = NULL;
     curAttr = PyDict_GetItemString(parseDataDict, name);
     if (curAttr == NULL) return NULL;
-    // TODO: PyDict_GetItemString returns borrowed reference so this overwrite isnt a leak ... right?
-    curAttr = PyObject_Str(curAttr);
+    curAttr = PyObject_Str(curAttr); // This is overwriting a borrowed ref with a new one
     if (curAttr == NULL) return NULL;
 
     const char *modelName = PyUnicode_AsUTF8(curAttr);
@@ -138,8 +126,8 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
     struct Py3dRenderingContext *rc = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
-    struct Py3dTransform *transform = getTransform(self);
-    if (transform == NULL) return NULL;
+    struct Py3dGameObject *owner = getOwner(self);
+    if (owner == NULL) return NULL;
 
     enableShader(self->shader);
 
@@ -149,8 +137,8 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
-    Mat4Mult(wvpMtx, getTransformWorldMtx(transform), rc->vpMtx);
-    Py_CLEAR(transform);
+    Mat4Mult(wvpMtx, Py3dGameObject_GetWorldMatrix(owner), rc->vpMtx);
+    Py_CLEAR(owner);
     setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 
     float texMtx[9] = {0.0f};

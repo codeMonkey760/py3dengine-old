@@ -1,7 +1,6 @@
 #include "math/quaternion.h"
 #include "math/vector3.h"
 #include "logger.h"
-#include "python/python_util.h"
 
 static PyObject *py3dQuaternionCtor = NULL;
 
@@ -70,33 +69,32 @@ static PyObject *Py3dQuaternion_Mult(struct Py3dQuaternion *self, PyObject *othe
 
     if (isQuaternion == 1) {
         struct Py3dQuaternion *otherQuaternion = (struct Py3dQuaternion *) other;
-        struct Py3dQuaternion *result = Py3dQuaternion_New();
 
-        result->elements[0] =
+        float x =
             (self->elements[3] * otherQuaternion->elements[0]) +
             (self->elements[0] * otherQuaternion->elements[3]) +
             (self->elements[1] * otherQuaternion->elements[2]) -
             (self->elements[2] * otherQuaternion->elements[1]);
 
-        result->elements[1] =
+        float y =
             (self->elements[3] * otherQuaternion->elements[1]) -
             (self->elements[0] * otherQuaternion->elements[2]) +
             (self->elements[1] * otherQuaternion->elements[3]) +
             (self->elements[2] * otherQuaternion->elements[0]);
 
-        result->elements[2] =
+        float z =
             (self->elements[3] * otherQuaternion->elements[2]) +
             (self->elements[0] * otherQuaternion->elements[1]) -
             (self->elements[1] * otherQuaternion->elements[0]) +
             (self->elements[2] * otherQuaternion->elements[3]);
 
-        result->elements[3] =
+        float w =
             (self->elements[3] * otherQuaternion->elements[3]) -
             (self->elements[0] * otherQuaternion->elements[0]) -
             (self->elements[1] * otherQuaternion->elements[1]) -
             (self->elements[2] * otherQuaternion->elements[2]);
 
-        return (PyObject *) result;
+        return (PyObject *) Py3dQuaternion_New(x, y, z, w);
     }
 
     PyErr_SetString(PyExc_TypeError, "Second operand must be of type Vector3 or Quaternion");
@@ -116,13 +114,12 @@ static PyObject *Py3dQuaternion_Normalize(struct Py3dQuaternion *self, PyObject 
         return NULL;
     }
 
-    struct Py3dQuaternion *result = Py3dQuaternion_New();
-    result->elements[0] = self->elements[0] / length;
-    result->elements[1] = self->elements[1] / length;
-    result->elements[2] = self->elements[2] / length;
-    result->elements[3] = self->elements[3] / length;
+    float x = self->elements[0] / length;
+    float y = self->elements[1] / length;
+    float z = self->elements[2] / length;
+    float w = self->elements[3] / length;
 
-    return (PyObject *) result;
+    return (PyObject *) Py3dQuaternion_New(x, y, z, w);
 }
 
 static PyObject *Py3dQuaternion_FromAxisAndDegrees(struct Py3dQuaternion *self, PyObject *args, PyObject *kwds) {
@@ -133,25 +130,19 @@ static PyObject *Py3dQuaternion_FromAxisAndDegrees(struct Py3dQuaternion *self, 
     angle *= (float) 0.017453293; //convert to radians
     float fac = sinf(angle / 2.0f);
 
-    struct Py3dQuaternion *result = Py3dQuaternion_New();
-    result->elements[0] = axis->elements[0] * fac;
-    result->elements[1] = axis->elements[1] * fac;
-    result->elements[2] = axis->elements[2] * fac;
-    result->elements[3] = cosf(angle / 2.0f);
+    float x = axis->elements[0] * fac;
+    float y = axis->elements[1] * fac;
+    float z = axis->elements[2] * fac;
+    float w = cosf(angle / 2.0f);
 
-    float length = sqrtf(
-        (result->elements[0] * result->elements[0]) +
-        (result->elements[1] * result->elements[1]) +
-        (result->elements[2] * result->elements[2]) +
-        (result->elements[3] * result->elements[3])
-    );
+    float length = sqrtf((x * x) + (y * y) + (z * z) + (w * w));
 
-    result->elements[0] /= length;
-    result->elements[1] /= length;
-    result->elements[2] /= length;
-    result->elements[3] /= length;
+    x /= length;
+    y /= length;
+    z /= length;
+    w /= length;
 
-    return (PyObject *) result;
+    return (PyObject *) Py3dQuaternion_New(x, y, z, w);
 }
 
 PyGetSetDef Py3dQuaternion_GettersSetters[] = {
@@ -214,20 +205,16 @@ void Py3dQuaternion_FinalizeCtor() {
     Py_CLEAR(py3dQuaternionCtor);
 }
 
-struct Py3dQuaternion *Py3dQuaternion_New() {
+struct Py3dQuaternion *Py3dQuaternion_New(float x, float y, float z, float w) {
     if (py3dQuaternionCtor == NULL) {
         critical_log("%s", "[Python]: Py3dQuaternion has not been initialized properly");
 
         return NULL;
     }
 
-    PyObject *py3dQuaternion = PyObject_CallNoArgs(py3dQuaternionCtor);
-    if (py3dQuaternion == NULL) {
-        critical_log("%s", "[Python]: Failed to allocate Quaternion in python interpreter");
-        handleException();
+    PyObject *args = Py_BuildValue("(ffff)", x, y, z, w);
+    struct Py3dQuaternion *ret = (struct Py3dQuaternion *) PyObject_Call(py3dQuaternionCtor, args, NULL);
+    Py_CLEAR(args);
 
-        return NULL;
-    }
-
-    return (struct Py3dQuaternion *) py3dQuaternion;
+    return ret;
 }

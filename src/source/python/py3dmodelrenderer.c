@@ -1,7 +1,6 @@
 #include "python/py3dmodelrenderer.h"
 #include "logger.h"
 #include "python/python_util.h"
-#include "python/py3dtransform.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dresourcemanager.h"
@@ -12,27 +11,17 @@
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
-static struct Py3dTransform *getTransform(struct Py3dModelRenderer *self) {
+static struct Py3dGameObject *getOwner(struct Py3dModelRenderer *self) {
     PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
     if (owner == NULL) {
         return NULL;
-    } else if (Py_IsNone(owner)) {
+    } else if (!Py3dGameObject_Check(owner)) {
         Py_CLEAR(owner);
         PyErr_SetString(PyExc_ValueError, "Cannot render a component that is detached from scene graph");
         return NULL;
     }
 
-    PyObject *transform = Py3dGameObject_GetTransform((struct Py3dGameObject *) owner, NULL);
-    Py_CLEAR(owner);
-    if (transform == NULL) {
-        return NULL;
-    } else if (Py_IsNone(transform)) {
-        Py_CLEAR(transform);
-        PyErr_SetString(PyExc_ValueError, "Cannot render a component who's parent does not have a transform");
-        return NULL;
-    }
-
-    return (struct Py3dTransform *) transform;
+    return (struct Py3dGameObject *) owner;
 }
 
 static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
@@ -44,14 +33,14 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     struct Py3dRenderingContext *rc = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
-    struct Py3dTransform *transform = getTransform(self);
-    if (transform == NULL) return NULL;
+    struct Py3dGameObject *owner = getOwner(self);
+    if (owner == NULL) return NULL;
 
     enableShader(self->shader);
     setShaderFloatArrayUniform(self->shader, "gDiffuseColor", getMaterialDiffuseColor(self->material), 3);
     setShaderFloatArrayUniform(self->shader, "gCamPos", rc->cameraPositionW, 3);
-    setShaderMatrixUniform(self->shader, "gWMtx", getTransformWorldMtx(transform), 4);
-    setShaderMatrixUniform(self->shader, "gWITMtx", getTransformWITMtx(transform), 4);
+    setShaderMatrixUniform(self->shader, "gWMtx", Py3dGameObject_GetWorldMatrix(owner), 4);
+    setShaderMatrixUniform(self->shader, "gWITMtx", Py3dGameObject_GetWITMatrix(owner), 4);
     setShaderTextureUniform(self->shader, "gDiffuseMap", self->material->_diffuseMap);
 
     float data[3] = {0.0f};
@@ -78,7 +67,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
-    Mat4Mult(wvpMtx, getTransformWorldMtx(transform), rc->vpMtx);
+    Mat4Mult(wvpMtx, Py3dGameObject_GetWorldMatrix(owner), rc->vpMtx);
     setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 
     bindModel(self->model);
@@ -87,7 +76,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
 
     disableShader(self->shader);
 
-    Py_CLEAR(transform);
+    Py_CLEAR(owner);
 
     Py_RETURN_NONE;
 }

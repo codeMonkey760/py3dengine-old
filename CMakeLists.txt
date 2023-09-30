@@ -90,17 +90,16 @@ add_executable(
     src/source/python/python_wrapper.c
     src/source/python/py3dcomponent.c
     src/source/python/py3dgameobject.c
-    src/source/python/py3dtransform.c
     src/source/python/py3dmodelrenderer.c
     src/source/python/py3drenderingcontext.c
     src/source/python/py3dspriterenderer.c
     src/source/python/py3dinput.c
-    src/source/python/py3dcollider.c
     src/source/python/py3dcontactpoint.c
     src/source/python/py3dcollisionevent.c
     src/source/python/py3dscene.c
     src/source/python/py3dresourcemanager.c
     src/source/python/py3dtextrenderer.c
+    src/source/python/py3drigidbody.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
