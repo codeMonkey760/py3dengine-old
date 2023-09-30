@@ -5,7 +5,7 @@
 #include "python/py3dmodelrenderer.h"
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
-#include "python/py3dcollider.h"
+#include "python/py3drigidbody.h"
 #include "python/py3dresourcemanager.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dcontactpoint.h"
@@ -148,7 +148,7 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-    if (!PyInit_Py3dCollider(newModule)) {
+    if (!PyInit_Py3dRigidBody(newModule)) {
         critical_log("%s", "[Python]: Failed to attach ColliderComponent to py3dengine module");
 
         Py_CLEAR(newModule);
@@ -243,10 +243,6 @@ int initPy3dEngineObjects() {
         return false;
     }
 
-    if (!Py3dCollider_FindCtor(module)) {
-        return false;
-    }
-
     if (!Py3dContactPoint_FindCtor(module)) {
         return false;
     }
@@ -273,7 +269,6 @@ void finalizePy3dEngineModule() {
     finalizePy3dResourceManagerCtor();
     Py3dModelRenderer_FinalizeCtor();
     Py3dSpriteRenderer_FinalizeCtor();
-    Py3dCollider_FinalizeCtor();
     Py3dContactPoint_FinalizeCtor();
     Py3dCollisionEvent_FinalizeCtor();
     Py3dScene_FinalizeCtor();
