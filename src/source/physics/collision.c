@@ -1,12 +1,12 @@
 #include "physics/collision.h"
 #include "physics/collision_state.h"
-#include "python/py3dcollider.h"
+#include "python/py3drigidbody.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3dcollisionevent.h"
 #include "python/py3dgameobject.h"
 #include "logger.h"
 
-static struct Py3dCollider *getColliderFromGeom(dGeomID geom) {
+static struct Py3dRigidBody *getRigidBodyFromGeom(dGeomID geom) {
     PyObject *obj = NULL;
 
     obj = dGeomGetData(geom);
@@ -15,20 +15,20 @@ static struct Py3dCollider *getColliderFromGeom(dGeomID geom) {
         return NULL;
     }
 
-    if (!Py3dCollider_Check(obj)) {
-        critical_log("[Collision]: Geom with non collider owner discovered");
+    if (!Py3dRigidBody_Check(obj)) {
+        critical_log("[Collision]: Geom with non Py3dRigidBody owner discovered");
         return NULL;
     }
 
-    return (struct Py3dCollider *) Py_NewRef(obj);
+    return (struct Py3dRigidBody *) Py_NewRef(obj);
 }
 
-static struct Py3dGameObject *getOwnerFromCollider(struct Py3dCollider *collider) {
+static struct Py3dGameObject *getOwnerFromRigidBody(struct Py3dRigidBody *collider) {
     PyObject *obj = NULL;
 
     obj = Py3dComponent_GetOwner((struct Py3dComponent *) collider, NULL);
     if (obj == NULL) {
-        warning_log("[Collision]: Collision detected with detached py3dcollider, discarding collision");
+        warning_log("[Collision]: Collision detected with detached Py3dRigidBody, discarding collision");
         return NULL;
     }
 
@@ -40,23 +40,23 @@ static struct Py3dGameObject *getOwnerFromCollider(struct Py3dCollider *collider
     return (struct Py3dGameObject *) obj;
 }
 
-static struct Py3dCollisionEvent *createCollisionEvent(struct Py3dCollider *c1, struct Py3dCollider *c2) {
+static struct Py3dCollisionEvent *createCollisionEvent(struct Py3dRigidBody *rb1, struct Py3dRigidBody *rb2) {
     struct Py3dCollisionEvent *event = Py3dCollisionEvent_New();
 
-    Py_CLEAR(event->collider1);
-    event->collider1 = Py_NewRef(c1);
-    Py_CLEAR(event->collider2);
-    event->collider2 = Py_NewRef(c2);
+    Py_CLEAR(event->rigidBody1);
+    event->rigidBody1 = Py_NewRef(rb1);
+    Py_CLEAR(event->rigidBody2);
+    event->rigidBody2 = Py_NewRef(rb2);
 
     return event;
 }
 
 static void passColliderEnterMessage(
     struct Py3dGameObject *owner,
-    struct Py3dCollider *ownedCollider,
-    struct Py3dCollider *otherCollider
+    struct Py3dRigidBody *ownedRigidBody,
+    struct Py3dRigidBody *otherRigidBody
 ) {
-    struct Py3dCollisionEvent *event = createCollisionEvent(ownedCollider, otherCollider);
+    struct Py3dCollisionEvent *event = createCollisionEvent(ownedRigidBody, otherRigidBody);
 
     Py3dGameObject_ColliderEnter((struct Py3dGameObject *) owner, event);
 
@@ -65,10 +65,10 @@ static void passColliderEnterMessage(
 
 static void passColliderExitMessage(
     struct Py3dGameObject *owner,
-    struct Py3dCollider *ownedCollider,
-    struct Py3dCollider *otherCollider
+    struct Py3dRigidBody *ownedRigidBody,
+    struct Py3dRigidBody *otherRigidBody
 ) {
-    struct Py3dCollisionEvent *event = createCollisionEvent(ownedCollider, otherCollider);
+    struct Py3dCollisionEvent *event = createCollisionEvent(ownedRigidBody, otherRigidBody);
 
     Py3dGameObject_ColliderExit((struct Py3dGameObject *) owner, event);
 
@@ -77,11 +77,11 @@ static void passColliderExitMessage(
 
 static void passCollideMessage(
     struct Py3dGameObject *owner,
-    struct Py3dCollider *ownedCollider,
-    struct Py3dCollider *otherCollider,
+    struct Py3dRigidBody *ownedRigidBody,
+    struct Py3dRigidBody *otherRigidBody,
     PyObject *contactsTuple
 ) {
-    struct Py3dCollisionEvent *event = createCollisionEvent(ownedCollider, otherCollider);
+    struct Py3dCollisionEvent *event = createCollisionEvent(ownedRigidBody, otherRigidBody);
 
     Py_CLEAR(event->contactsTuple);
     event->contactsTuple = Py_NewRef(contactsTuple);
@@ -150,28 +150,28 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     if (num_contacts == 0) return;
 
     // fetch Py3dColliders from o1 and o2 (hint: dGeomGetData should return a struct Py3dCollider *)
-    struct Py3dCollider *collider1 = getColliderFromGeom(o1);
-    struct Py3dCollider *collider2 = getColliderFromGeom(o2);
-    if (collider1 == NULL || collider2 == NULL) {
-        Py_CLEAR(collider1);
-        Py_CLEAR(collider2);
+    struct Py3dRigidBody *rb1 = getRigidBodyFromGeom(o1);
+    struct Py3dRigidBody *rb2 = getRigidBodyFromGeom(o2);
+    if (rb1 == NULL || rb2 == NULL) {
+        Py_CLEAR(rb1);
+        Py_CLEAR(rb2);
         return;
     }
 
     // if o1 and o2 don't belong to the same Py3dCollider (a Py3dCollider should have only one ODE Geom so this is a
     //    sanity check)
-    if (collider1 == collider2) {
+    if (rb1 == rb2) {
         warning_log("[Collision]: Colliding Geoms belong to same owner, discarding collision");
-        Py_CLEAR(collider1);
-        Py_CLEAR(collider2);
+        Py_CLEAR(rb1);
+        Py_CLEAR(rb2);
         return;
     }
 
-    struct Py3dGameObject *owner1 = getOwnerFromCollider(collider1);
-    struct Py3dGameObject *owner2 = getOwnerFromCollider(collider2);
+    struct Py3dGameObject *owner1 = getOwnerFromRigidBody(rb1);
+    struct Py3dGameObject *owner2 = getOwnerFromRigidBody(rb2);
     if (owner1 == NULL || owner2 == NULL) {
-        Py_CLEAR(collider1);
-        Py_CLEAR(collider2);
+        Py_CLEAR(rb1);
+        Py_CLEAR(rb2);
         Py_CLEAR(owner1);
         Py_CLEAR(owner2);
         return;
@@ -179,8 +179,8 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
 
     // if o1 and o2's Py3dColliders aren't owned by the same GameObject (this CAN and is likely to happen)
     if (owner1 == owner2) {
-        Py_CLEAR(collider1);
-        Py_CLEAR(collider2);
+        Py_CLEAR(rb1);
+        Py_CLEAR(rb2);
         Py_CLEAR(owner1);
         Py_CLEAR(owner2);
         return;
@@ -190,17 +190,17 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
     //    might be future features)
     // TODO: this is temporary, since we're not doing collision handling yet let's only allow collisions between
     //    colliders that have "isTrigger" set to true since collision handling isn't required for that use case
-    if (!collider1->isTrigger || !collider2->isTrigger) {
-        Py_CLEAR(collider1);
-        Py_CLEAR(collider2);
+    if (Py3dRigidBody_IsTriggerInt(rb1) != 1 || Py3dRigidBody_IsTriggerInt(rb2) != 1) {
+        Py_CLEAR(rb1);
+        Py_CLEAR(rb2);
         Py_CLEAR(owner1);
         Py_CLEAR(owner2);
         return;
     }
 
     // add Collision to current collision state
-    addCollisionToState(space->collisionState, collider1, collider2);
-    addCollisionToState(space->collisionState, collider2, collider1);
+    addCollisionToState(space->collisionState, rb1, rb2);
+    addCollisionToState(space->collisionState, rb1, rb2);
 
     // create a tuple containing contact info
     PyObject *contactsTuple = PyTuple_New(num_contacts);
@@ -208,16 +208,16 @@ static void nearCallback(void *data, dGeomID o1, dGeomID o2) {
         PyTuple_SetItem(contactsTuple, i, (PyObject *) Py3dContactPoint_New(&contacts[i]));
     }
 
-    // create a collision event for collider1 to collider2 and call collide on collider1's owner
-    passCollideMessage(owner1, collider1, collider2, contactsTuple);
+    // create a collision event for rigidBody1 to rigidBody2 and call collide on rigidBody1's owner
+    passCollideMessage(owner1, rb1, rb2, contactsTuple);
 
-    // create a collision event for collider2 to collider1 and call collide on collider2's owner
-    passCollideMessage(owner2, collider2, collider1, contactsTuple);
+    // create a collision event for rigidBody2 to rigidBody1 and call collide on rigidBody2's owner
+    passCollideMessage(owner2, rb1, rb2, contactsTuple);
 
     // clean up
     Py_CLEAR(contactsTuple);
-    Py_CLEAR(collider1);
-    Py_CLEAR(collider2);
+    Py_CLEAR(rb1);
+    Py_CLEAR(rb2);
     Py_CLEAR(owner1);
     Py_CLEAR(owner2);
 }
@@ -227,13 +227,13 @@ static void handleCollisionEvents(struct CollisionStateDiff *diff) {
 
     struct CollisionStateDiffEntry *curEntry = diff->head;
     while (curEntry != NULL) {
-        struct Py3dGameObject *owner = getOwnerFromCollider(curEntry->c1);
+        struct Py3dGameObject *owner = getOwnerFromRigidBody(curEntry->rb1);
         if (owner == NULL) continue;
 
         if (curEntry->isAddition == 0) {
-            passColliderExitMessage(owner, curEntry->c1, curEntry->c2);
+            passColliderExitMessage(owner, curEntry->rb1, curEntry->rb2);
         } else if (curEntry->isAddition == 1) {
-            passColliderEnterMessage(owner, curEntry->c1, curEntry->c2);
+            passColliderEnterMessage(owner, curEntry->rb1, curEntry->rb2);
         } else {
             warning_log("[Collision]: Bad collision event enum detected");
         }
@@ -283,4 +283,3 @@ void addGeomToWorldSpace(struct PhysicsSpace *space, dGeomID newGeom) {
 void removeGeomFromWorldSpace(struct PhysicsSpace *space, dGeomID geom) {
     dSpaceRemove(space->space, geom);
 }
-
