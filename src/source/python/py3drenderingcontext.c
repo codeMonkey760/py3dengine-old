@@ -13,16 +13,16 @@ static PyMethodDef Py3dRenderingContext_Methods[] = {
 };
 
 PyTypeObject Py3dRenderingContext_Type = {
-        PyObject_HEAD_INIT(NULL)
-        .tp_name = "py3dengine.RenderingContext",
-        .tp_doc = "Represents the current rendering pass",
-        .tp_basicsize = sizeof(struct Py3dRenderingContext),
-        .tp_itemsize = 0,
-        .tp_flags = Py_TPFLAGS_DEFAULT,
-        .tp_init = (initproc) Py3dRenderingContext_Init,
-        .tp_methods = Py3dRenderingContext_Methods,
-        .tp_dealloc = (destructor) Py3dRenderingContext_Dealloc,
-        .tp_new = PyType_GenericNew
+    PyObject_HEAD_INIT(NULL)
+    .tp_name = "py3dengine.RenderingContext",
+    .tp_doc = "Represents the current rendering pass",
+    .tp_basicsize = sizeof(struct Py3dRenderingContext),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_init = (initproc) Py3dRenderingContext_Init,
+    .tp_methods = Py3dRenderingContext_Methods,
+    .tp_dealloc = (destructor) Py3dRenderingContext_Dealloc,
+    .tp_new = PyType_GenericNew
 };
 
 extern int PyInit_Py3dRenderingContext(PyObject *module) {
