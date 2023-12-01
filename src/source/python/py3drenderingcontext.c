@@ -5,6 +5,20 @@
 #include "engine.h"
 #include "util.h"
 
+struct PerspectiveCamera {
+    float fovXInDegrees;
+    float nearPlaneDistance;
+    float farPlaceDistance;
+    float vpMtx[16];
+    float posW[3];
+};
+
+struct Py3dRenderingContext {
+    PyObject_HEAD
+    struct Py3dScene *scene;
+    struct PerspectiveCamera camera;
+};
+
 static PyObject *Py3dRenderingContext_Ctor = NULL;
 static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject *args, PyObject *kwds);
 static void Py3dRenderingContext_Dealloc(struct Py3dRenderingContext *self);
@@ -51,7 +65,7 @@ extern void Py3dRenderingContext_FinalizeCtor() {
     Py_CLEAR(Py3dRenderingContext_Ctor);
 }
 
-extern struct Py3dRenderingContext *Py3dRenderingContext_New(struct Py3dGameObject *activeCamera) {
+extern struct Py3dRenderingContext *Py3dRenderingContext_New(struct Py3dScene *scene) {
     if (activeCamera == NULL) {
         PyErr_SetString(PyExc_ValueError, "Rendering Context requires validate camera object to construct");
         return NULL;
@@ -77,12 +91,6 @@ extern int Py3dRenderingContext_Check(PyObject *obj) {
 
     return ret;
 }
-
-struct PerspectiveCamera {
-    float fovXInDegrees;
-    float nearPlaneDistance;
-    float farPlaceDistance;
-};
 
 static int extractFloatFromComponent(struct Py3dComponent *component, const char *name, float *dst) {
     if (component == NULL || dst == NULL) return 0;
@@ -127,10 +135,7 @@ static int extractCameraFromComponent(struct Py3dComponent *component, struct Pe
 }
 
 static int extractPerspectiveCameraFromGameObject(struct Py3dGameObject *go, struct PerspectiveCamera *camera) {
-    if (go == NULL || camera == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Could not extract camera from active camera Game Object");
-        return 0;
-    }
+    if (go == NULL || camera == NULL) return 0;
 
     Py_ssize_t componentCount = Py3dGameObject_GetComponentCountInt(go);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
@@ -143,7 +148,6 @@ static int extractPerspectiveCameraFromGameObject(struct Py3dGameObject *go, str
         if (extractRet == 1) return 1;
     }
 
-    PyErr_SetString(PyExc_ValueError, "Could not extract camera from active camera Game Object");
     return 0;
 }
 
@@ -170,6 +174,26 @@ static void buildPerspectiveMatrix(
     dst[11] = 1.0f;
     dst[14] = (-1.0f * near_z * far_z) / (far_z - near_z);
     dst[15] = 0.0f;
+}
+
+int Py3dRenderingContext_SetCamera(struct Py3dRenderingContext *self, struct Py3dGameObject *newCamera) {
+    if (newCamera == NULL) return 0;
+
+    struct PerspectiveCamera camera;
+    if (extractPerspectiveCameraFromGameObject(newCamera, &self->camera) != 1) return 0;
+
+    // TODO: when rendering targets are invented get the dimensions from it
+    // right now, the glfw window is the rendering target
+    // fyi the rendering target will come from the camera
+    int width = 0, height = 0;
+    getRenderingTargetDimensions(&width, &height);
+
+    float vMtx[16] = {0.0f};
+    float pMtx[16] = {0.0f};
+    Py3dGameObject_CalculateViewMatrix(activeCamera, vMtx);
+    buildPerspectiveMatrix(pMtx, &camera, width, height);
+    Mat4Mult(self->vpMtx, vMtx, pMtx);
+    Vec3Copy(self->cameraPositionW, Py3dGameObject_GetPositionFA(activeCamera));
 }
 
 static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject *args, PyObject *kwds) {
