@@ -57,6 +57,7 @@ if(NOT soil_POPULATED)
 endif()
 
 find_package(Python COMPONENTS Development)
+find_package(ODE REQUIRED)
 
 include_directories(src/headers)
 
@@ -117,7 +118,7 @@ endif()
 target_include_directories(py3dengine PRIVATE ${json-c_SOURCE_DIR})
 target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine glfw Python::Python json-c soil ode)
+target_link_libraries(py3dengine glfw Python::Python json-c soil ODE::ODE)
 
 if (NOT PY3D_TEST_PROJECT_LOCATION)
     message(FATAL_ERROR, "Please set 'PY3D_TEST_PROJECT_LOCATION'")
