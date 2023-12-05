@@ -1,4 +1,4 @@
-#include <json.h>
+#include <json-c/json.h>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
