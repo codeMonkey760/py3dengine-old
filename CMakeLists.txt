@@ -3,28 +3,9 @@ project(py3dengine C)
 
 set(CMAKE_C_STANDARD 17)
 
-include(FetchContent)
 include(FindOpenGL)
 
-if (NOT PY3D_SOIL_LOCATION)
-    set(PY3D_SOIL_LOCATION https://github.com/paralin/soil.git)
-endif()
-FetchContent_Declare(
-    soil
-    GIT_REPOSITORY ${PY3D_SOIL_LOCATION}
-    GIT_TAG master
-)
-FetchContent_GetProperties(soil)
-if(NOT soil_POPULATED)
-    FetchContent_Populate(soil)
-    add_subdirectory(${soil_SOURCE_DIR} ${soil_BINARY_DIR} EXCLUDE_FROM_ALL)
-    target_link_libraries(
-        soil
-        ${OPENGL_LIBRARIES}
-    )
-endif()
-
-find_package(Python COMPONENTS Development)
+find_package(Python COMPONENTS Development REQUIRED)
 find_package(ODE REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(json-c REQUIRED)
@@ -85,9 +66,8 @@ find_library(MATH_LIBRARY m)
 if (MATH_LIBRARY)
     target_link_libraries(py3dengine ${MATH_LIBRARY})
 endif()
-target_include_directories(py3dengine PRIVATE ${soil_SOURCE_DIR}/inc)
 target_include_directories(py3dengine PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(py3dengine Python::Python json-c::json-c soil ODE::ODE glfw)
+target_link_libraries(py3dengine Python::Python json-c::json-c SOIL ODE::ODE glfw)
 
 if (NOT PY3D_TEST_PROJECT_LOCATION)
     message(FATAL_ERROR, "Please set 'PY3D_TEST_PROJECT_LOCATION'")
