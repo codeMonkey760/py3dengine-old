@@ -1,0 +1,8 @@
+[requires]
+ode/0.16.2
+glfw/3.3.8
+json-c/0.17
+
+[generators]
+CMakeDeps
+CMakeToolchain

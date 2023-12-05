@@ -1,4 +1,4 @@
-#include <json.h>
+#include <json-c/json.h>
 
 #include "logger.h"
 #include "wfo_parser/wfo_parser.h"
