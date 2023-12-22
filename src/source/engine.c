@@ -310,7 +310,6 @@ PyObject *activateScene(const char *sceneName) {
     PyObject *scene = PyDict_GetItemString(sceneDict, sceneName);
     if (!Py3dScene_Check(scene)) {
         PyErr_Format(Py3dErr_SceneError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
-        Py_CLEAR(scene);
         return NULL;
     }
 
