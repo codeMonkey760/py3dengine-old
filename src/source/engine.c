@@ -330,7 +330,7 @@ PyObject *unloadScene(const char *sceneName) {
     }
 
     PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
-    if (sceneName == NULL) return NULL;
+    if (sceneNameObj == NULL) return NULL;
 
     PyObject *activeSceneName = Py3dScene_GetName(activeScene, NULL);
     int cmpRet = PyObject_RichCompareBool(sceneNameObj, activeSceneName, Py_EQ);
