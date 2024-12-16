@@ -1,5 +1,5 @@
 #include <string.h>
-#include <json.h>
+#include <json-c/json.h>
 
 #include "logger.h"
 #include "json_parser.h"

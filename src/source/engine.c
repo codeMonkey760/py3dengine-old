@@ -1,4 +1,4 @@
-#include <json.h>
+#include <json-c/json.h>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -310,7 +310,6 @@ PyObject *activateScene(const char *sceneName) {
     PyObject *scene = PyDict_GetItemString(sceneDict, sceneName);
     if (!Py3dScene_Check(scene)) {
         PyErr_Format(Py3dErr_SceneError, "Could not activate scene with name \"%s\". Please load it first.", sceneName);
-        Py_CLEAR(scene);
         return NULL;
     }
 
@@ -331,7 +330,7 @@ PyObject *unloadScene(const char *sceneName) {
     }
 
     PyObject *sceneNameObj = PyUnicode_FromString(sceneName);
-    if (sceneName == NULL) return NULL;
+    if (sceneNameObj == NULL) return NULL;
 
     PyObject *activeSceneName = Py3dScene_GetName(activeScene, NULL);
     int cmpRet = PyObject_RichCompareBool(sceneNameObj, activeSceneName, Py_EQ);

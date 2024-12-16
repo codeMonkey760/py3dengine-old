@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include <json.h>
+#include <json-c/json.h>
 
 #include "logger.h"
 #include "config.h"
