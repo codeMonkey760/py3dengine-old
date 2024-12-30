@@ -17,7 +17,8 @@ extern void Py3dRenderingContext_FinalizeCtor();
 extern struct Py3dRenderingContext *Py3dRenderingContext_New(struct Py3dScene *scene);
 extern int Py3dRenderingContext_Check(PyObject *obj);
 extern int Py3dRenderingContext_SetCamera(struct Py3dRenderingContext *self, struct Py3dGameObject *newCamera);
-extern void 
+extern float* Py3dRenderingContext_GetCameraPosW(struct Py3dRenderingContext *self);
+extern float* Py3dRenderingContext_GetCameraVPMtx(struct Py3dRenderingContext *self);
 
 #endif
 

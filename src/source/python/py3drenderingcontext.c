@@ -224,3 +224,17 @@ static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject
 static void Py3dRenderingContext_Dealloc(struct Py3dRenderingContext *self) {
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
+
+float* Py3dRenderingContext_GetCameraPosW(struct Py3dRenderingContext *self)
+{
+    if (self == NULL) return NULL;
+
+    return self->camera.posW;
+}
+
+float* Py3dRenderingContext_GetCameraVPMtx(struct Py3dRenderingContext *self)
+{
+    if (self == NULL) return NULL;
+
+    return self->camera.vpMtx;
+}
