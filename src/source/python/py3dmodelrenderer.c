@@ -38,7 +38,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
 
     enableShader(self->shader);
     setShaderFloatArrayUniform(self->shader, "gDiffuseColor", getMaterialDiffuseColor(self->material), 3);
-    setShaderFloatArrayUniform(self->shader, "gCamPos", rc->cameraPositionW, 3);
+    setShaderFloatArrayUniform(self->shader, "gCamPos", Py3dRenderingContext_GetCameraPosW(rc), 3);
     setShaderMatrixUniform(self->shader, "gWMtx", Py3dGameObject_GetWorldMatrix(owner), 4);
     setShaderMatrixUniform(self->shader, "gWITMtx", Py3dGameObject_GetWITMatrix(owner), 4);
     setShaderTextureUniform(self->shader, "gDiffuseMap", self->material->_diffuseMap);
@@ -67,7 +67,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
-    Mat4Mult(wvpMtx, Py3dGameObject_GetWorldMatrix(owner), rc->vpMtx);
+    Mat4Mult(wvpMtx, Py3dGameObject_GetWorldMatrix(owner), Py3dRenderingContext_GetCameraVPMtx(rc));
     setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 
     bindModel(self->model);
