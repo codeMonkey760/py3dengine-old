@@ -332,7 +332,7 @@ void Py3dScene_Render(struct Py3dScene *self) {
         return;
     }
 
-    struct Py3dRenderingContext *rc = Py3dRenderingContext_New((struct Py3dGameObject *)self->activeCamera);
+    struct Py3dRenderingContext *rc = Py3dRenderingContext_New(self);
     if (rc == NULL) {
         handleException();
         return;
