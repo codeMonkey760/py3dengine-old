@@ -49,6 +49,7 @@ extern void Py3dScene_SetSceneGraph(struct Py3dScene *self, PyObject *newSceneGr
 extern PyObject *Py3dScene_ActivateCamera(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dScene_ActivateCameraByName(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dScene_ActivateCameraByNameCStr(struct Py3dScene *self, const char *name);
+extern PyObject *Py3dScene_GetActiveCamera(struct Py3dScene *self);
 
 extern void Py3dScene_KeyEvent(struct Py3dScene *self, int key, int scancode, int action, int mods);
 extern PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args, PyObject *kwds);
