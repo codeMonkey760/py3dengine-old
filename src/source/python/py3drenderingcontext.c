@@ -247,11 +247,16 @@ static int Py3dRenderingContext_Init(struct Py3dRenderingContext *self, PyObject
     }
 
     setCamera(self, activeCamera);
+    Py_CLEAR(activeCamera);
 
     return 0;
 }
 
 static void Py3dRenderingContext_Dealloc(struct Py3dRenderingContext *self) {
+    // This is gonna spam the logs
+    //trace_log("%s", "[RenderingContext]: Deallocating Scene");
+
+    Py_CLEAR(self->scene);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
