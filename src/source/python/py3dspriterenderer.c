@@ -137,7 +137,7 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
-    Mat4Mult(wvpMtx, Py3dGameObject_GetWorldMatrix(owner), rc->vpMtx);
+    Mat4Mult(wvpMtx, Py3dGameObject_GetWorldMatrix(owner), Py3dRenderingContext_GetCameraVPMtx(rc));
     Py_CLEAR(owner);
     setShaderMatrixUniform(self->shader, "gWVPMtx", wvpMtx, 4);
 

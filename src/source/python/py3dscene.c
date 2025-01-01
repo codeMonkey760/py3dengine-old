@@ -332,7 +332,7 @@ void Py3dScene_Render(struct Py3dScene *self) {
         return;
     }
 
-    struct Py3dRenderingContext *rc = Py3dRenderingContext_New((struct Py3dGameObject *)self->activeCamera);
+    struct Py3dRenderingContext *rc = Py3dRenderingContext_New(self);
     if (rc == NULL) {
         handleException();
         return;
@@ -402,6 +402,8 @@ PyObject *Py3dScene_ActivateCamera(struct Py3dScene *self, PyObject *args, PyObj
 
     Py_CLEAR(self->activeCamera);
     self->activeCamera = Py_NewRef(newCamera);
+
+    Py_RETURN_NONE;
 }
 
 PyObject *Py3dScene_ActivateCameraByName(struct Py3dScene *self, PyObject *args, PyObject *kwds) {
@@ -433,6 +435,12 @@ PyObject *Py3dScene_ActivateCameraByNameCStr(struct Py3dScene *self, const char 
     self->activeCamera = newCamera;
 
     Py_RETURN_NONE;
+}
+
+PyObject *Py3dScene_GetActiveCamera(struct Py3dScene *self) {
+    if (self->activeCamera == NULL) Py_RETURN_NONE;
+
+    return Py_NewRef(self->activeCamera);
 }
 
 // TODO: receive these event from the engine
