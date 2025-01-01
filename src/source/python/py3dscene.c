@@ -346,7 +346,7 @@ void Py3dScene_Render(struct Py3dScene *self) {
 
     Py_CLEAR(ret);
     Py_CLEAR(args);
-    Py_CLEAR(rc);
+    Py_CLEAR(rc); // TODO: this might not be correct ... Py3dGameObject_Render should be taking ownership of this???
 }
 
 void Py3dScene_End(struct Py3dScene *self) {
