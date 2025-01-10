@@ -37,33 +37,32 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     if (owner == NULL) return NULL;
 
     enableShader(self->shader);
-    setShaderFloatArrayUniform(self->shader, "gDiffuseColor", getMaterialDiffuseColor(self->material), 3);
     setShaderFloatArrayUniform(self->shader, "gCamPos", Py3dRenderingContext_GetCameraPosW(rc), 3);
     setShaderMatrixUniform(self->shader, "gWMtx", Py3dGameObject_GetWorldMatrix(owner), 4);
     setShaderMatrixUniform(self->shader, "gWITMtx", Py3dGameObject_GetWITMatrix(owner), 4);
-    setShaderTextureUniform(self->shader, "gDiffuseMap", self->material->_diffuseMap);
+    setShaderTextureUniform(self->shader, "gMaterial.diffuse", self->material->_diffuseMap);
 
     float data[3] = {0.0f};
 
-    data[0] = data[1] = data[2] = 0.8f;
-    setShaderFloatArrayUniform(self->shader, "gDiffuseLight", data, 3);
-    data[0] = data[1] = data[2] = 0.8f;
-    setShaderFloatArrayUniform(self->shader, "gSpecLight", data, 3);
+    data[0] = data[1] = data[2] = 1.0f;
+    setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", data, 3);
+    data[0] = data[1] = data[2] = 1.0f;
+    setShaderFloatArrayUniform(self->shader, "gLights[0].specular", data, 3);
     data[0] = data[1] = data[2] = 0.1f;
-    setShaderFloatArrayUniform(self->shader, "gAmbientLight", data, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", data, 3);
     data[0] = data[1] = 10.0f; data[2] = -10.0f;
-    setShaderFloatArrayUniform(self->shader, "gLightPos", data, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].position", data, 3);
     data[0] = 512.0f;
-    setShaderFloatArrayUniform(self->shader, "gSpecPower", data, 1);
-    data[0] = 5.0f;
-    setShaderFloatArrayUniform(self->shader, "gLightInt", data, 1);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].specPower", data, 1);
+    data[0] = 4.0f;
+    setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", data, 1);
     data[0] = 0.0f; data[1] = 0.01f; data[2] = 0.01f;
-    setShaderFloatArrayUniform(self->shader, "gLightAtt", data, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", data, 3);
 
     data[0] = data[1] = data[2] = 1.0f;
-    setShaderFloatArrayUniform(self->shader, "gSpecMaterial", data, 3);
+    setShaderFloatArrayUniform(self->shader, "gMaterial.specular", data, 3);
     data[0] = data[1] = data[2] = 1.0f;
-    setShaderFloatArrayUniform(self->shader, "gAmbientMaterial", data, 3);
+    setShaderFloatArrayUniform(self->shader, "gMaterial.ambient", data, 3);
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
