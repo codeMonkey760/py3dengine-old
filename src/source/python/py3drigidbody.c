@@ -162,11 +162,14 @@ static struct PhysicsSpace *getOwnersPhysicsSpace(struct Py3dGameObject *owner) 
         return NULL;
     }
 
-    if (scene->space == NULL) {
+    struct PhysicsSpace *space = scene->space;
+    Py_CLEAR(scene); // TODO: THIS IS A DEFECT!!!! Py_CLEAR can dealloc python objects! If this happens here
+                     // then space is now a dangling pointer and will result in a use after free!!!!
+    if (space == NULL) {
         PyErr_SetString(PyExc_ValueError, "Scene has no physics space");
     }
 
-    return scene->space;
+    return space;
 }
 
 PyObject *Py3dRigidBody_SetShape(struct Py3dRigidBody *self, PyObject *args, PyObject *kwds) {
