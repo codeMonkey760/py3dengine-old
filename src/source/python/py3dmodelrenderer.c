@@ -1,4 +1,5 @@
 #include "python/py3dmodelrenderer.h"
+#include <lights.h>
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3drenderingcontext.h"
@@ -8,6 +9,7 @@
 #include "resources/material.h"
 #include "resources/model.h"
 #include "util.h"
+#include "python/py3dscene.h"
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
@@ -24,6 +26,15 @@ static struct Py3dGameObject *getOwner(struct Py3dModelRenderer *self) {
     return (struct Py3dGameObject *) owner;
 }
 
+static struct Py3dScene *getScene(struct Py3dGameObject *owner) {
+    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
+    if (scene == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot render a component that is detached from scene graph");
+    }
+
+    return scene;
+}
+
 static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
     if (self->shader == NULL || self->model == NULL || self->material == NULL) {
         PyErr_SetString(PyExc_ValueError, "ModelRendererComponent is not correctly configured");
@@ -36,29 +47,28 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     struct Py3dGameObject *owner = getOwner(self);
     if (owner == NULL) return NULL;
 
+    struct Py3dScene *scene = getScene(owner);
+    if (scene == NULL) return NULL;
+
     enableShader(self->shader);
     setShaderFloatArrayUniform(self->shader, "gCamPos", Py3dRenderingContext_GetCameraPosW(rc), 3);
     setShaderMatrixUniform(self->shader, "gWMtx", Py3dGameObject_GetWorldMatrix(owner), 4);
     setShaderMatrixUniform(self->shader, "gWITMtx", Py3dGameObject_GetWITMatrix(owner), 4);
     setShaderTextureUniform(self->shader, "gMaterial.diffuse", self->material->_diffuseMap);
 
+    struct LightData *lightData = NULL;
+    size_t numLights = 0;
+    Py3dScene_GetDynamicLightData(scene, &lightData, &numLights);
+
+    setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", lightData->diffuse, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData->specular, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData->ambient, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData->position, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].specPower", &lightData->specPower, 1);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData->intensity, 1);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData->attenuation, 3);
+
     float data[3] = {0.0f};
-
-    data[0] = data[1] = data[2] = 1.0f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", data, 3);
-    data[0] = data[1] = data[2] = 1.0f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].specular", data, 3);
-    data[0] = data[1] = data[2] = 0.1f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", data, 3);
-    data[0] = data[1] = 10.0f; data[2] = -10.0f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].position", data, 3);
-    data[0] = 512.0f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].specPower", data, 1);
-    data[0] = 4.0f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", data, 1);
-    data[0] = 0.0f; data[1] = 0.01f; data[2] = 0.01f;
-    setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", data, 3);
-
     data[0] = data[1] = data[2] = 1.0f;
     setShaderFloatArrayUniform(self->shader, "gMaterial.specular", data, 3);
     data[0] = data[1] = data[2] = 1.0f;
@@ -75,6 +85,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
 
     disableShader(self->shader);
 
+    Py_CLEAR(scene);
     Py_CLEAR(owner);
 
     Py_RETURN_NONE;

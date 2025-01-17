@@ -8,6 +8,7 @@
 
 struct PhysicsSpace;
 struct Py3dResourceManager;
+struct LightData;
 
 struct Py3dScene {
     PyObject_HEAD
@@ -20,6 +21,8 @@ struct Py3dScene {
     struct PhysicsSpace *space;
     PyObject *callbackTable[GLFW_KEY_MENU+1][GLFW_REPEAT+1][64];
     int cursorMode;
+    struct LightData *lightData;
+    ssize_t numLights;
 };
 extern PyTypeObject Py3dScene_Type;
 
@@ -54,5 +57,7 @@ extern PyObject *Py3dScene_GetActiveCamera(struct Py3dScene *self);
 extern void Py3dScene_KeyEvent(struct Py3dScene *self, int key, int scancode, int action, int mods);
 extern PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 PyObject *Py3dScene_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds);
+
+extern void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightData **lightDataPtr, size_t *numLightsPtr);
 
 #endif

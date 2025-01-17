@@ -9,6 +9,7 @@
 #include "python/py3dgameobject.h"
 #include "python/py3dresourcemanager.h"
 #include "python/py3drenderingcontext.h"
+#include "lights.h"
 
 static PyObject *py3dSceneCtor = NULL;
 
@@ -67,6 +68,7 @@ static void Py3dScene_Dealloc(struct Py3dScene *self) {
     Py3dScene_Clear(self);
     deallocPhysicsSpace(&self->space);
     finalizeCallbackTable(self);
+    LightData_Dealloc(&self->lightData);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -83,6 +85,30 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
     initPhysicsSpace(self->space);
     initCallbackTable(self);
     self->cursorMode = GLFW_CURSOR_NORMAL;
+    self->lightData = NULL;
+    LightData_Alloc(&self->lightData, 1);
+    self->numLights = 1;
+
+    self->lightData[0].used = 1;
+    self->lightData[0].enabled = 1;
+    self->lightData[0].type = LIGHT_TYPE_POINT;
+    self->lightData[0].position[0] = 10.0f;
+    self->lightData[0].position[1] = 10.0f;
+    self->lightData[0].position[2] = -10.0f;
+    self->lightData[0].diffuse[0] = 1.0f;
+    self->lightData[0].diffuse[1] = 1.0f;
+    self->lightData[0].diffuse[2] = 1.0f;
+    self->lightData[0].specular[0] = 1.0f;
+    self->lightData[0].specular[1] = 1.0f;
+    self->lightData[0].specular[2] = 1.0f;
+    self->lightData[0].ambient[0] = 0.1f;
+    self->lightData[0].ambient[1] = 0.1f;
+    self->lightData[0].ambient[2] = 0.1f;
+    self->lightData[0].specPower = 512.0f;
+    self->lightData[0].intensity = 4.0f;
+    self->lightData[0].attenuation[0] = 0.0f;
+    self->lightData[0].attenuation[1] = 0.01f;
+    self->lightData[0].attenuation[2] = 0.01f;
 
     return 0;
 }
@@ -509,4 +535,11 @@ PyObject *Py3dScene_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObje
     setCursorMode(self->cursorMode);
 
     Py_RETURN_NONE;
+}
+
+void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightData **lightDataPtr, size_t *numLightsPtr) {
+    if (self == NULL || lightDataPtr == NULL || numLightsPtr == NULL) return;
+
+    (*lightDataPtr) = self->lightData;
+    (*numLightsPtr) = self->numLights;
 }
