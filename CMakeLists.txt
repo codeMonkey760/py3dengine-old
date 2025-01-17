@@ -23,6 +23,7 @@ add_executable(
     src/source/custom_path.c
     src/source/config.c
     src/source/json_parser.c
+    src/source/lights.c
     src/source/physics/collision.c
     src/source/physics/collision_state.c
     src/source/wfo_parser/wfo_parser.c
