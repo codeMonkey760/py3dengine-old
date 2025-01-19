@@ -392,6 +392,34 @@ void parseMaterialFile(struct Py3dResourceManager *manager, FILE *mtl) {
                 dataBuffer[2],
                 getChars(getResourceName(curMaterial))
             );
+        } else if (strncmp(typeBuffer, "Ka", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            if (curMaterial == NULL) {
+                error_log("%s", "[WfoParser]: Trying to write ambient color into NULL material.");
+                continue;
+            }
+            readFloatsFromLine(curPos, dataBuffer, 3);
+            setMaterialAmbientColor((struct Material *) curMaterial, dataBuffer);
+            trace_log(
+                "[WfoParser]: Writing (%.2f, %.2f, %.2f) as ambient color to material named \"%s\"",
+                dataBuffer[0],
+                dataBuffer[1],
+                dataBuffer[2],
+                getChars(getResourceName(curMaterial))
+            );
+        } else if (strncmp(typeBuffer, "Ks", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            if (curMaterial == NULL) {
+                error_log("%s", "[WfoParser]: Trying to write specular color into NULL material.");
+                continue;
+            }
+            readFloatsFromLine(curPos, dataBuffer, 3);
+            setMaterialSpecularColor((struct Material *) curMaterial, dataBuffer);
+            trace_log(
+                "[WfoParser]: Writing (%.2f, %.2f, %.2f) as specular color to material named \"%s\"",
+                dataBuffer[0],
+                dataBuffer[1],
+                dataBuffer[2],
+                getChars(getResourceName(curMaterial))
+            );
         } else if (strncmp(typeBuffer, "map_Kd", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             if (curMaterial == NULL) {
                 error_log("%s", "[WfoParser]: Trying to write diffuse texture into NULL material.");
