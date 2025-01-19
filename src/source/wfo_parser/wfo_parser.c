@@ -420,6 +420,18 @@ void parseMaterialFile(struct Py3dResourceManager *manager, FILE *mtl) {
                 dataBuffer[2],
                 getChars(getResourceName(curMaterial))
             );
+        } else if (strncmp(typeBuffer, "Ns", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
+            if (curMaterial == NULL) {
+                error_log("%s", "[WfoParser]: Trying to write specular power into NULL material.");
+                continue;
+            }
+            readFloatFromLine(curPos, dataBuffer);
+            setMaterialSpecPower((struct Material *) curMaterial, dataBuffer[0]);
+            trace_log(
+                "[WfoParser]: Writing %.2f as specular power to material named \"%s\"",
+                dataBuffer[0],
+                getChars(getResourceName(curMaterial))
+            );
         } else if (strncmp(typeBuffer, "map_Kd", TYPE_BUFFER_SIZE_IN_ELEMENTS) == 0) {
             if (curMaterial == NULL) {
                 error_log("%s", "[WfoParser]: Trying to write diffuse texture into NULL material.");
