@@ -134,3 +134,15 @@ void setMaterialSpecularColor(struct Material *material, const float newSpecular
 
     Vec3Copy(material->specularColor, newSpecularColor);
 }
+
+float getMaterialSpecPower(struct Material *material) {
+    if (material == NULL) return 0.0f;
+
+    return material->specularPower;
+}
+
+void setMaterialSpecPower(struct Material *material, float newSpecPower) {
+    if (material == NULL) return;
+
+    material->specularPower = newSpecPower;
+}

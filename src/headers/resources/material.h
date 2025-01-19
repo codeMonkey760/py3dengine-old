@@ -39,4 +39,7 @@ extern const float *getMaterialSpecularColor(struct Material *material);
 extern void setMaterialSpecularColorRGB(struct Material *material, float r, float g, float b);
 extern void setMaterialSpecularColor(struct Material *material, const float newSpecularColor[3]);
 
+extern float getMaterialSpecPower(struct Material *material);
+extern void setMaterialSpecPower(struct Material *material, float newSpecPower);
+
 #endif
