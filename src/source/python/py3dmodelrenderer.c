@@ -55,6 +55,8 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     setShaderMatrixUniform(self->shader, "gWMtx", Py3dGameObject_GetWorldMatrix(owner), 4);
     setShaderMatrixUniform(self->shader, "gWITMtx", Py3dGameObject_GetWITMatrix(owner), 4);
     setShaderTextureUniform(self->shader, "gMaterial.diffuse", self->material->_diffuseMap);
+    setShaderFloatArrayUniform(self->shader, "gMaterial.ambient", getMaterialAmbientColor(self->material), 3);
+    setShaderFloatArrayUniform(self->shader, "gMaterial.specular", getMaterialSpecularColor(self->material), 3);
 
     struct LightData *lightData = NULL;
     size_t numLights = 0;
@@ -67,12 +69,6 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     setShaderFloatArrayUniform(self->shader, "gLights[0].specPower", &lightData->specPower, 1);
     setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData->intensity, 1);
     setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData->attenuation, 3);
-
-    float data[3] = {0.0f};
-    data[0] = data[1] = data[2] = 1.0f;
-    setShaderFloatArrayUniform(self->shader, "gMaterial.specular", data, 3);
-    data[0] = data[1] = data[2] = 1.0f;
-    setShaderFloatArrayUniform(self->shader, "gMaterial.ambient", data, 3);
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
