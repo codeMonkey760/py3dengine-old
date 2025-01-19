@@ -57,6 +57,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     setShaderTextureUniform(self->shader, "gMaterial.diffuse", self->material->_diffuseMap);
     setShaderFloatArrayUniform(self->shader, "gMaterial.ambient", getMaterialAmbientColor(self->material), 3);
     setShaderFloatArrayUniform(self->shader, "gMaterial.specular", getMaterialSpecularColor(self->material), 3);
+    setShaderFloatArrayUniform(self->shader, "gMaterial.specPower", getMaterialSpecPower(self->material), 1);
 
     struct LightData *lightData = NULL;
     size_t numLights = 0;
@@ -66,7 +67,6 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData->specular, 3);
     setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData->ambient, 3);
     setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData->position, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].specPower", &lightData->specPower, 1);
     setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData->intensity, 1);
     setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData->attenuation, 3);
 
