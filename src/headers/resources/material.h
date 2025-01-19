@@ -31,4 +31,12 @@ extern const float *getMaterialDiffuseColor(struct Material *material);
 extern void setMaterialDiffuseColorRGB(struct Material *material, float r, float g, float b);
 extern void setMaterialDiffuseColor(struct Material *material, const float newDiffuseColor[3]);
 
+extern const float *getMaterialAmbientColor(struct Material *material);
+extern void setMaterialAmbientColorRGB(struct Material *material, float r, float g, float b);
+extern void setMaterialAmbientColor(struct Material *material, const float newAmbientColor[3]);
+
+extern const float *getMaterialSpecularColor(struct Material *material);
+extern void setMaterialSpecularColorRGB(struct Material *material, float r, float g, float b);
+extern void setMaterialSpecularColor(struct Material *material, const float newSpecularColor[3]);
+
 #endif

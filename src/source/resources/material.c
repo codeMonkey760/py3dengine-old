@@ -94,3 +94,43 @@ void setMaterialDiffuseColor(struct Material *material, const float newDiffuseCo
 
     Vec3Copy(material->diffuseColor, newDiffuseColor);
 }
+
+const float *getMaterialAmbientColor(struct Material *material) {
+    if (material == NULL) return NULL;
+
+    return material->ambientColor;
+}
+
+void setMaterialAmbientColorRGB(struct Material *material, float r, float g, float b) {
+    if (material == NULL) return;
+
+    material->ambientColor[0] = r;
+    material->ambientColor[1] = g;
+    material->ambientColor[2] = b;
+}
+
+void setMaterialAmbientColor(struct Material *material, const float newAmbientColor[3]) {
+    if (material == NULL || newAmbientColor == NULL) return;
+
+    Vec3Copy(material->ambientColor, newAmbientColor);
+}
+
+const float *getMaterialSpecularColor(struct Material *material) {
+    if (material == NULL) return NULL;
+
+    return material->specularColor;
+}
+
+void setMaterialSpecularColorRGB(struct Material *material, float r, float g, float b) {
+    if (material == NULL) return;
+
+    material->specularColor[0] = r;
+    material->specularColor[1] = g;
+    material->specularColor[2] = b;
+}
+
+void setMaterialSpecularColor(struct Material *material, const float newSpecularColor[3]) {
+    if (material == NULL || newSpecularColor == NULL) return;
+
+    Vec3Copy(material->specularColor, newSpecularColor);
+}
