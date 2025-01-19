@@ -11,7 +11,6 @@ struct LightData {
     float diffuse[3];
     float specular[3];
     float ambient[3];
-    float specPower;
     float intensity;
     float attenuation[3];
 };

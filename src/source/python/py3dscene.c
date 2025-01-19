@@ -543,7 +543,6 @@ void Py3dScene_RefreshLightingData(struct Py3dScene *self) {
     self->lightData[0].ambient[0] = 0.1f;
     self->lightData[0].ambient[1] = 0.1f;
     self->lightData[0].ambient[2] = 0.1f;
-    self->lightData[0].specPower = 512.0f;
     self->lightData[0].intensity = 4.0f;
     self->lightData[0].attenuation[0] = 0.0f;
     self->lightData[0].attenuation[1] = 0.01f;
