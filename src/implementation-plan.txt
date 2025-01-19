@@ -1,7 +1,0 @@
-DYNAMIC LIGHTING:
-
---> Modify default shader to use a single hard coded light
---> Modify default shader to use hard coded material data
---> Modify rendering process to pull hard coded lighting data from scene and pass to shader
---> Modify rendering process to pull material data from scene and pass to shader
---> Add light components so that scene can specify lighting data
