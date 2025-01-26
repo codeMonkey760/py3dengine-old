@@ -15,7 +15,9 @@ struct LightData {
     float attenuation[3];
 };
 
-void LightData_Alloc(struct LightData **ptr, unsigned int count);
-void LightData_Dealloc(struct LightData **ptr);
+extern void LightData_Alloc(struct LightData **ptr, unsigned int count);
+extern void LightData_Dealloc(struct LightData **ptr);
+extern void LightData_Init(struct LightData *self);
+extern void LightData_Copy(struct LightData *dst, const struct LightData *src);
 
 #endif
