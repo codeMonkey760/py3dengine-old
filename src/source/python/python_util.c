@@ -191,3 +191,90 @@ struct Py3dGameObject *Py3d_GetComponentOwner(struct Py3dComponent *component) {
 
     return (struct Py3dGameObject *) owner;
 }
+
+static PyObject* Py3d_GetParseData(
+    PyObject *parseDataDict,
+    PyTypeObject *type,
+    const char *keyName,
+    const char *componentName
+) {
+    if (parseDataDict == NULL || type == NULL || keyName == NULL || componentName == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetIntParseData received invalid params");
+        return NULL;
+    }
+
+    PyObject *obj = PyDict_GetItemString(parseDataDict, keyName);
+    if (obj == NULL) {
+        PyErr_Format(PyExc_KeyError, "Parse data for \"%s\" must include a field called \"%s\"", componentName, keyName);
+        return NULL;
+    }
+    if (!Py_IS_TYPE(obj, type)) {
+        PyErr_Format(PyExc_KeyError, "Field with name \"%s\" must be of type \"%s\"", keyName, _PyType_Name(type));
+        return NULL;
+    }
+
+    return obj;
+}
+
+int Py3d_GetBooleanParseData(PyObject *parseDataDict, const char *keyName, int *dst, const char *componentName) {
+    if (dst == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetBooleanParseData received invalid params");
+        return 0;
+    }
+
+    const PyObject *obj = Py3d_GetParseData(parseDataDict, &PyBool_Type, keyName, componentName);
+    if (obj == NULL) return 0;
+
+    *dst = Py_IsTrue(obj);
+    return 1;
+}
+
+int Py3d_GetIntParseData(PyObject *parseDataDict, const char *keyName, int *dst, const char *componentName) {
+    if (dst == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetIntParseData received invalid params");
+        return 0;
+    }
+
+    PyObject *obj = Py3d_GetParseData(parseDataDict, &PyLong_Type, keyName, componentName);
+    if (obj == NULL) return 0;
+
+    const int result = (int) PyLong_AsLong(obj);
+    if (PyErr_Occurred() != NULL) {
+        return 0;
+    }
+
+    (*dst) = result;
+
+    return 1;
+}
+
+int Py3d_GetFloatParseData(PyObject *parseDataDict, const char *keyName, float *dst, const char *componentName) {
+    if (dst == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetIntParseData received invalid params");
+        return 0;
+    }
+
+    PyObject *obj = Py3d_GetParseData(parseDataDict, &PyFloat_Type, keyName, componentName);
+    if (obj == NULL) return 0;
+
+    const float result = (float) PyFloat_AsDouble(obj);
+    if (PyErr_Occurred()) return 0;
+
+    (*dst) = result;
+
+    return 1;
+}
+
+int Py3d_GetVector3ParseData(PyObject *parseDataDict, const char *keyName, float dst[3], const char *componentName) {
+    if (dst == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetIntParseData received invalid params");
+        return 0;
+    }
+
+    PyObject *obj = Py3d_GetParseData(parseDataDict, &Py3dVector3_Type, keyName, componentName);
+    if (obj == NULL) return 0;
+
+    Py3dVector3_AsFloatArray((struct Py3dVector3 *) obj, dst);
+
+    return 1;
+}
