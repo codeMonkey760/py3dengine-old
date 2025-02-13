@@ -20,6 +20,7 @@ static int Py3dLight_Init(struct Py3dLight *self, PyObject *args, PyObject *kwds
 }
 
 static PyMethodDef Py3dLight_Methods[] = {
+    {"parse", (PyCFunction) Py3dLight_Parse, METH_VARARGS, "Handle parse messages"},
     {NULL}
 };
 
@@ -96,4 +97,25 @@ int Py3dLight_Check(PyObject *obj) {
     }
 
     return ret;
+}
+
+PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    if (superParseRet == NULL) return NULL;
+    Py_CLEAR(superParseRet);
+
+    const char *compName = "LightComponent";
+
+    PyObject *parseDataDict = NULL, *py3dResourceManager = NULL;
+    if (PyArg_ParseTuple(args, "O!O", &PyDict_Type, &parseDataDict, &py3dResourceManager) != 1) return NULL;
+
+    if (!Py3d_GetBooleanParseData(parseDataDict, "enabled", &self->data.enabled, compName)) return NULL;
+    if (!Py3d_GetIntParseData(parseDataDict, "type", &self->data.type, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "diffuse", self->data.diffuse, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "specular", self->data.specular, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "ambient", self->data.ambient, compName)) return NULL;
+    if (!Py3d_GetFloatParseData(parseDataDict, "intensity", &self->data.intensity, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "attenuation", self->data.attenuation, compName)) return NULL;
+
+    Py_RETURN_NONE;
 }

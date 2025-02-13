@@ -12,4 +12,6 @@ extern void Py3dLight_FinalizeCtor();
 extern struct Py3dLight *Py3dLight_New();
 extern int Py3dLight_Check(PyObject *obj);
 
+extern PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+
 #endif
