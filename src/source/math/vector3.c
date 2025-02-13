@@ -315,3 +315,9 @@ struct Py3dVector3 *Py3dVector3_New(float x, float y, float z) {
 
     return (struct Py3dVector3 *) py3dVector3;
 }
+
+void Py3dVector3_AsFloatArray(struct Py3dVector3 *self, float dst[3]) {
+    if (self == NULL || dst == NULL) return;
+
+    Vec3Copy(dst, self->elements);
+}

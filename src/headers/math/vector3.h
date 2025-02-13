@@ -18,5 +18,6 @@ extern bool PyInit_Py3dVector3(PyObject *module);
 extern bool Py3dVector3_FindCtor(PyObject *module);
 extern void Py3dVector3_FinalizeCtor();
 extern struct Py3dVector3 *Py3dVector3_New(float x, float y, float z);
+extern void Py3dVector3_AsFloatArray(struct Py3dVector3 *self, float dst[3]);
 
 #endif
