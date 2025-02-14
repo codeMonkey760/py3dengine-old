@@ -13,6 +13,85 @@
 
 static PyObject *py3dSceneCtor = NULL;
 
+struct LightListNode {
+    struct Py3dLight *component;
+    struct LightListNode *next;
+};
+
+static void allocLightListNode(struct LightListNode **node) {
+    if (node == NULL || (*node) != NULL) return;
+
+    struct LightListNode *newNode = calloc(1, sizeof(struct LightListNode));
+    newNode->component = NULL;
+    newNode->next = NULL;
+
+    *node = newNode;
+}
+
+static void deallocLightListNode(struct LightListNode **node) {
+    if (node == NULL || (*node) == NULL) return;
+
+    deallocLightListNode(&(*node)->next);
+
+    free(*node);
+    *node = NULL;
+}
+
+static void appendLightToList(struct LightListNode **list, struct Py3dLight *newLightComponent) {
+    if (list == NULL) return;
+
+    struct LightListNode *prev = NULL, *next = NULL;
+
+    next = *list;
+    while (next != NULL) {
+        if (next->component == newLightComponent) {
+            warning_log("%s", "[Scene]: Attempted to add non unique light to light list");
+            return;
+        }
+
+        prev = next;
+        next = next->next;
+    }
+
+    struct LightListNode *newNode = NULL;
+    allocLightListNode(&newNode);
+    newNode->next = NULL;
+    newNode->component = newLightComponent;
+
+    if (prev == NULL) {
+        *list = newNode;
+    } else {
+        prev->next = newNode;
+    }
+}
+
+static void removeLightFromList(struct LightListNode **list, const struct Py3dLight *target) {
+    if (list == NULL || *list == NULL) {
+        warning_log("%s", "[Scene]: Tried to remove light from empty light list");
+        return;
+    }
+
+    struct LightListNode *prev = NULL, *next = *list;
+    while (next != NULL) {
+        if (next->component == target) {
+            if (prev != NULL) {
+                prev->next = next->next;
+            } else {
+                *list = next->next;
+            }
+
+            free(next);
+            next = NULL;
+            return;
+        }
+
+        prev = next;
+        next = next->next;
+    }
+
+    warning_log("%s", "[Scene]: Attempted to remove a non existent light from light list");
+}
+
 static int traverseCallbackTable(struct Py3dScene *self, visitproc visit, void *arg) {
     for (int i = 0; i < GLFW_KEY_MENU+1; ++i) {
         for (int j = 0; j < GLFW_REPEAT+1; ++j) {
@@ -69,6 +148,7 @@ static void Py3dScene_Dealloc(struct Py3dScene *self) {
     deallocPhysicsSpace(&self->space);
     finalizeCallbackTable(self);
     LightData_Dealloc(&self->lightData);
+    deallocLightListNode(&self->lightList);
     Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -88,6 +168,7 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
     self->lightData = NULL;
     LightData_Alloc(&self->lightData, 1);
     self->numLights = 1;
+    self->lightList = NULL;
 
     return 0;
 }
@@ -552,15 +633,15 @@ void Py3dScene_RefreshLightingData(struct Py3dScene *self) {
 int Py3dScene_RegisterLight(struct Py3dScene *self, struct Py3dLight *newLightComponent) {
     if (self == NULL || newLightComponent == NULL) return 0;
 
-    // TODO: finish this
+    appendLightToList(&self->lightList, newLightComponent);
 
     return 1;
 }
 
-int Py3dScene_UnRegisterLight(struct Py3dScene *self, struct Py3dLight *lightComponent) {
+int Py3dScene_UnRegisterLight(struct Py3dScene *self, const struct Py3dLight *lightComponent) {
     if (self == NULL || lightComponent == NULL) return 0;
 
-    // TODO: finish this
+    removeLightFromList(&self->lightList, lightComponent);
 
     return 1;
 }

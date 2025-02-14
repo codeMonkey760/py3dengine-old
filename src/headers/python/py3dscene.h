@@ -10,6 +10,7 @@ struct PhysicsSpace;
 struct Py3dResourceManager;
 struct LightData;
 struct Py3dLight;
+struct LightListNode;
 
 struct Py3dScene {
     PyObject_HEAD
@@ -24,6 +25,7 @@ struct Py3dScene {
     int cursorMode;
     struct LightData *lightData;
     ssize_t numLights;
+    struct LightListNode *lightList;
 };
 extern PyTypeObject Py3dScene_Type;
 
@@ -63,6 +65,6 @@ extern void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightDa
 extern void Py3dScene_RefreshLightingData(struct Py3dScene *self);
 
 extern int Py3dScene_RegisterLight(struct Py3dScene *self, struct Py3dLight *newLightComponent);
-extern int Py3dScene_UnRegisterLight(struct Py3dScene *self, struct Py3dLight *lightComponent);
+extern int Py3dScene_UnRegisterLight(struct Py3dScene *self, const struct Py3dLight *lightComponent);
 
 #endif
