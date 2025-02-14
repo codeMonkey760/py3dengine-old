@@ -179,6 +179,72 @@ int Py3dGameObject_Check(PyObject *obj) {
     return ret;
 }
 
+static void passMessageToComponent(PyObject *component, int(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+    if (!Py3dComponent_Check(component)) {
+        warning_log("[GameObject]: GameObject list has non component item.");
+        return;
+    }
+
+    if (acceptMessage != NULL) {
+        if (!acceptMessage((struct Py3dComponent *) component)) return;
+    }
+
+    PyObject *messageHandler = getCallable((PyObject *) component, messageName);
+    if (messageHandler == NULL) {
+        PyErr_Clear();
+        return;
+    }
+
+    PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+    if (ret == NULL) {
+        handleException();
+    }
+    Py_CLEAR(ret);
+    Py_CLEAR(messageHandler);
+}
+
+static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
+    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
+    for (Py_ssize_t i = 0; i < componentCount; ++i) {
+        PyObject *curComponent = Py_NewRef(PyList_GetItem(self->componentsList, i));
+        passMessageToComponent(curComponent, acceptMessage, messageName, args);
+        Py_CLEAR(curComponent);
+    }
+
+    Py_ssize_t childCount = PySequence_Size(self->childrenList);
+    for (Py_ssize_t i = 0; i < childCount; ++i) {
+        PyObject *curChild = PyList_GetItem(self->childrenList, i);
+        if (!Py3dGameObject_Check(curChild)) {
+            warning_log("[GameObject]: Child list has non Game Object child. Will not pass update message.");
+            continue;
+        }
+
+        PyObject *messageHandler = getCallable((PyObject *) curChild, messageName);
+        if (messageHandler == NULL) {
+            warning_log("[GameObject]: Could not pass \"%s\" message to child", messageName);
+            handleException();
+            continue;
+        }
+
+        if (Py_EnterRecursiveCall(" in GameObject::passMessage") != 0) {
+            critical_log("[GameObject]: Hit max recursion depth while passing message \"%s\" to children", messageName);
+            handleException();
+            Py_CLEAR(messageHandler);
+            continue;
+        }
+        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
+        if (ret == NULL) {
+            handleException();
+        }
+        Py_LeaveRecursiveCall();
+
+        Py_CLEAR(ret);
+        Py_CLEAR(messageHandler);
+    }
+
+    Py_RETURN_NONE;
+}
+
 struct Py3dGameObject *Py3dGameObject_New(struct Py3dScene *newScene) {
     if (py3dGameObjectCtor == NULL) {
         critical_log("%s", "[Python]: Py3dGameObject has not been initialized properly");
@@ -477,6 +543,10 @@ void Py3dGameObject_AttachComponentInC(struct Py3dGameObject *self, struct Py3dC
 
     Py_CLEAR(component->owner);
     component->owner = Py_NewRef((PyObject *) self);
+
+    PyObject *args = Py_BuildValue("()");
+    passMessageToComponent((PyObject *) component, NULL, "attach", args);
+    Py_CLEAR(args);
 }
 
 PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -498,6 +568,12 @@ void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dC
         handleException();
     }
     Py_CLEAR(ret);
+
+    Py_CLEAR(component->owner);
+
+    PyObject *args = Py_BuildValue("()");
+    passMessageToComponent((PyObject *) component, NULL, "detach", args);
+    Py_CLEAR(args);
 }
 
 extern PyObject *Py3dGameObject_DetachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
@@ -570,72 +646,6 @@ static PyObject *getCallable(PyObject *obj, const char *callableName) {
     }
 
     return callable;
-}
-
-static void passMessageToComponent(PyObject *component, int(*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
-    if (!Py3dComponent_Check(component)) {
-        warning_log("[GameObject]: GameObject list has non component item.");
-        return;
-    }
-
-    if (acceptMessage != NULL) {
-        if (!acceptMessage((struct Py3dComponent *) component)) return;
-    }
-
-    PyObject *messageHandler = getCallable((PyObject *) component, messageName);
-    if (messageHandler == NULL) {
-        PyErr_Clear();
-        return;
-    }
-
-    PyObject *ret = PyObject_Call(messageHandler, args, NULL);
-    if (ret == NULL) {
-        handleException();
-    }
-    Py_CLEAR(ret);
-    Py_CLEAR(messageHandler);
-}
-
-static PyObject *passMessage(struct Py3dGameObject *self, int (*acceptMessage)(struct Py3dComponent *), const char *messageName, PyObject *args) {
-    Py_ssize_t componentCount = PySequence_Size(self->componentsList);
-    for (Py_ssize_t i = 0; i < componentCount; ++i) {
-        PyObject *curComponent = Py_NewRef(PyList_GetItem(self->componentsList, i));
-        passMessageToComponent(curComponent, acceptMessage, messageName, args);
-        Py_CLEAR(curComponent);
-    }
-
-    Py_ssize_t childCount = PySequence_Size(self->childrenList);
-    for (Py_ssize_t i = 0; i < childCount; ++i) {
-        PyObject *curChild = PyList_GetItem(self->childrenList, i);
-        if (!Py3dGameObject_Check(curChild)) {
-            warning_log("[GameObject]: Child list has non Game Object child. Will not pass update message.");
-            continue;
-        }
-
-        PyObject *messageHandler = getCallable((PyObject *) curChild, messageName);
-        if (messageHandler == NULL) {
-            warning_log("[GameObject]: Could not pass \"%s\" message to child", messageName);
-            handleException();
-            continue;
-        }
-
-        if (Py_EnterRecursiveCall(" in GameObject::passMessage") != 0) {
-            critical_log("[GameObject]: Hit max recursion depth while passing message \"%s\" to children", messageName);
-            handleException();
-            Py_CLEAR(messageHandler);
-            continue;
-        }
-        PyObject *ret = PyObject_Call(messageHandler, args, NULL);
-        if (ret == NULL) {
-            handleException();
-        }
-        Py_LeaveRecursiveCall();
-
-        Py_CLEAR(ret);
-        Py_CLEAR(messageHandler);
-    }
-
-    Py_RETURN_NONE;
 }
 
 const float *Py3dGameObject_GetPositionFA(struct Py3dGameObject *self) {
