@@ -13,5 +13,7 @@ extern struct Py3dLight *Py3dLight_New();
 extern int Py3dLight_Check(PyObject *obj);
 
 extern PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_Attach(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_Detach(struct Py3dLight *self, PyObject *args, PyObject *kwds);
 
 #endif

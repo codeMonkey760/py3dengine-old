@@ -1,4 +1,8 @@
 #include "python/py3dlight.h"
+
+#include "python/py3dscene.h"
+#include "python/py3dgameobject.h"
+
 #include "python/py3dcomponent.h"
 #include "logger.h"
 #include "python/python_util.h"
@@ -116,6 +120,46 @@ PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds
     if (!Py3d_GetVector3ParseData(parseDataDict, "ambient", self->data.ambient, compName)) return NULL;
     if (!Py3d_GetFloatParseData(parseDataDict, "intensity", &self->data.intensity, compName)) return NULL;
     if (!Py3d_GetVector3ParseData(parseDataDict, "attenuation", self->data.attenuation, compName)) return NULL;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dLight_Attach(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with self set to NULL");
+        return NULL;
+    }
+
+    struct Py3dScene *scene = Py3d_GetSceneForComponent((struct Py3dComponent *) self);
+    if (scene == NULL) return NULL;
+
+    const int result = Py3dScene_RegisterLight(scene, self);
+    Py_CLEAR(scene);
+
+    if (!result) {
+        PyErr_SetString(PyExc_AssertionError, "Could not register light with containing scene");
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dLight_Detach(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with self set to NULL");
+        return NULL;
+    }
+
+    struct Py3dScene *scene = Py3d_GetSceneForComponent((struct Py3dComponent *) self);
+    if (scene == NULL) return NULL;
+
+    const int result = Py3dScene_UnRegisterLight(scene, self);
+    Py_CLEAR(scene);
+
+    if (!result) {
+        PyErr_SetString(PyExc_AssertionError, "Could not unregister light with containing scene");
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
