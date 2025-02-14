@@ -548,3 +548,19 @@ void Py3dScene_RefreshLightingData(struct Py3dScene *self) {
     self->lightData[0].attenuation[1] = 0.01f;
     self->lightData[0].attenuation[2] = 0.01f;
 }
+
+int Py3dScene_RegisterLight(struct Py3dScene *self, struct Py3dLight *newLightComponent) {
+    if (self == NULL || newLightComponent == NULL) return 0;
+
+    // TODO: finish this
+
+    return 1;
+}
+
+int Py3dScene_UnRegisterLight(struct Py3dScene *self, struct Py3dLight *lightComponent) {
+    if (self == NULL || lightComponent == NULL) return 0;
+
+    // TODO: finish this
+
+    return 1;
+}
