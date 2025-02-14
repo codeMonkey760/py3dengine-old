@@ -278,3 +278,47 @@ int Py3d_GetVector3ParseData(PyObject *parseDataDict, const char *keyName, float
 
     return 1;
 }
+
+struct Py3dGameObject *Py3d_GetOwnerForComponent(struct Py3dComponent *component) {
+    if (component == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetOwnerForComponent received NULL component");
+        return NULL;
+    }
+    if (!Py3dComponent_Check((PyObject *) component)) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetOwnerForComponent received component that failed Py3dComponent_Check");
+        return NULL;
+    }
+
+    struct Py3dGameObject *owner = (struct Py3dGameObject *) Py3dComponent_GetOwner(component, NULL);
+    if (owner == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot get owner of detached component");
+        return NULL;
+    }
+    if (!Py3dGameObject_Check((PyObject *) owner)) {
+        Py_CLEAR(owner);
+        PyErr_SetString(PyExc_AssertionError, "Component is owned by something that isn't a game object");
+        return NULL;
+    }
+
+    return owner;
+}
+
+struct Py3dScene *Py3d_GetSceneForComponent(struct Py3dComponent *component) {
+    struct Py3dGameObject *owner = Py3d_GetComponentOwner(component);
+    if (owner == NULL) return NULL;
+
+    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
+    Py_CLEAR(owner);
+
+    if (scene == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot get scene of detached component");
+        return NULL;
+    }
+    if (!Py3dScene_Check((PyObject *) scene)) {
+        Py_CLEAR(owner);
+        PyErr_SetString(PyExc_AssertionError, "Scene pointer failed Py3dScene_Check");
+        return NULL;
+    }
+
+    return scene;
+}
