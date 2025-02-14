@@ -561,6 +561,10 @@ PyObject *Py3dGameObject_AttachComponent(struct Py3dGameObject *self, PyObject *
 void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dComponent *component) {
     if (Py3dGameObject_Check((PyObject *) self) != 1 || Py3dComponent_Check((PyObject *) component) != 1) return;
 
+    PyObject *args = Py_BuildValue("()");
+    passMessageToComponent((PyObject *) component, NULL, "detach", args);
+    Py_CLEAR(args);
+
     PyObject *methodName = PyUnicode_FromString("remove");
     PyObject *ret = PyObject_CallMethodOneArg(self->componentsList, methodName, (PyObject *) component);
     Py_CLEAR(methodName);
@@ -570,10 +574,6 @@ void Py3dGameObject_DetachComponentInC(struct Py3dGameObject *self, struct Py3dC
     Py_CLEAR(ret);
 
     Py_CLEAR(component->owner);
-
-    PyObject *args = Py_BuildValue("()");
-    passMessageToComponent((PyObject *) component, NULL, "detach", args);
-    Py_CLEAR(args);
 }
 
 extern PyObject *Py3dGameObject_DetachComponent(struct Py3dGameObject *self, PyObject *args, PyObject *kwds) {
