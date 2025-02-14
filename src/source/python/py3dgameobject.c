@@ -634,7 +634,7 @@ Py_ssize_t Py3dGameObject_GetComponentCountInt(struct Py3dGameObject *self) {
 }
 
 struct Py3dScene *Py3dGameObject_GetScene(struct Py3dGameObject *self) {
-    return (struct Py3dScene *) Py_NewRef(self->scene);
+    return (struct Py3dScene *) Py_XNewRef(self->scene);
 }
 
 static PyObject *getCallable(PyObject *obj, const char *callableName) {
