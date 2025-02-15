@@ -1,6 +1,7 @@
 #ifndef LIGHTS_H
 #define LIGHTS_H
 
+#define LIGHT_TYPE_UNKNOWN 0
 #define LIGHT_TYPE_POINT 1
 
 struct LightData {

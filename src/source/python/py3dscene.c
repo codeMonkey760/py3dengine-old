@@ -1,6 +1,7 @@
 #include "python/py3dscene.h"
 #include <structmember.h>
 
+#include "util.h"
 #include "engine.h"
 #include "logger.h"
 #include "python/python_util.h"
@@ -10,6 +11,8 @@
 #include "python/py3dresourcemanager.h"
 #include "python/py3drenderingcontext.h"
 #include "lights.h"
+#include "python/py3dcomponent.h"
+#include "python/py3dlight.h"
 
 static PyObject *py3dSceneCtor = NULL;
 
@@ -609,25 +612,37 @@ void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightData **li
 void Py3dScene_RefreshLightingData(struct Py3dScene *self) {
     if (self == NULL) return;
 
-    self->lightData[0].used = 1;
-    self->lightData[0].enabled = 1;
-    self->lightData[0].type = LIGHT_TYPE_POINT;
-    self->lightData[0].position[0] = 10.0f;
-    self->lightData[0].position[1] = 10.0f;
-    self->lightData[0].position[2] = -10.0f;
-    self->lightData[0].diffuse[0] = 1.0f;
-    self->lightData[0].diffuse[1] = 1.0f;
-    self->lightData[0].diffuse[2] = 1.0f;
-    self->lightData[0].specular[0] = 1.0f;
-    self->lightData[0].specular[1] = 1.0f;
-    self->lightData[0].specular[2] = 1.0f;
-    self->lightData[0].ambient[0] = 0.1f;
-    self->lightData[0].ambient[1] = 0.1f;
-    self->lightData[0].ambient[2] = 0.1f;
-    self->lightData[0].intensity = 4.0f;
-    self->lightData[0].attenuation[0] = 0.0f;
-    self->lightData[0].attenuation[1] = 0.01f;
-    self->lightData[0].attenuation[2] = 0.01f;
+    memset(self->lightData, 0, sizeof(struct LightData) * self->numLights);
+
+    const struct LightListNode *curNode = self->lightList;
+    ssize_t curLight = 0;
+    while (curNode != NULL && curLight < self->numLights) {
+        struct Py3dLight *component = curNode->component;
+        struct Py3dGameObject *owner = Py3d_GetComponentOwner((struct Py3dComponent *) component);
+        if (owner == NULL) {
+            warning_log("%s", "[Scene]: Could not determine light owner while refreshing lighting data");
+            handleException();
+            continue;
+        }
+
+        self->lightData[curLight].used = 1;
+        self->lightData[curLight].enabled =
+            Py3dComponent_IsEnabledBool((struct Py3dComponent *) component) &&
+            Py3dComponent_IsVisibleBool((struct Py3dComponent *) component) &&
+            Py3dGameObject_IsEnabledBool(owner) &&
+            Py3dGameObject_IsVisibleBool(owner);
+        Py3dLight_GetType(component, &self->lightData[curLight].type);
+        Vec3Copy(self->lightData[curLight].position, Py3dGameObject_GetPositionFA(owner));
+        Py3dLight_GetDiffuse(component, self->lightData[curLight].diffuse);
+        Py3dLight_GetSpecular(component, self->lightData[curLight].specular);
+        Py3dLight_GetAmbient(component, self->lightData[curLight].ambient);
+        Py3dLight_GetIntensity(component, &self->lightData[curLight].intensity);
+        Py3dLight_GetAttenuation(component, self->lightData[curLight].attenuation);
+
+        Py_CLEAR(owner);
+        curNode = curNode->next;
+        ++curLight;
+    }
 }
 
 int Py3dScene_RegisterLight(struct Py3dScene *self, struct Py3dLight *newLightComponent) {

@@ -1,5 +1,7 @@
 #include "python/py3dlight.h"
 
+#include "util.h"
+
 #include "python/py3dscene.h"
 #include "python/py3dgameobject.h"
 
@@ -12,13 +14,23 @@ static PyObject *Py3dLight_Ctor = NULL;
 
 struct Py3dLight {
     struct Py3dComponent base;
-    struct LightData data;
+    int lightType;
+    float diffuse[3];
+    float specular[3];
+    float ambient[3];
+    float intensity;
+    float attenuation[3];
 };
 
 static int Py3dLight_Init(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
     if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
 
-    LightData_Init(&self->data);
+    self->lightType = LIGHT_TYPE_UNKNOWN;
+    Vec3Fill(self->diffuse, 0.0f);
+    Vec3Fill(self->specular, 0.0f);
+    Vec3Fill(self->ambient, 0.0f);
+    self->intensity = 0.0f;
+    Vec3Fill(self->attenuation, 0.0f);
 
     return 0;
 }
@@ -103,6 +115,42 @@ int Py3dLight_Check(PyObject *obj) {
     return ret;
 }
 
+void Py3dLight_GetType(struct Py3dLight *self, int *dst) {
+    if (self == NULL || dst == NULL) return;
+
+    *dst = self->lightType;
+}
+
+void Py3dLight_GetDiffuse(struct Py3dLight *self, float dst[3]) {
+    if (self == NULL || dst == NULL) return;
+
+    Vec3Copy(dst, self->diffuse);
+}
+
+void Py3dLight_GetSpecular(struct Py3dLight *self, float dst[3]) {
+    if (self == NULL || dst == NULL) return;
+
+    Vec3Copy(dst, self->specular);
+}
+
+void Py3dLight_GetAmbient(struct Py3dLight *self, float dst[3]) {
+    if (self == NULL || dst == NULL) return;
+
+    Vec3Copy(dst, self->ambient);
+}
+
+void Py3dLight_GetIntensity(struct Py3dLight *self, float *dst) {
+    if (self == NULL || dst == NULL) return;
+
+    *dst = self->intensity;
+}
+
+void Py3dLight_GetAttenuation(struct Py3dLight *self, float dst[3]) {
+    if (self == NULL || dst == NULL) return;
+
+    Vec3Copy(dst, self->attenuation);
+}
+
 PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
     PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
     if (superParseRet == NULL) return NULL;
@@ -113,13 +161,12 @@ PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds
     PyObject *parseDataDict = NULL, *py3dResourceManager = NULL;
     if (PyArg_ParseTuple(args, "O!O", &PyDict_Type, &parseDataDict, &py3dResourceManager) != 1) return NULL;
 
-    if (!Py3d_GetBooleanParseData(parseDataDict, "enabled", &self->data.enabled, compName)) return NULL;
-    if (!Py3d_GetIntParseData(parseDataDict, "type", &self->data.type, compName)) return NULL;
-    if (!Py3d_GetVector3ParseData(parseDataDict, "diffuse", self->data.diffuse, compName)) return NULL;
-    if (!Py3d_GetVector3ParseData(parseDataDict, "specular", self->data.specular, compName)) return NULL;
-    if (!Py3d_GetVector3ParseData(parseDataDict, "ambient", self->data.ambient, compName)) return NULL;
-    if (!Py3d_GetFloatParseData(parseDataDict, "intensity", &self->data.intensity, compName)) return NULL;
-    if (!Py3d_GetVector3ParseData(parseDataDict, "attenuation", self->data.attenuation, compName)) return NULL;
+    if (!Py3d_GetIntParseData(parseDataDict, "lightType", &self->lightType, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "diffuse", self->diffuse, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "specular", self->specular, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "ambient", self->ambient, compName)) return NULL;
+    if (!Py3d_GetFloatParseData(parseDataDict, "intensity", &self->intensity, compName)) return NULL;
+    if (!Py3d_GetVector3ParseData(parseDataDict, "attenuation", self->attenuation, compName)) return NULL;
 
     Py_RETURN_NONE;
 }
