@@ -169,8 +169,7 @@ static int Py3dScene_Init(struct Py3dScene *self, PyObject *args, PyObject *kwds
     initCallbackTable(self);
     self->cursorMode = GLFW_CURSOR_NORMAL;
     self->lightData = NULL;
-    LightData_Alloc(&self->lightData, 1);
-    self->numLights = 1;
+    self->numLights = 0;
     self->lightList = NULL;
 
     return 0;
@@ -611,6 +610,10 @@ void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightData **li
 
 void Py3dScene_RefreshLightingData(struct Py3dScene *self) {
     if (self == NULL) return;
+
+    LightData_Dealloc(&self->lightData);
+    self->numLights = getConfigMaxDynamicLights();
+    LightData_Alloc(&self->lightData, self->numLights);
 
     memset(self->lightData, 0, sizeof(struct LightData) * self->numLights);
 
