@@ -6,6 +6,7 @@
 
 struct LightData;
 struct Py3dLight;
+extern PyTypeObject Py3dLight_Type;
 
 extern int PyInit_Py3dLight(PyObject *module);
 extern int Py3dLight_FindCtor(PyObject *module);

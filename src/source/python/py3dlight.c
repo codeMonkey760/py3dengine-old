@@ -55,7 +55,7 @@ static void Py3dLight_Dealloc(struct Py3dModelRenderer *self) {
     //Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
-static PyTypeObject Py3dLight_Type = {
+PyTypeObject Py3dLight_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "py3dengine.LightComponent",
     .tp_doc = "A dynamic light",

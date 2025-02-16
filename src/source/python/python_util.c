@@ -8,6 +8,7 @@
 #include "python/py3dscene.h"
 #include "math/vector3.h"
 #include "math/quaternion.h"
+#include "python/py3dlight.h"
 
 static PyObject *convertToPyString(PyObject *obj) {
     PyObject *ret = PyObject_Str(obj);
@@ -47,6 +48,7 @@ static PyObject *interesting_types[] = {
     (PyObject *) &Py3dVector3_Type,
     (PyObject *) &Py3dQuaternion_Type,
     (PyObject *) &Py3dScene_Type,
+    (PyObject *) &Py3dLight_Type,
 };
 
 static bool isObjectInteresting(PyObject *obj) {
