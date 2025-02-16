@@ -272,11 +272,21 @@ int Py3d_GetVector3ParseData(PyObject *parseDataDict, const char *keyName, float
     }
 
     PyObject *obj = Py3d_GetParseData(parseDataDict, &Py3dVector3_Type, keyName, componentName);
-    if (obj == NULL) return 0;
+    if (obj != NULL) {
+        Py3dVector3_AsFloatArray((struct Py3dVector3 *) obj, dst);
 
-    Py3dVector3_AsFloatArray((struct Py3dVector3 *) obj, dst);
+        return 1;
+    }
+    PyErr_Clear();
 
-    return 1;
+    obj = Py3d_GetParseData(parseDataDict, &PyList_Type, keyName, componentName);
+    if (obj != NULL) {
+        return PyArg_ParseTuple(obj, "fff", &dst[0], &dst[1], &dst[2]);
+    }
+    PyErr_Clear();
+
+    PyErr_Format(PyExc_KeyError, "Field with name \"%s\" must be of type \"Vector3\" or a sequence of three floats", keyName);
+    return 0;
 }
 
 struct Py3dGameObject *Py3d_GetOwnerForComponent(struct Py3dComponent *component) {
