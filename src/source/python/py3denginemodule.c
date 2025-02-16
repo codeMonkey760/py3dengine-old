@@ -12,6 +12,7 @@
 #include "python/py3dcollisionevent.h"
 #include "python/py3dscene.h"
 #include "python/py3dtextrenderer.h"
+#include "python/py3dlight.h"
 #include "engine.h"
 
 PyObject *Py3dErr_SceneError = NULL;
@@ -87,7 +88,7 @@ static PyMethodDef Py3dEngine_Methods[] = {
     {NULL}
 };
 
-static struct PyModuleDef py3dengineModuleDef = {
+static PyModuleDef py3dengineModuleDef = {
     PyModuleDef_HEAD_INIT,
     .m_name = "py3dengine",
     .m_doc = "Top level module containing interface to engine.",
@@ -183,6 +184,13 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
+    if (!PyInit_Py3dLight(newModule)) {
+        critical_log("%s", "[Python]: Failed to attach LightComponent to py3dengine module");
+
+        Py_CLEAR(newModule);
+        return NULL;
+    }
+
     Py3dErr_SceneError = PyErr_NewException("py3dengine.SceneError", NULL, NULL);
     if (Py3dErr_SceneError == NULL) {
         critical_log("%s", "[Python]: Failed to create SceneError");
@@ -255,6 +263,10 @@ int initPy3dEngineObjects() {
         return false;
     }
 
+    if (!Py3dLight_FindCtor(module)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -272,4 +284,5 @@ void finalizePy3dEngineModule() {
     Py3dContactPoint_FinalizeCtor();
     Py3dCollisionEvent_FinalizeCtor();
     Py3dScene_FinalizeCtor();
+    Py3dLight_FinalizeCtor();
 }
