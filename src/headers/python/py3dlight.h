@@ -24,4 +24,11 @@ extern PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObjec
 extern PyObject *Py3dLight_Attach(struct Py3dLight *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dLight_Detach(struct Py3dLight *self, PyObject *args, PyObject *kwds);
 
+extern PyObject *Py3dLight_SetType(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_SetDiffuseColor(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_SetSpecularColor(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_SetAmbientColor(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_SetIntensity(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+extern PyObject *Py3dLight_SetAttenuation(struct Py3dLight *self, PyObject *args, PyObject *kwds);
+
 #endif

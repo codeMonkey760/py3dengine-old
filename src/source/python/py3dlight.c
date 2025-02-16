@@ -3,7 +3,7 @@
 #include "util.h"
 
 #include "python/py3dscene.h"
-#include "python/py3dgameobject.h"
+#include "math/vector3.h"
 
 #include "python/py3dcomponent.h"
 #include "logger.h"
@@ -39,6 +39,12 @@ static PyMethodDef Py3dLight_Methods[] = {
     {"parse", (PyCFunction) Py3dLight_Parse, METH_VARARGS, "Handle parse messages"},
     {"attach", (PyCFunction) Py3dLight_Attach, METH_VARARGS, "Handle attach messages"},
     {"detach", (PyCFunction) Py3dLight_Detach, METH_VARARGS, "Handle detach messages"},
+    {"set_light_type", (PyCFunction) Py3dLight_SetType, METH_VARARGS, "Set light type"},
+    {"set_diffuse_color", (PyCFunction) Py3dLight_SetDiffuseColor, METH_VARARGS, "Set diffuse color"},
+    {"set_specular_color", (PyCFunction) Py3dLight_SetSpecularColor, METH_VARARGS, "Set specular color"},
+    {"set_ambient_color", (PyCFunction) Py3dLight_SetAmbientColor, METH_VARARGS, "Set ambient color"},
+    {"set_intensity", (PyCFunction) Py3dLight_SetIntensity, METH_VARARGS, "Set intensity"},
+    {"set_attenuation", (PyCFunction) Py3dLight_SetAttenuation, METH_VARARGS, "Set attenuation params"},
     {NULL}
 };
 
@@ -211,4 +217,96 @@ PyObject *Py3dLight_Detach(struct Py3dLight *self, PyObject *args, PyObject *kwd
     }
 
     Py_RETURN_NONE;
+}
+
+static PyObject *setFloatArrayValue(float dst[3], PyObject *args) {
+    struct Py3dVector3 *newColorAsVec3 = NULL;
+    if (PyArg_ParseTuple(args, "O!", &Py3dVector3_Type, &newColorAsVec3)) {
+        // TODO: implement this
+        PyErr_SetString(PyExc_NotImplementedError, "Setting value from Vector3 not yet implemented");
+        return NULL;
+    }
+    PyErr_Clear();
+
+    float components[3] = {0.0f};
+
+    if (PyArg_ParseTuple(args, "(fff)", &components[0], &components[1], &components[2])) {
+        Vec3Copy(dst, components);
+        Py_RETURN_NONE;
+    }
+    PyErr_Clear();
+
+    if (PyArg_ParseTuple(args, "fff", &components[0], &components[1], &components[2])) {
+        // TODO: implement this
+        PyErr_SetString(PyExc_NotImplementedError, "Setting value from individual floats not yet implemented");
+        return NULL;
+    }
+    PyErr_Clear();
+
+    PyErr_SetString(PyExc_ValueError, "Function requires Vector3 a sequence of 3 floats or 3 individual floats");
+    return NULL;
+}
+
+PyObject *Py3dLight_SetType(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL || args == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with invalid params");
+        return NULL;
+    }
+
+    int newType = -1;
+    if (!PyArg_ParseTuple(args, "i", &newType)) return NULL;
+
+    self->lightType = newType; //TODO: since this is an enum, add additional validation
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dLight_SetDiffuseColor(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL || args == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with invalid params");
+        return NULL;
+    }
+
+    return setFloatArrayValue(self->diffuse, args);
+}
+
+PyObject *Py3dLight_SetSpecularColor(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL || args == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with invalid params");
+        return NULL;
+    }
+
+    return setFloatArrayValue(self->specular, args);
+}
+
+PyObject *Py3dLight_SetAmbientColor(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL || args == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with invalid params");
+        return NULL;
+    }
+
+    return setFloatArrayValue(self->ambient, args);
+}
+
+PyObject *Py3dLight_SetIntensity(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL || args == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with invalid params");
+        return NULL;
+    }
+
+    float newIntensity = 0.0f;
+    if (!PyArg_ParseTuple(args, "f", &newIntensity)) return NULL;
+
+    self->intensity = newIntensity;
+
+    Py_RETURN_NONE;
+}
+
+PyObject *Py3dLight_SetAttenuation(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
+    if (self == NULL || args == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Python function called with invalid params");
+        return NULL;
+    }
+
+    return setFloatArrayValue(self->attenuation, args);
 }
