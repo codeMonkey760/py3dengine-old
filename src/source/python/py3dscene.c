@@ -1,6 +1,7 @@
 #include "python/py3dscene.h"
 #include <structmember.h>
 
+#include "config.h"
 #include "util.h"
 #include "engine.h"
 #include "logger.h"
@@ -45,6 +46,7 @@ static void appendLightToList(struct LightListNode **list, struct Py3dLight *new
 
     struct LightListNode *prev = NULL, *next = NULL;
 
+    int lightCount = 0;
     next = *list;
     while (next != NULL) {
         if (next->component == newLightComponent) {
@@ -54,12 +56,18 @@ static void appendLightToList(struct LightListNode **list, struct Py3dLight *new
 
         prev = next;
         next = next->next;
+        lightCount++;
     }
 
     struct LightListNode *newNode = NULL;
     allocLightListNode(&newNode);
     newNode->next = NULL;
     newNode->component = newLightComponent;
+
+    trace_log("[Scene]: Light count for scene increased from %d to %d", lightCount, lightCount + 1);
+    if (lightCount >= getConfigMaxDynamicLights()) {
+        warning_log("[Scene]: Light count for scene has reached max dynamic light config value. Further lights will be ignored.");
+    }
 
     if (prev == NULL) {
         *list = newNode;
