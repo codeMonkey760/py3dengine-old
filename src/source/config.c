@@ -23,6 +23,9 @@
 #define SWAP_INTERVAL_DEFAULT 0
 #define SWAP_INTERVAL_CONFIG_NAME "swap_interval"
 
+#define MAX_DYNAMIC_LIGHTS_DEFAULT 8
+#define MAX_DYNAMIC_LIGHTS_CONFIG_NAME "max_dynamic_lights"
+
 #define STARTING_SCENE_DEFAULT "default.json"
 #define STARTING_SCENE_CONFIG_NAME "starting_scene"
 
@@ -36,6 +39,7 @@ struct Configuration {
     int screen_top;
     bool full_screen;
     int swap_interval;
+    int max_dynamic_lights;
     struct String *startingScene;
     bool wfo_reverse_polygons;
 } config = {
@@ -45,6 +49,7 @@ struct Configuration {
     .screen_top = SCREEN_TOP_DEFAULT,
     .full_screen = FULL_SCREEN_DEFAULT,
     .swap_interval = SWAP_INTERVAL_DEFAULT,
+    .max_dynamic_lights = MAX_DYNAMIC_LIGHTS_DEFAULT,
     .startingScene = NULL,
     .wfo_reverse_polygons = WFO_REVERSE_POLYGONS_DEFAULT
 };
@@ -154,6 +159,8 @@ void parseConfig(FILE *configFile) {
     getBoolFromObject(config_root, FULL_SCREEN_CONFIG_NAME, &config.full_screen, FULL_SCREEN_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", SWAP_INTERVAL_CONFIG_NAME);
     getIntFromObject(config_root, SWAP_INTERVAL_CONFIG_NAME, &config.swap_interval, SWAP_INTERVAL_DEFAULT);
+    trace_log("[Config]: Attempting to set \"%s\" from config", MAX_DYNAMIC_LIGHTS_CONFIG_NAME);
+    getIntFromObject(config_root, MAX_DYNAMIC_LIGHTS_CONFIG_NAME, &config.swap_interval, MAX_DYNAMIC_LIGHTS_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", STARTING_SCENE_CONFIG_NAME);
     getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", WFO_REVERSE_POLYGONS_CONFIG_NAME);
@@ -205,6 +212,10 @@ bool getConfigFullScreen() {
 
 int getConfigSwapInterval() {
     return config.swap_interval;
+}
+
+int getConfigMaxDynamicLights() {
+    return config.max_dynamic_lights;
 }
 
 const char *getConfigStartingScene() {
