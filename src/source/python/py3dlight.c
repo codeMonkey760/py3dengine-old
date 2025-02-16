@@ -37,6 +37,8 @@ static int Py3dLight_Init(struct Py3dLight *self, PyObject *args, PyObject *kwds
 
 static PyMethodDef Py3dLight_Methods[] = {
     {"parse", (PyCFunction) Py3dLight_Parse, METH_VARARGS, "Handle parse messages"},
+    {"attach", (PyCFunction) Py3dLight_Attach, METH_VARARGS, "Handle attach messages"},
+    {"detach", (PyCFunction) Py3dLight_Detach, METH_VARARGS, "Handle detach messages"},
     {NULL}
 };
 
