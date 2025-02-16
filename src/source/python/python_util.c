@@ -282,13 +282,30 @@ int Py3d_GetVector3ParseData(PyObject *parseDataDict, const char *keyName, float
     PyErr_Clear();
 
     obj = Py3d_GetParseData(parseDataDict, &PyList_Type, keyName, componentName);
-    if (obj != NULL) {
-        return PyArg_ParseTuple(obj, "fff", &dst[0], &dst[1], &dst[2]);
-    }
-    PyErr_Clear();
+    if (obj == NULL) {
+        PyErr_Clear();
+        PyErr_Format(PyExc_KeyError, "Field with name \"%s\" must be of type \"Vector3\" or a sequence of three floats", keyName);
+        return 0;
 
-    PyErr_Format(PyExc_KeyError, "Field with name \"%s\" must be of type \"Vector3\" or a sequence of three floats", keyName);
-    return 0;
+    }
+
+    if (PyList_Size(obj) != 3) {
+        PyErr_Format(PyExc_KeyError, "Field with name \"%s\" must be of type \"Vector3\" or a sequence of three floats", keyName);
+        return 0;
+    }
+
+    for (Py_ssize_t i = 0; i < 3; ++i) {
+        PyObject *number = PyList_GetItem(obj, i);
+        number = PyNumber_Float(number);
+        if (number == NULL) {
+            PyErr_Format(PyExc_KeyError, "Field with name \"%s\" must be of type \"Vector3\" or a sequence of three floats", keyName);
+            return 0;
+        }
+        dst[i] = (float) PyFloat_AsDouble(number);
+        Py_CLEAR(number); // Clear the new ref picked up from PyNumber_Float
+    }
+
+    return 1;
 }
 
 struct Py3dGameObject *Py3d_GetOwnerForComponent(struct Py3dComponent *component) {
