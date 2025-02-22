@@ -13,6 +13,97 @@
 #include "util.h"
 #include "python/py3dscene.h"
 
+// TODO: remove all of this hardcoded stuff once we have shader definition file parsing implemented
+#define SHADER_PARAM_TYPE_INT 0
+#define SHADER_PARAM_TYPE_FLOAT 1
+
+struct ShaderParam {
+    int type;
+    const char *structName;
+    const char *paramName;
+    const size_t offset;
+    int paramSize;
+} shader_params[9] = {
+    {
+        SHADER_PARAM_TYPE_INT,
+        "gLights",
+        "used",
+        0,
+        1,
+    },
+    {
+        SHADER_PARAM_TYPE_INT,
+        "gLights",
+        "enabled",
+        0 + sizeof(GLint),
+        1,
+    },
+    {
+        SHADER_PARAM_TYPE_INT,
+        "gLights",
+        "lightType",
+        0 + sizeof(GLint) + sizeof(GLint),
+        1,
+    },
+    {
+        SHADER_PARAM_TYPE_FLOAT,
+        "gLights",
+        "position",
+        0 + sizeof(GLint) + sizeof(GLint) + sizeof(GLint),
+        3,
+    },
+    {
+        SHADER_PARAM_TYPE_FLOAT,
+        "gLights",
+        "diffuse",
+        0 + sizeof(GLint) + sizeof(GLint) + sizeof(GLint) + (sizeof(float) * 3),
+        3,
+    },
+    {
+        SHADER_PARAM_TYPE_FLOAT,
+        "gLights",
+        "specular",
+        0 + sizeof(GLint) + sizeof(GLint) + sizeof(GLint) + (sizeof(float) * 3) + (sizeof(float) * 3),
+        3,
+    },
+    {
+        SHADER_PARAM_TYPE_FLOAT,
+        "gLights",
+        "ambient",
+        0 + sizeof(GLint) + sizeof(GLint) + sizeof(GLint) + (sizeof(float) * 3) + (sizeof(float) * 3) + (sizeof(float) * 3),
+        3,
+    },
+    {
+        SHADER_PARAM_TYPE_FLOAT,
+        "gLights",
+        "intensity",
+        0 + sizeof(GLint) + sizeof(GLint) + sizeof(GLint) + (sizeof(float) * 3) + (sizeof(float) * 3) + (sizeof(float) * 3) + (sizeof(float) * 3),
+        1,
+    },
+    {
+        SHADER_PARAM_TYPE_FLOAT,
+        "gLights",
+        "attenuation",
+        0 + sizeof(GLint) + sizeof(GLint) + sizeof(GLint) + (sizeof(float) * 3) + (sizeof(float) * 3) + (sizeof(float) * 3) + (sizeof(float) * 3) + sizeof(float),
+        3,
+    },
+};
+
+static void setShaderParam(struct Shader *shader, int curLight, int curParam, struct LightData *lightData) {
+    char name_buffer[32+1] = {0};
+    snprintf(name_buffer, 32, "%s[%d].%s", shader_params[curParam].structName, curLight, shader_params[curParam].paramName);
+
+    const size_t lightOffset = sizeof(struct LightData) * curLight;
+    const size_t paramOffset = shader_params[curParam].offset;
+    const void *dataSrc = ((void *) lightData) + lightOffset + paramOffset;
+
+    if (shader_params[curParam].type == SHADER_PARAM_TYPE_INT) {
+        setShaderIntUniform(shader, name_buffer, dataSrc, shader_params[curParam].paramSize);
+    } else if (shader_params[curParam].type == SHADER_PARAM_TYPE_FLOAT) {
+        setShaderFloatArrayUniform(shader, name_buffer, dataSrc, shader_params[curParam].paramSize);
+    }
+}
+
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
 static struct Py3dGameObject *getOwner(struct Py3dModelRenderer *self) {
@@ -65,16 +156,10 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     size_t numLights = 0;
     Py3dScene_GetDynamicLightData(scene, &lightData, &numLights);
 
-    for (int curLight = 0; curLight < 1; /*curLight < numLights;*/ ++curLight) {
-        setShaderIntUniform(self->shader, "gLights[0].used", &lightData[curLight].used, 1);
-        setShaderIntUniform(self->shader, "gLights[0].enabled", &lightData[curLight].enabled, 1);
-        setShaderIntUniform(self->shader, "gLights[0].lightType", &lightData[curLight].type, 1);
-        setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", lightData[curLight].diffuse, 3);
-        setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData[curLight].specular, 3);
-        setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData[curLight].ambient, 3);
-        setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData[curLight].position, 3);
-        setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData[curLight].intensity, 1);
-        setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData[curLight].attenuation, 3);
+    for (int curLight = 0; curLight < numLights; ++curLight) {
+        for (int curParam = 0; curParam < 9; ++curParam) {
+            setShaderParam(self->shader, curLight, curParam, lightData);
+        }
     }
 
     float wvpMtx[16] = {0.0f};
