@@ -94,7 +94,7 @@ static void getIntFromObject(json_object *obj, const char *key_name, int *dst, i
 
     int value = json_object_get_int(valueObj);
     (*dst) = value;
-    trace_log("[Config]: Config value \"%s\" was successful set to \"%d\"", key_name, value);
+    trace_log("[Config]: Config value \"%s\" was successfully set to \"%d\"", key_name, value);
 }
 
 static void getBoolFromObject(json_object *obj, const char *key_name, bool *dst, bool default_value) {
@@ -113,7 +113,7 @@ static void getBoolFromObject(json_object *obj, const char *key_name, bool *dst,
 
     bool value = json_object_get_boolean(valueObj);
     (*dst) = value;
-    trace_log("[Config]: Config value \"%s\" was successful set to \"%s\"", key_name, (value) ? "true" : "false");
+    trace_log("[Config]: Config value \"%s\" was successfully set to \"%s\"", key_name, (value) ? "true" : "false");
 }
 
 static void getStringFromObject(json_object *obj, const char *key_name, struct String *dst, const char *default_value) {
@@ -132,7 +132,7 @@ static void getStringFromObject(json_object *obj, const char *key_name, struct S
 
     const char *value = json_object_get_string(valueObj);
     setChars(dst, value);
-    trace_log("[Config]: Config value \"%s\" was successful set to \"%s\"", key_name, value);
+    trace_log("[Config]: Config value \"%s\" was successfully set to \"%s\"", key_name, value);
 }
 
 void parseConfig(FILE *configFile) {
