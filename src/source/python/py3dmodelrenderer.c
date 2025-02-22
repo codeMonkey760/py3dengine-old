@@ -1,5 +1,7 @@
+#include <glad/gl.h>
+
 #include "python/py3dmodelrenderer.h"
-#include <lights.h>
+#include "lights.h"
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3drenderingcontext.h"
@@ -63,12 +65,17 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     size_t numLights = 0;
     Py3dScene_GetDynamicLightData(scene, &lightData, &numLights);
 
-    setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", lightData[0].diffuse, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData[0].specular, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData[0].ambient, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData[0].position, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData[0].intensity, 1);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData[0].attenuation, 3);
+    for (int curLight = 0; curLight < 1; /*curLight < numLights;*/ ++curLight) {
+        setShaderIntUniform(self->shader, "gLights[0].used", &lightData[curLight].used, 1);
+        setShaderIntUniform(self->shader, "gLights[0].enabled", &lightData[curLight].enabled, 1);
+        setShaderIntUniform(self->shader, "gLights[0].lightType", &lightData[curLight].type, 1);
+        setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", lightData[curLight].diffuse, 3);
+        setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData[curLight].specular, 3);
+        setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData[curLight].ambient, 3);
+        setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData[curLight].position, 3);
+        setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData[curLight].intensity, 1);
+        setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData[curLight].attenuation, 3);
+    }
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
