@@ -14,7 +14,7 @@ extern void Py3dLight_FinalizeCtor();
 extern struct Py3dLight *Py3dLight_New();
 extern int Py3dLight_Check(PyObject *obj);
 
-extern void Py3dLight_GetType(struct Py3dLight *self, int *dst);
+extern void Py3dLight_GetType(struct Py3dLight *self, GLint *dst);
 extern void Py3dLight_GetDiffuse(struct Py3dLight *self, float dst[3]);
 extern void Py3dLight_GetSpecular(struct Py3dLight *self, float dst[3]);
 extern void Py3dLight_GetAmbient(struct Py3dLight *self, float dst[3]);

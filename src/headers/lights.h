@@ -5,9 +5,10 @@
 #define LIGHT_TYPE_POINT 1
 
 struct LightData {
-    int used;
-    int enabled;
-    int type;
+    // TODO: find a way to remove the OpenGL stuff
+    GLint used;
+    GLint enabled;
+    GLint type;
     float position[3];
     float diffuse[3];
     float specular[3];

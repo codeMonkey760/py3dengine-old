@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <glad/gl.h>
 #include "lights.h"
 
 void LightData_Alloc(struct LightData **ptr, unsigned int count) {

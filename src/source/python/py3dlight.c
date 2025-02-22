@@ -1,3 +1,5 @@
+#include <glad/gl.h>
+
 #include "python/py3dlight.h"
 
 #include "util.h"
@@ -14,7 +16,7 @@ static PyObject *Py3dLight_Ctor = NULL;
 
 struct Py3dLight {
     struct Py3dComponent base;
-    int lightType;
+    GLint lightType;
     float diffuse[3];
     float specular[3];
     float ambient[3];
@@ -123,7 +125,7 @@ int Py3dLight_Check(PyObject *obj) {
     return ret;
 }
 
-void Py3dLight_GetType(struct Py3dLight *self, int *dst) {
+void Py3dLight_GetType(struct Py3dLight *self, GLint *dst) {
     if (self == NULL || dst == NULL) return;
 
     *dst = self->lightType;
