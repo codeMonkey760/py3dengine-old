@@ -160,7 +160,7 @@ void parseConfig(FILE *configFile) {
     trace_log("[Config]: Attempting to set \"%s\" from config", SWAP_INTERVAL_CONFIG_NAME);
     getIntFromObject(config_root, SWAP_INTERVAL_CONFIG_NAME, &config.swap_interval, SWAP_INTERVAL_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", MAX_DYNAMIC_LIGHTS_CONFIG_NAME);
-    getIntFromObject(config_root, MAX_DYNAMIC_LIGHTS_CONFIG_NAME, &config.swap_interval, MAX_DYNAMIC_LIGHTS_DEFAULT);
+    getIntFromObject(config_root, MAX_DYNAMIC_LIGHTS_CONFIG_NAME, &config.max_dynamic_lights, MAX_DYNAMIC_LIGHTS_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", STARTING_SCENE_CONFIG_NAME);
     getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", WFO_REVERSE_POLYGONS_CONFIG_NAME);
