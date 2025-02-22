@@ -405,8 +405,6 @@ void Py3dScene_Update(struct Py3dScene *self, float dt) {
         handleException();
     }
 
-    Py3dScene_RefreshLightingData(self);
-
     Py_CLEAR(ret);
     Py_CLEAR(args);
 
@@ -429,6 +427,8 @@ void Py3dScene_Render(struct Py3dScene *self) {
         warning_log("[Scene]: Scene graph does not possess a valid active camera");
         return;
     }
+
+    Py3dScene_MarshalLightData(self);
 
     struct Py3dRenderingContext *rc = Py3dRenderingContext_New(self);
     if (rc == NULL) {
@@ -616,7 +616,7 @@ void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightData **li
     (*numLightsPtr) = self->numLights;
 }
 
-void Py3dScene_RefreshLightingData(struct Py3dScene *self) {
+void Py3dScene_MarshalLightData(struct Py3dScene *self) {
     if (self == NULL) return;
 
     LightData_Dealloc(&self->lightData);

@@ -62,7 +62,7 @@ extern PyObject *Py3dScene_SetKeyCallback(struct Py3dScene *self, PyObject *args
 PyObject *Py3dScene_SetCursorMode(struct Py3dScene *self, PyObject *args, PyObject *kwds);
 
 extern void Py3dScene_GetDynamicLightData(struct Py3dScene *self, struct LightData **lightDataPtr, size_t *numLightsPtr);
-extern void Py3dScene_RefreshLightingData(struct Py3dScene *self);
+extern void Py3dScene_MarshalLightData(struct Py3dScene *self);
 
 extern int Py3dScene_RegisterLight(struct Py3dScene *self, struct Py3dLight *newLightComponent);
 extern int Py3dScene_UnRegisterLight(struct Py3dScene *self, const struct Py3dLight *lightComponent);

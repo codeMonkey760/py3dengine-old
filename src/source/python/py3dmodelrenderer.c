@@ -63,12 +63,12 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     size_t numLights = 0;
     Py3dScene_GetDynamicLightData(scene, &lightData, &numLights);
 
-    setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", lightData->diffuse, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData->specular, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData->ambient, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData->position, 3);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData->intensity, 1);
-    setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData->attenuation, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].diffuse", lightData[0].diffuse, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].specular", lightData[0].specular, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].ambient", lightData[0].ambient, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].position", lightData[0].position, 3);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].intensity", &lightData[0].intensity, 1);
+    setShaderFloatArrayUniform(self->shader, "gLights[0].attenuation", lightData[0].attenuation, 3);
 
     float wvpMtx[16] = {0.0f};
     Mat4Identity(wvpMtx);
