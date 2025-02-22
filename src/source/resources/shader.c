@@ -322,6 +322,27 @@ bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float
     return true;
 }
 
+bool setShaderIntUniform(struct Shader *shader, const char *name, const GLint *src, size_t dimensions) {
+    if (shader == NULL || name == NULL || src == NULL) return false;
+
+    GLint loc = getUniformLocation(shader, name);
+    if (loc == -1) return false;
+
+    if (dimensions == 1) {
+        glUniform1iv(loc, 1, src);
+    } else if (dimensions == 2) {
+        glUniform2iv(loc, 1, src);
+    } else if (dimensions == 3) {
+        glUniform3iv(loc, 1, src);
+    } else if (dimensions == 4) {
+        glUniform4iv(loc, 1, src);
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
 bool setShaderTextureUniform(struct Shader *shader, const char *name, struct Texture *texture) {
     if (shader == NULL || name == NULL || texture == NULL) return false;
 

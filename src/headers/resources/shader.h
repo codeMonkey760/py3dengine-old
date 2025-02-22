@@ -1,6 +1,8 @@
 #ifndef PY3DENGINE_RESOURCES_SHADER_H
 #define PY3DENGINE_RESOURCES_SHADER_H
 
+#include <glad/gl.h>
+
 #include "resources/base_resource.h"
 
 #define RESOURCE_TYPE_NAME_SHADER "Shader"
@@ -30,6 +32,7 @@ extern void disableShader(struct Shader *shader);
 
 extern bool setShaderFloatArrayUniform(struct Shader *shader, const char *name, const float *src, size_t numElements);
 extern bool setShaderMatrixUniform(struct Shader *shader, const char *name, const float *src, size_t dimensions);
+extern bool setShaderIntUniform(struct Shader *shader, const char *name, const GLint *src, size_t dimensions);
 extern bool setShaderTextureUniform(struct Shader *shader, const char *name, struct Texture *texture);
 
 #endif
