@@ -15,6 +15,8 @@ struct Py3dModelRenderer {
     struct Shader *shader;
     struct Model *model;
     struct Material *material;
+    int isShadowCaster;
+    int isShadowReceiver;
 };
 
 extern int PyInit_Py3dModelRenderer(PyObject *module);

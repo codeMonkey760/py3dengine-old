@@ -240,6 +240,14 @@ static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObjec
         curRes = NULL;
     }
 
+    if (!Py3d_GetBooleanParseData(parseDataDict, "is_shadow_caster", &self->isShadowCaster, "ModelRendererComponent")) {
+        return NULL;
+    }
+
+    if (!Py3d_GetBooleanParseData(parseDataDict, "is_shadow_receiver", &self->isShadowReceiver, "ModelRendererComponent")) {
+        return NULL;
+    }
+
     Py_RETURN_NONE;
 }
 
@@ -262,6 +270,8 @@ static int Py3dModelRenderer_Init(struct Py3dModelRenderer *self, PyObject *args
     self->material = NULL;
     self->model = NULL;
     self->shader = NULL;
+    self->isShadowCaster = 1;
+    self->isShadowReceiver = 1;
 
     return 0;
 }
