@@ -118,7 +118,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     struct Py3dGameObject *owner = Py3d_GetOwnerForComponent((struct Py3dComponent *) self);
     if (owner == NULL) return NULL;
 
-    struct Py3dScene *scene = Py3d_GetSceneForComponent((struct Py3dComponent *) self);
+    struct Py3dScene *scene = Py3d_GetSceneForGameObject(owner);
     if (scene == NULL) return NULL;
 
     enableShader(self->shader);
