@@ -106,28 +106,6 @@ static void setShaderParam(struct Shader *shader, int curLight, int curParam, st
 
 static PyObject *Py3dModelRenderer_Ctor = NULL;
 
-static struct Py3dGameObject *getOwner(struct Py3dModelRenderer *self) {
-    PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
-    if (owner == NULL) {
-        return NULL;
-    } else if (!Py3dGameObject_Check(owner)) {
-        Py_CLEAR(owner);
-        PyErr_SetString(PyExc_ValueError, "Cannot render a component that is detached from scene graph");
-        return NULL;
-    }
-
-    return (struct Py3dGameObject *) owner;
-}
-
-static struct Py3dScene *getScene(struct Py3dGameObject *owner) {
-    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
-    if (scene == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot render a component that is detached from scene graph");
-    }
-
-    return scene;
-}
-
 static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
     if (self->shader == NULL || self->model == NULL || self->material == NULL) {
         PyErr_SetString(PyExc_ValueError, "ModelRendererComponent is not correctly configured");
@@ -137,10 +115,10 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     struct Py3dRenderingContext *rc = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
-    struct Py3dGameObject *owner = getOwner(self);
+    struct Py3dGameObject *owner = Py3d_GetOwnerForComponent((struct Py3dComponent *) self);
     if (owner == NULL) return NULL;
 
-    struct Py3dScene *scene = getScene(owner);
+    struct Py3dScene *scene = Py3d_GetSceneForComponent((struct Py3dComponent *) self);
     if (scene == NULL) return NULL;
 
     enableShader(self->shader);
