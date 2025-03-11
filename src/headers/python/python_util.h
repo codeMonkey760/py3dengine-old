@@ -18,5 +18,6 @@ extern int Py3d_GetFloatParseData(PyObject *parseDataDict, const char *keyName, 
 extern int Py3d_GetVector3ParseData(PyObject *parseDataDict, const char *keyName, float dst[3], const char *componentName);
 extern struct Py3dGameObject *Py3d_GetOwnerForComponent(struct Py3dComponent *component);
 extern struct Py3dScene *Py3d_GetSceneForComponent(struct Py3dComponent *component);
+extern struct Py3dScene *Py3d_GetSceneForGameObject(struct Py3dGameObject *gameObject);
 
 #endif

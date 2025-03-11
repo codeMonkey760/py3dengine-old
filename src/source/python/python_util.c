@@ -336,15 +336,29 @@ struct Py3dScene *Py3d_GetSceneForComponent(struct Py3dComponent *component) {
     struct Py3dGameObject *owner = Py3d_GetComponentOwner(component);
     if (owner == NULL) return NULL;
 
-    struct Py3dScene *scene = Py3dGameObject_GetScene(owner);
+    struct Py3dScene *ret = Py3d_GetSceneForGameObject(owner);
     Py_CLEAR(owner);
 
+    return ret;
+}
+
+struct Py3dScene *Py3d_GetSceneForGameObject(struct Py3dGameObject *gameObject) {
+    if (gameObject == NULL) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetSceneForGameObject received NULL game object");
+        return NULL;
+    }
+    if (!Py3dGameObject_Check((PyObject *) gameObject)) {
+        PyErr_SetString(PyExc_AssertionError, "Py3d_GetSceneForGameObject received component that failed Py3dGameObject_Check");
+        return NULL;
+    }
+
+    struct Py3dScene *scene = Py3dGameObject_GetScene(gameObject);
     if (scene == NULL) {
         PyErr_SetString(PyExc_ValueError, "Cannot get scene of detached component");
         return NULL;
     }
     if (!Py3dScene_Check((PyObject *) scene)) {
-        Py_CLEAR(owner);
+        Py_CLEAR(scene);
         PyErr_SetString(PyExc_AssertionError, "Scene pointer failed Py3dScene_Check");
         return NULL;
     }
