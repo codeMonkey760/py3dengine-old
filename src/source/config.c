@@ -32,6 +32,9 @@
 #define WFO_REVERSE_POLYGONS_DEFAULT true
 #define WFO_REVERSE_POLYGONS_CONFIG_NAME "wfo_reverse_polygons"
 
+#define SHADOW_MAP_SIZE_DEFAULT 1024
+#define SHADOW_MAP_SIZE_NAME "shadow_map_size"
+
 struct Configuration {
     int screen_width;
     int screen_height;
@@ -42,6 +45,7 @@ struct Configuration {
     int max_dynamic_lights;
     struct String *startingScene;
     bool wfo_reverse_polygons;
+    int shadow_map_size;
 } config = {
     .screen_width = SCREEN_WIDTH_DEFAULT,
     .screen_height = SCREEN_HEIGHT_DEFAULT,
@@ -51,7 +55,8 @@ struct Configuration {
     .swap_interval = SWAP_INTERVAL_DEFAULT,
     .max_dynamic_lights = MAX_DYNAMIC_LIGHTS_DEFAULT,
     .startingScene = NULL,
-    .wfo_reverse_polygons = WFO_REVERSE_POLYGONS_DEFAULT
+    .wfo_reverse_polygons = WFO_REVERSE_POLYGONS_DEFAULT,
+    .shadow_map_size = SHADOW_MAP_SIZE_DEFAULT
 };
 
 static json_object *get_object(json_object *parent, const char *key_name) {
@@ -165,6 +170,8 @@ void parseConfig(FILE *configFile) {
     getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", WFO_REVERSE_POLYGONS_CONFIG_NAME);
     getBoolFromObject(config_root, WFO_REVERSE_POLYGONS_CONFIG_NAME, &config.wfo_reverse_polygons, WFO_REVERSE_POLYGONS_DEFAULT);
+    trace_log("[Config]: Attempting to set \"%s\" from config", SHADOW_MAP_SIZE_NAME);
+    getIntFromObject(config_root, SHADOW_MAP_SIZE_NAME, &config.shadow_map_size, SHADOW_MAP_SIZE_DEFAULT);
 
     json_object_put(config_root);
     config_root = NULL;
@@ -228,4 +235,8 @@ const char *getConfigStartingScene() {
 
 bool getConfigWfoReversePolygons() {
     return config.wfo_reverse_polygons;
+}
+
+int getConfigShadowMapSize() {
+    return SHADOW_MAP_SIZE_DEFAULT;
 }
