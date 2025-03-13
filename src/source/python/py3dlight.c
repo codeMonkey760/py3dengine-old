@@ -22,6 +22,7 @@ struct Py3dLight {
     float ambient[3];
     float intensity;
     float attenuation[3];
+    int generate_shadows;
 };
 
 static int Py3dLight_Init(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
@@ -33,6 +34,7 @@ static int Py3dLight_Init(struct Py3dLight *self, PyObject *args, PyObject *kwds
     Vec3Fill(self->ambient, 0.0f);
     self->intensity = 0.0f;
     Vec3Fill(self->attenuation, 0.0f);
+    self->generate_shadows = 1;
 
     return 0;
 }
@@ -177,6 +179,7 @@ PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds
     if (!Py3d_GetVector3ParseData(parseDataDict, "ambient", self->ambient, compName)) return NULL;
     if (!Py3d_GetFloatParseData(parseDataDict, "intensity", &self->intensity, compName)) return NULL;
     if (!Py3d_GetVector3ParseData(parseDataDict, "attenuation", self->attenuation, compName)) return NULL;
+    if (!Py3d_GetBooleanParseData(parseDataDict, "generate_shadows", &self->generate_shadows, compName)) return NULL;
 
     Py_RETURN_NONE;
 }
