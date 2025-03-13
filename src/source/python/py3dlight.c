@@ -1,16 +1,14 @@
 #include <glad/gl.h>
 
-#include "python/py3dlight.h"
-
 #include "util.h"
-
-#include "python/py3dscene.h"
 #include "math/vector3.h"
-
+#include "python/py3dscene.h"
+#include "python/py3dgameobject.h"
 #include "python/py3dcomponent.h"
 #include "logger.h"
 #include "python/python_util.h"
 #include "lights.h"
+#include "python/py3dlight.h"
 
 static PyObject *Py3dLight_Ctor = NULL;
 
@@ -167,6 +165,25 @@ int Py3dLight_GeneratesShadowsBool(struct Py3dLight *self) {
     if (self == NULL) return 0;
 
     return self->generate_shadows;
+}
+
+int Py3dLight_ShouldRenderShadowMap(struct Py3dLight *self) {
+    if (self == NULL) return 0;
+
+    struct Py3dComponent *component = (struct Py3dComponent *) self;
+
+    struct Py3dGameObject *owner = Py3d_GetComponentOwner(component);
+    if (owner == NULL) return 0;
+
+    const int ret =
+        Py3dGameObject_IsEnabledBool(owner) &&
+        Py3dGameObject_IsVisibleBool(owner) &&
+        Py3dComponent_IsEnabledBool(component) &&
+        Py3dComponent_IsVisibleBool(component) &&
+        Py3dLight_GeneratesShadowsBool(self);
+    Py_CLEAR(owner);
+
+    return ret;
 }
 
 PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
