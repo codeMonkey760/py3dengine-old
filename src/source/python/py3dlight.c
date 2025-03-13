@@ -163,6 +163,12 @@ void Py3dLight_GetAttenuation(struct Py3dLight *self, float dst[3]) {
     Vec3Copy(dst, self->attenuation);
 }
 
+int Py3dLight_GeneratesShadowsBool(struct Py3dLight *self) {
+    if (self == NULL) return 0;
+
+    return self->generate_shadows;
+}
+
 PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
     PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
     if (superParseRet == NULL) return NULL;

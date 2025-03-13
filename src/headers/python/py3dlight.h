@@ -20,6 +20,7 @@ extern void Py3dLight_GetSpecular(struct Py3dLight *self, float dst[3]);
 extern void Py3dLight_GetAmbient(struct Py3dLight *self, float dst[3]);
 extern void Py3dLight_GetIntensity(struct Py3dLight *self, float *dst);
 extern void Py3dLight_GetAttenuation(struct Py3dLight *self, float dst[3]);
+extern int Py3dLight_GeneratesShadowsBool(struct Py3dLight *self);
 
 extern PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds);
 extern PyObject *Py3dLight_Attach(struct Py3dLight *self, PyObject *args, PyObject *kwds);
