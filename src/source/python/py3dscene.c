@@ -1,3 +1,5 @@
+#include <glad/gl.h>
+
 #include "python/py3dscene.h"
 #include <structmember.h>
 
@@ -101,6 +103,46 @@ static void removeLightFromList(struct LightListNode **list, const struct Py3dLi
     }
 
     warning_log("%s", "[Scene]: Attempted to remove a non existent light from light list");
+}
+
+static void renderShadowMap(struct Py3dScene *self, struct Py3dLight *light) {
+    if (self == NULL || light == NULL) return;
+
+    if (!Py3dLight_ShouldRenderShadowMap(light)) return;
+
+    // TODO: let's get shadow mapping working on point lights first, then get fancy
+    int lightType = LIGHT_TYPE_UNKNOWN;
+    Py3dLight_GetType(light, &lightType);
+    if (lightType != LIGHT_TYPE_POINT) return;
+
+    // TODO: generate VP matrices for each cube map face
+    glViewport(0, 0, getConfigShadowMapSize(), getConfigShadowMapSize());
+    glBindFramebuffer(GL_FRAMEBUFFER, Py3dLight_GetShadowMapFBO(light));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // use depth map shader
+    // set depth map shader uniforms
+
+    // set up open gl for rendering pass
+    // --> set render target as light's shadow map
+    // --> set render modes
+
+    // instantiate rendering context
+
+    // render scene for shadow map pass
+
+}
+
+static void renderShadowMaps(struct Py3dScene *self) {
+    if (self == NULL) return;
+
+    const struct LightListNode *curNode = self->lightList;
+
+    while (curNode != NULL) {
+        renderShadowMap(self, curNode->component);
+
+        curNode = curNode->next;
+    }
 }
 
 static int traverseCallbackTable(struct Py3dScene *self, visitproc visit, void *arg) {
@@ -429,6 +471,8 @@ void Py3dScene_Render(struct Py3dScene *self) {
     }
 
     Py3dScene_MarshalLightData(self);
+
+    renderShadowMaps(self);
 
     struct Py3dRenderingContext *rc = Py3dRenderingContext_New(self);
     if (rc == NULL) {
