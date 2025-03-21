@@ -115,7 +115,7 @@ PyInit_py3dEngine(void) {
     }
 
     if (!PyInit_Py3dComponent(newModule)) {
-        critical_log("%s", "[Python]: Failed to attach Component to py3dengine module");
+        critical_log("%s", "[Python]: Failed to attach OldComponent to py3dengine module");
 
         Py_CLEAR(newModule);
         return NULL;
