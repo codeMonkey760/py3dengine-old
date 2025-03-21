@@ -56,7 +56,7 @@ static void Py3dRigidBody_Dealloc(struct Py3dRigidBody *self) {
 
 PyTypeObject Py3dRigidBody_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "py3dengine.RigidBodyComponent",
+    .tp_name = "py3dengineEXT.RigidBodyComponent",
     .tp_doc = "Gives GameObjects a presence in the physics engine",
     .tp_basicsize = sizeof(struct Py3dRigidBody),
     .tp_itemsize = 0,

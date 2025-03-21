@@ -90,7 +90,7 @@ static PyMethodDef Py3dEngine_Methods[] = {
 
 static PyModuleDef py3dengineModuleDef = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "py3dengine",
+    .m_name = "py3dengineEXT",
     .m_doc = "Top level module containing interface to engine.",
     .m_size = -1,
     .m_methods = Py3dEngine_Methods
@@ -191,7 +191,7 @@ PyInit_py3dEngine(void) {
         return NULL;
     }
 
-    Py3dErr_SceneError = PyErr_NewException("py3dengine.SceneError", NULL, NULL);
+    Py3dErr_SceneError = PyErr_NewException("py3dengineEXT.SceneError", NULL, NULL);
     if (Py3dErr_SceneError == NULL) {
         critical_log("%s", "[Python]: Failed to create SceneError");
 
@@ -211,8 +211,8 @@ PyInit_py3dEngine(void) {
 }
 
 int appendPy3dEngineModule() {
-    if (PyImport_AppendInittab("py3dengine", PyInit_py3dEngine) == -1) {
-        critical_log("%s", "[Python]: Failed to extend built-in modules table with py3dengine module");
+    if (PyImport_AppendInittab("py3dengineEXT", PyInit_py3dEngine) == -1) {
+        critical_log("%s", "[Python]: Failed to extend built-in modules table with py3dengineEXT module");
         return false;
     }
 
@@ -220,9 +220,9 @@ int appendPy3dEngineModule() {
 }
 
 int importPy3dEngineModule() {
-    module = PyImport_ImportModule("py3dengine");
+    module = PyImport_ImportModule("py3dengineEXT");
     if (module == NULL) {
-        critical_log("%s", "[Python]: Could not import py3dengine");
+        critical_log("%s", "[Python]: Could not import py3dengineEXT");
         handleException();
         return false;
     }

@@ -129,7 +129,7 @@ PyMethodDef Py3dGameObject_Methods[] = {
 
 PyTypeObject Py3dGameObject_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name = "py3dengine.GameObject",
+    .tp_name = "py3dengineEXT.GameObject",
     .tp_basicsize = sizeof(struct Py3dGameObject),
     .tp_dealloc = (destructor) Py3dGameObject_Dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,

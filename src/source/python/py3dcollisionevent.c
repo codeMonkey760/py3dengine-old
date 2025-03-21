@@ -27,7 +27,7 @@ static PyGetSetDef Py3dCollisionEvent_GetSet[] = {
 
 PyTypeObject Py3dCollisionEvent_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "py3dengine.CollisionEvent",
+    .tp_name = "py3dengineEXT.CollisionEvent",
     .tp_doc = "Represents a collision event",
     .tp_basicsize = sizeof(struct Py3dCollisionEvent),
     .tp_itemsize = 0,

@@ -32,6 +32,9 @@
 #define WFO_REVERSE_POLYGONS_DEFAULT true
 #define WFO_REVERSE_POLYGONS_CONFIG_NAME "wfo_reverse_polygons"
 
+#define ENGINE_SCRIPT_LOCATION_DEFAULT NULL
+#define ENGINE_SCRIPT_LOCATION_CONFIG_NAME "engine_script_location"
+
 struct Configuration {
     int screen_width;
     int screen_height;
@@ -42,6 +45,7 @@ struct Configuration {
     int max_dynamic_lights;
     struct String *startingScene;
     bool wfo_reverse_polygons;
+    struct String *engineScriptLocation;
 } config = {
     .screen_width = SCREEN_WIDTH_DEFAULT,
     .screen_height = SCREEN_HEIGHT_DEFAULT,
@@ -51,7 +55,8 @@ struct Configuration {
     .swap_interval = SWAP_INTERVAL_DEFAULT,
     .max_dynamic_lights = MAX_DYNAMIC_LIGHTS_DEFAULT,
     .startingScene = NULL,
-    .wfo_reverse_polygons = WFO_REVERSE_POLYGONS_DEFAULT
+    .wfo_reverse_polygons = WFO_REVERSE_POLYGONS_DEFAULT,
+    .engineScriptLocation = NULL
 };
 
 static json_object *get_object(json_object *parent, const char *key_name) {
@@ -147,6 +152,10 @@ void parseConfig(FILE *configFile) {
     }
     allocString(&config.startingScene, STARTING_SCENE_DEFAULT);
 
+    if (config.engineScriptLocation == NULL) {
+        allocString(&config.engineScriptLocation, ENGINE_SCRIPT_LOCATION_DEFAULT);
+    }
+
     trace_log("[Config]: Attempting to set \"%s\" from config", SCREEN_WIDTH_CONFIG_NAME);
     getIntFromObject(config_root, SCREEN_WIDTH_CONFIG_NAME, &config.screen_width, SCREEN_WIDTH_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", SCREEN_HEIGHT_CONFIG_NAME);
@@ -165,6 +174,8 @@ void parseConfig(FILE *configFile) {
     getStringFromObject(config_root, STARTING_SCENE_CONFIG_NAME, config.startingScene, STARTING_SCENE_DEFAULT);
     trace_log("[Config]: Attempting to set \"%s\" from config", WFO_REVERSE_POLYGONS_CONFIG_NAME);
     getBoolFromObject(config_root, WFO_REVERSE_POLYGONS_CONFIG_NAME, &config.wfo_reverse_polygons, WFO_REVERSE_POLYGONS_DEFAULT);
+    trace_log("[Config]: Attempting to set \"%s\" from config", ENGINE_SCRIPT_LOCATION_CONFIG_NAME);
+    getStringFromObject(config_root, ENGINE_SCRIPT_LOCATION_CONFIG_NAME, config.engineScriptLocation, ENGINE_SCRIPT_LOCATION_DEFAULT);
 
     json_object_put(config_root);
     config_root = NULL;
@@ -188,6 +199,7 @@ void parseConfigFile(const char *fileName) {
 
 void finalizeConfig() {
     deleteString(&config.startingScene);
+    deleteString(&config.engineScriptLocation);
 }
 
 int getConfigScreenWidth() {
@@ -228,4 +240,8 @@ const char *getConfigStartingScene() {
 
 bool getConfigWfoReversePolygons() {
     return config.wfo_reverse_polygons;
+}
+
+const char *getConfigEngineScriptLocation() {
+    return getChars(config.engineScriptLocation);
 }

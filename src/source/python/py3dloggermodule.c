@@ -80,7 +80,7 @@ PyMethodDef Py3dLogger_Methods[] = {
 
 static struct PyModuleDef Py3dLogger_ModuleDef = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "py3dlogger",
+    .m_name = "py3dengineEXT",
     .m_doc = "Functions for writing to the configured logs",
     .m_size = -1,
     .m_methods = Py3dLogger_Methods

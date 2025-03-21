@@ -17,5 +17,6 @@ extern int getConfigSwapInterval();
 extern int getConfigMaxDynamicLights();
 extern const char *getConfigStartingScene();
 extern bool getConfigWfoReversePolygons();
+extern const char *getConfigEngineScriptLocation();
 
 #endif

@@ -246,7 +246,7 @@ static int Py3dModelRenderer_Init(struct Py3dModelRenderer *self, PyObject *args
 
 static PyTypeObject Py3dModelRenderer_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "py3dengine.ModelRendererComponent",
+    .tp_name = "py3dengineEXT.ModelRendererComponent",
     .tp_doc = "Renders a 3d model with a shader and a material",
     .tp_basicsize = sizeof(struct Py3dModelRenderer),
     .tp_itemsize = 0,

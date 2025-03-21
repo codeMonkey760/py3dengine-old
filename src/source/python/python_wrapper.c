@@ -14,6 +14,8 @@
 #include "python/python_util.h"
 
 void appendImportPath(const char *relPath) {
+    if (relPath == NULL) return;
+
     PyObject *sysMod = PyImport_ImportModule("sys");
     if (sysMod == NULL) {
         critical_log("[Python]: Could not import \"sys\" module");

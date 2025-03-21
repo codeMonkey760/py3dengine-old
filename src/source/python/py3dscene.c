@@ -197,7 +197,7 @@ PyMethodDef Py3dScene_Methods[] = {
 
 PyTypeObject Py3dScene_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name = "py3dengine.Scene",
+    .tp_name = "py3dengineEXT.Scene",
     .tp_basicsize = sizeof(struct Py3dScene),
     .tp_dealloc = (destructor) Py3dScene_Dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,

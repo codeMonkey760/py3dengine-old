@@ -42,7 +42,7 @@ static PyMethodDef Py3dRenderingContext_Methods[] = {
 
 PyTypeObject Py3dRenderingContext_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name = "py3dengine.RenderingContext",
+    .tp_name = "py3dengineEXT.RenderingContext",
     .tp_doc = "Represents the current rendering pass",
     .tp_basicsize = sizeof(struct Py3dRenderingContext),
     .tp_itemsize = 0,

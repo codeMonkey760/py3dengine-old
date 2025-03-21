@@ -28,7 +28,7 @@ static PyGetSetDef Py3dContactPoint_GetSet[] = {
 
 PyTypeObject Py3dContactPoint_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "py3dengine.ContactPoint",
+    .tp_name = "py3dengineEXT.ContactPoint",
     .tp_doc = "Represents a point of contact during a collision",
     .tp_basicsize = sizeof(struct Py3dContactPoint),
     .tp_itemsize = 0,

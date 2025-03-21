@@ -56,7 +56,7 @@ static PyMethodDef Py3dSpriteRenderer_Methods[] = {
 
 PyTypeObject Py3dSpriteRenderer_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "py3dengine.SpriteRendererComponent",
+    .tp_name = "py3dengineEXT.SpriteRendererComponent",
     .tp_doc = "Renders a sprite",
     .tp_basicsize = sizeof(struct Py3dSpriteRenderer),
     .tp_itemsize = 0,

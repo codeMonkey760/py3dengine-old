@@ -40,7 +40,7 @@ static void Py3dTextRenderer_Dealloc(struct Py3dTextRenderer *self);
 
 PyTypeObject Py3dTextRenderer_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name = "py3dengine.TextRendererComponent",
+    .tp_name = "py3dengineEXT.TextRendererComponent",
     .tp_doc = "Renders text",
     .tp_basicsize = sizeof(struct Py3dTextRenderer),
     .tp_itemsize = 0,

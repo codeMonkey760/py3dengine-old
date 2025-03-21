@@ -65,7 +65,7 @@ PyMethodDef Py3dResourceManager_Methods[] = {
 
 PyTypeObject Py3dResourceManager_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name = "py3dengine.ResourceManager",
+    .tp_name = "py3dengineEXT.ResourceManager",
     .tp_basicsize = sizeof(struct Py3dResourceManager),
     .tp_itemsize = 0,
     .tp_dealloc = (destructor) Py3dResourceManager_Dealloc,

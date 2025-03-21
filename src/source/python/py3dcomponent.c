@@ -42,7 +42,7 @@ static PyMethodDef py3d_component_methods[] = {
 
 PyTypeObject Py3dComponent_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name = "py3dengine.Component",
+    .tp_name = "py3dengineEXT.Component",
     .tp_basicsize = sizeof(struct Py3dComponent),
     .tp_dealloc = (destructor) Py3dComponent_Dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
