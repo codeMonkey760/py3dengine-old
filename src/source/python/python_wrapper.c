@@ -1,17 +1,39 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <stdbool.h>
-
 #include "logger.h"
 #include "custom_string.h"
 #include "custom_path.h"
 #include "python/python_wrapper.h"
+#include "python/component_helper.h"
 #include "python/py3denginemodule.h"
 #include "python/py3dmathmodule.h"
 #include "python/py3dloggermodule.h"
 #include "python/py3dinput.h"
 #include "python/python_util.h"
+
+PyObject *py3dEngineModule = NULL;
+
+static void finalizePy3dEngineModule() {
+    Py_XDECREF(py3dEngineModule);
+    py3dEngineModule = NULL;
+}
+
+static int importPy3dEngineModule() {
+    finalizePy3dEngineModule();
+
+    py3dEngineModule = PyImport_ImportModule("py3dengine");
+    if (py3dEngineModule == NULL) {
+        handleException();
+        return 0;
+    }
+
+    return 1;
+}
+
+PyObject *getPy3dEngineModule() {
+    return py3dEngineModule;
+}
 
 void appendImportPath(const char *relPath) {
     if (relPath == NULL) return;
@@ -56,8 +78,8 @@ void appendImportPath(const char *relPath) {
     Py_CLEAR(sysMod);
 }
 
-bool initializePython(int argc, char **argv) {
-    if (!appendPy3dEngineModule()) return false;
+int initializePython(int argc, char **argv) {
+    if (!appendPy3dEngineExtModule()) return false;
     if (!appendPy3dMathModule()) return false;
     if (!appendPy3dLoggerModule()) return false;
     if (!appendPy3dInputModule()) return false;
@@ -82,13 +104,15 @@ bool initializePython(int argc, char **argv) {
 
     PyConfig_Clear(&config);
 
-    if (!importPy3dEngineModule()) return false;
+    if (!importPy3dEngineExtModule()) return false;
     if (!importPy3dMathModule()) return false;
     if (!importPy3dLoggerModule()) return false;
+    if (!importPy3dEngineModule()) return false;
     // input module does not need an import
 
-    if (!initPy3dEngineObjects()) return false;
+    if (!initPy3dEngineExtObjects()) return false;
     if (!initPy3dMathObjects()) return false;
+    if (!Py3d_InitComponentHelper()) return false;
     // logger module does not need init
     // input module does not need init
 
@@ -107,7 +131,9 @@ bool initializePython(int argc, char **argv) {
 void finalizePython() {
     // input module does not need finalization
     // logger module does not need finalization
+    Py3d_FinalizeComponentHelper();
     finalizePy3dMathModule();
+    finalizePy3dEngineExtModule();
     finalizePy3dEngineModule();
 
     Py_Finalize();

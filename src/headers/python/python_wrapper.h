@@ -1,10 +1,12 @@
 #ifndef PY3DENGINE_PYTHON_WRAPPER_H
 #define PY3DENGINE_PYTHON_WRAPPER_H
 
-#include <stdbool.h>
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
-extern bool initializePython(int argc, char **argv);
+extern int initializePython(int argc, char **argv);
 extern void appendImportPath(const char *relPath);
 extern void finalizePython();
+extern PyObject *getPy3dEngineModule();
 
 #endif
