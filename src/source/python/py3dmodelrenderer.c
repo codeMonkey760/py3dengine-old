@@ -1,6 +1,7 @@
 #include <glad/gl.h>
 
 #include "python/py3dmodelrenderer.h"
+#include "python/component_helper.h"
 #include "lights.h"
 #include "logger.h"
 #include "python/python_util.h"
@@ -115,7 +116,7 @@ static PyObject *Py3dModelRenderer_Render(struct Py3dModelRenderer *self, PyObje
     struct Py3dRenderingContext *rc = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
-    struct Py3dGameObject *owner = Py3d_GetOwnerForComponent((struct Py3dComponent *) self);
+    struct Py3dGameObject *owner = Py3d_GetOwnerForComponent((PyObject *) self);
     if (owner == NULL) return NULL;
 
     struct Py3dScene *scene = Py3d_GetSceneForGameObject(owner);
@@ -178,7 +179,7 @@ static struct BaseResource *lookupResource(const char *name, PyObject *parseData
 }
 
 static PyObject *Py3dModelRenderer_Parse(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
-    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    PyObject *superParseRet = Py3d_CallSuperMethod((PyObject *) self, "parse", args, kwds);
     if (superParseRet == NULL) return NULL;
     Py_CLEAR(superParseRet);
 
@@ -228,14 +229,11 @@ static PyMethodDef Py3dModelRenderer_Methods[] = {
 };
 
 static void Py3dModelRenderer_Dealloc(struct Py3dModelRenderer *self) {
-    // TODO: its not particularly clear if I should do this
-    Py3dComponent_Dealloc((struct Py3dComponent *) self);
-
-    //Py_TYPE(self)->tp_free((PyObject *) self);
+    Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static int Py3dModelRenderer_Init(struct Py3dModelRenderer *self, PyObject *args, PyObject *kwds) {
-    if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
+    if (Py3d_CallSuperInit((PyObject *) self, args, kwds) == -1) return -1;
 
     self->material = NULL;
     self->model = NULL;
@@ -258,7 +256,8 @@ static PyTypeObject Py3dModelRenderer_Type = {
 };
 
 int PyInit_Py3dModelRenderer(PyObject *module) {
-    Py3dModelRenderer_Type.tp_base = &Py3dComponent_Type;
+    // TODO: I'm not sure this is gonna work
+    Py3dModelRenderer_Type.tp_base = Py3d_GetComponentType();
     if (PyType_Ready(&Py3dModelRenderer_Type) < 0) return false;
 
     if (PyModule_AddObject(module, "ModelRendererComponent", (PyObject *) &Py3dModelRenderer_Type) < 0) return false;

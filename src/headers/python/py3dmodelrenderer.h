@@ -4,14 +4,11 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "py3dcomponent.h"
-
 struct Model;
 struct Shader;
 struct Material;
 
 struct Py3dModelRenderer {
-    struct Py3dComponent base;
     struct Shader *shader;
     struct Model *model;
     struct Material *material;
