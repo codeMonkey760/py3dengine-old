@@ -6,13 +6,13 @@
 #include "engine.h"
 #include "logger.h"
 #include "python/python_util.h"
+#include "python/component_helper.h"
 #include "physics/collision.h"
 #include "python/py3dinput.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dresourcemanager.h"
 #include "python/py3drenderingcontext.h"
 #include "lights.h"
-#include "python/py3dcomponent.h"
 #include "python/py3dlight.h"
 
 static PyObject *py3dSceneCtor = NULL;
@@ -629,7 +629,7 @@ void Py3dScene_MarshalLightData(struct Py3dScene *self) {
     ssize_t curLight = 0;
     while (curNode != NULL && curLight < self->numLights) {
         struct Py3dLight *component = curNode->component;
-        struct Py3dGameObject *owner = Py3d_GetComponentOwner((struct Py3dComponent *) component);
+        struct Py3dGameObject *owner = Py3d_GetComponentOwner((PyObject *) component);
         if (owner == NULL) {
             warning_log("%s", "[Scene]: Could not determine light owner while refreshing lighting data");
             handleException();
@@ -638,8 +638,8 @@ void Py3dScene_MarshalLightData(struct Py3dScene *self) {
 
         self->lightData[curLight].used = 1;
         self->lightData[curLight].enabled =
-            Py3dComponent_IsEnabledBool((struct Py3dComponent *) component) &&
-            Py3dComponent_IsVisibleBool((struct Py3dComponent *) component) &&
+            Py3d_IsComponentEnabled((PyObject *) component) &&
+            Py3d_IsComponentVisible((PyObject *) component) &&
             Py3dGameObject_IsEnabledBool(owner) &&
             Py3dGameObject_IsVisibleBool(owner);
         Py3dLight_GetType(component, &self->lightData[curLight].type);
