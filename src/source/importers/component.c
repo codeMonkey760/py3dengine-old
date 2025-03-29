@@ -1,6 +1,5 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <stdlib.h>
 
 #include "logger.h"
 #include "python/python_util.h"
@@ -48,7 +47,7 @@ void importComponent(struct PythonScript **scriptPtr, json_object *componentDesc
 void importBuiltinComponent(struct PythonScript **scriptPtr, const char *name) {
     if (scriptPtr == NULL || (*scriptPtr) != NULL) return;
 
-    PyObject *py3dEngineModule = getPy3dEngineModule();
+    PyObject *py3dEngineModule = getPy3dEngineExtModule();
     if (py3dEngineModule == NULL) return;
 
     struct PythonScript *newScript = NULL;
