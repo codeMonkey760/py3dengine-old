@@ -7,7 +7,6 @@
 #include "python/py3dresourcemanager.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"
-#include "python/py3dcomponent.h"
 #include "python/python_util.h"
 #include "math/vector3.h"
 #include "math/quaternion.h"
@@ -122,6 +121,9 @@ static PyObject *createPyValueFromJsonObject(json_object *json) {
         case json_type_object:
             return createPyDictFromJsonObject(json);
     }
+
+    PyErr_SetString(PyExc_AssertionError, "Tried to create python value for unsupported type");
+    return NULL;
 }
 
 static PyObject *createPyDictFromJsonObject(json_object *json) {
@@ -131,7 +133,13 @@ static PyObject *createPyDictFromJsonObject(json_object *json) {
     if (ret == NULL) return NULL;
 
     json_object_object_foreach(json, key, val) {
-        PyDict_SetItemString(ret, key, createPyValueFromJsonObject(val));
+        PyObject *valObj = createPyValueFromJsonObject(val);
+        if (valObj == NULL) {
+            Py_CLEAR(ret);
+            return NULL;
+        }
+        PyDict_SetItemString(ret, key, valObj);
+        Py_CLEAR(valObj);
     }
 
     return ret;
@@ -154,9 +162,9 @@ static PyObject *createPyListFromJsonArray(json_object *json) {
     return ret;
 }
 
-static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *data, struct Py3dResourceManager *rm) {
+static bool callPythonComponentParse(PyObject *component, PyObject *data, struct Py3dResourceManager *rm) {
     if (
-        Py3dComponent_Check((PyObject *) component) != 1 ||
+        Py3d_IsComponentSubclass(component) != 1 ||
         data == NULL ||
         Py3dResourceManager_Check((PyObject *) rm) != 1
     ) return false;
@@ -186,13 +194,13 @@ static bool callPythonComponentParse(struct Py3dComponent *component, PyObject *
 }
 
 static bool parsePythonComponent(
-    struct Py3dComponent *pyComponent,
+    PyObject *pyComponent,
     json_object *json,
     struct Py3dResourceManager *resourceManager
 ) {
     if (
         json == NULL ||
-        Py3dComponent_Check((PyObject *) pyComponent) != 1 ||
+        Py3d_IsComponentSubclass(pyComponent) != 1 ||
         Py3dResourceManager_Check((PyObject *) resourceManager) != 1
     ) return false;
 
@@ -316,19 +324,19 @@ bool parseGameObject(
         if (type_name_json == NULL) continue;
         const char *typeName = json_object_get_string(type_name_json);
 
-        struct Py3dComponent *pyComponent = NULL;
+        PyObject *component = NULL;
         struct BaseResource *pyScript = Py3dResourceManager_GetResource(resourceManager,typeName);
         if (!isResourceTypePythonScript(pyScript)) continue;
 
-        createPythonComponent((struct PythonScript *) pyScript, &pyComponent);
-        Py3dGameObject_AttachComponentInC(newGO, pyComponent);
+        createPythonComponent((struct PythonScript *) pyScript, &component);
+        Py3dGameObject_AttachComponentInC(newGO, component);
 
-        if (!parsePythonComponent(pyComponent, cur_component_json, resourceManager)) {
+        if (!parsePythonComponent(component, cur_component_json, resourceManager)) {
             error_log("%s", "[JsonParser]: Python component failed to parse.");
-            Py3dGameObject_DetachComponentInC(newGO, pyComponent);
+            Py3dGameObject_DetachComponentInC(newGO, component);
         }
 
-        Py_CLEAR(pyComponent);
+        Py_CLEAR(component);
     }
 
     size_t json_children_array_length = json_object_array_length(json_children_array);
