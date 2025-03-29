@@ -1,7 +1,7 @@
 #include "logger.h"
 #include "python/python_util.h"
+#include "python/python_wrapper.h"
 #include "python/py3dgameobject.h"
-#include "python/py3dcomponent.h"
 #include "python/py3dcollisionevent.h"
 #include "python/py3dcontactpoint.h"
 #include "python/py3drenderingcontext.h"
@@ -41,7 +41,6 @@ void handleException() {
 
 static PyObject *interesting_types[] = {
     (PyObject *) &Py3dGameObject_Type,
-    (PyObject *) &Py3dComponent_Type,
     (PyObject *) &Py3dCollisionEvent_Type,
     (PyObject *) &Py3dContactPoint_Type,
     (PyObject *) &Py3dRenderingContext_Type,
@@ -178,22 +177,6 @@ PyObject *Py3d_GetTypeFromTuple(PyObject *tuple, Py_ssize_t index, PyTypeObject 
     return item;
 }
 
-struct Py3dGameObject *Py3d_GetComponentOwner(struct Py3dComponent *component) {
-    PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) component, NULL);
-    if (Py_IsNone(owner)) {
-        Py_CLEAR(owner);
-        return NULL;
-    }
-
-    if (!Py3dGameObject_Check(owner)) {
-        Py_CLEAR(owner);
-        critical_log("[Utility]: Py3dComponent has an owner that is not a GameObject");
-        return NULL;
-    }
-
-    return (struct Py3dGameObject *) owner;
-}
-
 static PyObject* Py3d_GetParseData(
     PyObject *parseDataDict,
     PyTypeObject *type,
@@ -306,62 +289,4 @@ int Py3d_GetVector3ParseData(PyObject *parseDataDict, const char *keyName, float
     }
 
     return 1;
-}
-
-struct Py3dGameObject *Py3d_GetOwnerForComponent(struct Py3dComponent *component) {
-    if (component == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Py3d_GetOwnerForComponent received NULL component");
-        return NULL;
-    }
-    if (!Py3dComponent_Check((PyObject *) component)) {
-        PyErr_SetString(PyExc_AssertionError, "Py3d_GetOwnerForComponent received component that failed Py3dComponent_Check");
-        return NULL;
-    }
-
-    struct Py3dGameObject *owner = (struct Py3dGameObject *) Py3dComponent_GetOwner(component, NULL);
-    if (owner == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot get owner of detached component");
-        return NULL;
-    }
-    if (!Py3dGameObject_Check((PyObject *) owner)) {
-        Py_CLEAR(owner);
-        PyErr_SetString(PyExc_AssertionError, "Component is owned by something that isn't a game object");
-        return NULL;
-    }
-
-    return owner;
-}
-
-struct Py3dScene *Py3d_GetSceneForComponent(struct Py3dComponent *component) {
-    struct Py3dGameObject *owner = Py3d_GetComponentOwner(component);
-    if (owner == NULL) return NULL;
-
-    struct Py3dScene *ret = Py3d_GetSceneForGameObject(owner);
-    Py_CLEAR(owner);
-
-    return ret;
-}
-
-struct Py3dScene *Py3d_GetSceneForGameObject(struct Py3dGameObject *gameObject) {
-    if (gameObject == NULL) {
-        PyErr_SetString(PyExc_AssertionError, "Py3d_GetSceneForGameObject received NULL game object");
-        return NULL;
-    }
-    if (!Py3dGameObject_Check((PyObject *) gameObject)) {
-        PyErr_SetString(PyExc_AssertionError, "Py3d_GetSceneForGameObject received component that failed Py3dGameObject_Check");
-        return NULL;
-    }
-
-    struct Py3dScene *scene = Py3dGameObject_GetScene(gameObject);
-    if (scene == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot get scene of detached component");
-        return NULL;
-    }
-    if (!Py3dScene_Check((PyObject *) scene)) {
-        Py_CLEAR(scene);
-        PyErr_SetString(PyExc_AssertionError, "Scene pointer failed Py3dScene_Check");
-        return NULL;
-    }
-
-    return scene;
 }
