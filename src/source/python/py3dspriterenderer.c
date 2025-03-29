@@ -1,4 +1,7 @@
+#include "logger.h"
+#include "util.h"
 #include "python/py3dspriterenderer.h"
+#include "python/component_helper.h"
 #include "python/py3drenderingcontext.h"
 #include "python/py3dgameobject.h"
 #include "python/py3dresourcemanager.h"
@@ -6,28 +9,11 @@
 #include "resources/sprite.h"
 #include "resources/model.h"
 #include "resources/shader.h"
-#include "resources/texture.h"
-
-#include "logger.h"
-#include "util.h"
 
 static PyObject *Py3dSpriteRenderer_Ctor = NULL;
 
 static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds);
 static void Py3dSpriteRenderer_Dealloc(struct Py3dSpriteRenderer *self);
-
-static struct Py3dGameObject *getOwner(struct Py3dSpriteRenderer *self) {
-    PyObject *owner = Py3dComponent_GetOwner((struct Py3dComponent *) self, NULL);
-    if (owner == NULL) {
-        return NULL;
-    } else if (!Py3dGameObject_Check(owner)) {
-        Py_CLEAR(owner);
-        PyErr_SetString(PyExc_ValueError, "Cannot render a component that is detached from scene graph");
-        return NULL;
-    }
-
-    return (struct Py3dGameObject *) owner;
-}
 
 static struct BaseResource *lookupResource(const char *name, PyObject *parseDataDict, struct Py3dResourceManager *rm) {
     PyObject *curAttr = NULL;
@@ -67,7 +53,7 @@ PyTypeObject Py3dSpriteRenderer_Type = {
 };
 
 extern int PyInit_Py3dSpriteRenderer(PyObject *module) {
-    Py3dSpriteRenderer_Type.tp_base = &Py3dComponent_Type;
+    Py3dSpriteRenderer_Type.tp_base = Py3d_GetComponentType();
     if (PyType_Ready(&Py3dSpriteRenderer_Type) < 0) return 0;
 
     if (PyModule_AddObject(module, "SpriteRendererComponent", (PyObject *) &Py3dSpriteRenderer_Type) < 0) return 0;
@@ -126,7 +112,7 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
     struct Py3dRenderingContext *rc = NULL;
     if (PyArg_ParseTuple(args, "O!", &Py3dRenderingContext_Type, &rc) != 1) return NULL;
 
-    struct Py3dGameObject *owner = getOwner(self);
+    struct Py3dGameObject *owner = Py3d_GetComponentOwner((PyObject *) self);
     if (owner == NULL) return NULL;
 
     enableShader(self->shader);
@@ -155,7 +141,7 @@ PyObject *Py3dSpriteRenderer_Render(struct Py3dSpriteRenderer *self, PyObject *a
 }
 
 PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds) {
-    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    PyObject *superParseRet = Py3d_CallSuperMethod((PyObject *) self, "parse", args, kwds);
     if (superParseRet == NULL) return NULL;
     Py_CLEAR(superParseRet);
 
@@ -194,7 +180,7 @@ PyObject *Py3dSpriteRenderer_Parse(struct Py3dSpriteRenderer *self, PyObject *ar
 }
 
 static int Py3dSpriteRenderer_Init(struct Py3dSpriteRenderer *self, PyObject *args, PyObject *kwds) {
-    if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
+    if (!Py3d_CallSuperInit((PyObject *) self, args, kwds)) return -1;
 
     self->sprite = NULL;
     self->quad = NULL;
@@ -207,5 +193,6 @@ static void Py3dSpriteRenderer_Dealloc(struct Py3dSpriteRenderer *self) {
     self->sprite = NULL;
     self->quad = NULL;
     self->shader = NULL;
-    Py3dComponent_Dealloc((struct Py3dComponent *) self);
+
+    Py_TYPE(self)->tp_free((PyObject *) self);
 }
