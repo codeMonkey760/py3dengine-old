@@ -54,6 +54,7 @@ add_executable(
     src/source/python/py3dtextrenderer.c
     src/source/python/py3drigidbody.c
     src/source/python/py3dlight.c
+    src/source/python/component_helper.c
     src/source/math/vector3.c
     src/source/math/quaternion.c
     src/source/importers/texture.c
