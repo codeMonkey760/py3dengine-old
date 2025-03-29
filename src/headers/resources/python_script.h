@@ -14,14 +14,12 @@ struct PythonScript {
     PyObject *_componentType;
 };
 
-struct Py3dComponent;
-
 extern bool isResourceTypePythonScript(struct BaseResource *resource);
 extern void allocPythonScript(struct PythonScript **pythonScriptPtr);
 extern void deletePythonScript(struct PythonScript **pythonScript);
 
 extern void initPythonScript(struct PythonScript *resource, PyObject *module, const char *newComponentTypeName);
-extern void createPythonComponent(struct PythonScript *resource, struct Py3dComponent **componentPtr);
+extern void createPythonComponent(struct PythonScript *resource, PyObject **componentPtr);
 extern PyObject *getPythonScriptType(struct PythonScript *resource);
 
 #endif
