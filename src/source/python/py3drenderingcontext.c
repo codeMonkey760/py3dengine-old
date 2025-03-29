@@ -1,7 +1,5 @@
 #include "python/py3drenderingcontext.h"
-
-#include <python/py3dcomponent.h>
-
+#include "python/component_helper.h"
 #include "python/python_util.h"
 #include "logger.h"
 #include "python/py3dgameobject.h"
@@ -112,10 +110,10 @@ extern int Py3dRenderingContext_Check(PyObject *obj) {
     return ret;
 }
 
-static int extractFloatFromComponent(struct Py3dComponent *component, const char *name, float *dst) {
+static int extractFloatFromComponent(PyObject *component, const char *name, float *dst) {
     if (component == NULL || name == NULL || dst == NULL) return 0;
 
-    PyObject *getAttrRet = PyObject_GetAttrString((PyObject *) component, name);
+    PyObject *getAttrRet = PyObject_GetAttrString(component, name);
     if (getAttrRet == NULL) {
         PyErr_Clear();
         return 0;
@@ -135,7 +133,7 @@ static int extractFloatFromComponent(struct Py3dComponent *component, const char
     return 1;
 }
 
-static int extractCameraFromComponent(struct Py3dComponent *component, struct PerspectiveCamera *camera) {
+static int extractCameraFromComponent(PyObject *component, struct PerspectiveCamera *camera) {
     if (component == NULL || camera == NULL) return 0;
 
     float fov_x_in_degrees = 0.0f;
@@ -159,17 +157,12 @@ static int extractPerspectiveCameraFromGameObject(struct Py3dGameObject *go, str
 
     const Py_ssize_t componentCount = Py3dGameObject_GetComponentCountInt(go);
     for (Py_ssize_t i = 0; i < componentCount; ++i) {
-        struct Py3dComponent *curComponent = NULL;
-
-        PyObject *getComponentRet = Py3dGameObject_GetComponentByIndexInt(go, i);
-        if (getComponentRet == NULL) {
+        PyObject *curComponent = Py3dGameObject_GetComponentByIndexInt(go, i);
+        if (curComponent == NULL) {
             return 0;
-        } else if (!Py3dComponent_Check(getComponentRet)) {
-            Py_CLEAR(getComponentRet);
+        } else if (!Py3d_IsComponentSubclass(curComponent)) {
+            Py_CLEAR(curComponent);
             return 0;
-        } else {
-            curComponent = (struct Py3dComponent *) getComponentRet;
-            getComponentRet = NULL;
         }
 
         const int extractRet = extractCameraFromComponent(curComponent, camera);
