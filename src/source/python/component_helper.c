@@ -3,6 +3,33 @@
 #include "python/py3dgameobject.h"
 #include "python/component_helper.h"
 
+static PyTypeObject *componentType = NULL;
+
+int Py3d_InitComponentHelper() {
+    PyObject *componentMod = PyImport_ImportModule("Component");
+    if (componentMod == NULL) return 0;
+
+    // TODO: can I do this?
+    componentType = (PyTypeObject *) PyObject_GetAttrString(componentMod, "Component");
+    Py_CLEAR(componentMod);
+
+    if (!componentType) {
+        critical_log("[Python]: Cannot obtain reference to builtin type \"Component\"");
+    }
+
+    return componentType != NULL;
+}
+
+void Py3d_FinalizeComponentHelper() {
+    if (componentType == NULL) return;
+
+    Py_CLEAR(componentType);
+}
+
+PyTypeObject *Py3d_GetComponentType() {
+    return componentType;
+}
+
 struct Py3dGameObject *Py3d_GetComponentOwner(PyObject *component) {
     if (component == NULL) return NULL;
 
@@ -110,4 +137,42 @@ int Py3d_CallSuperInit(PyObject *obj, PyObject *args, PyObject *kwds) {
 
     Py_CLEAR(ret);
     return 0;
+}
+
+int Py3d_IsComponentEnabled(PyObject *obj) {
+    if (!Py3d_IsComponentSubclass(obj)) {
+        error_log("[Python]: Py3d_IsComponentEnabled was called with non component subclass");
+        return 0;
+    }
+
+    PyObject *ret = PyObject_CallMethod(obj, "enabled", NULL);
+    if (ret == NULL) {
+        error_log("[Python]: Calling \"enabled\" on component subclass yield an exception");
+        handleException();
+        return 0;
+    }
+
+    const int result = Py_IsTrue(ret);
+    Py_CLEAR(ret);
+
+    return result;
+}
+
+int Py3d_IsComponentVisible(PyObject *obj) {
+    if (!Py3d_IsComponentSubclass(obj)) {
+        error_log("[Python]: Py3d_IsComponentVisible was called with non component subclass");
+        return 0;
+    }
+
+    PyObject *ret = PyObject_CallMethod(obj, "visible", NULL);
+    if (ret == NULL) {
+        error_log("[Python]: Calling \"visible\" on component subclass yield an exception");
+        handleException();
+        return 0;
+    }
+
+    const int result = Py_IsTrue(ret);
+    Py_CLEAR(ret);
+
+    return result;
 }
