@@ -1,4 +1,6 @@
 #include "physics/collision.h"
+#include "python/component_helper.h"
+#include "python/python_util.h"
 #include "physics/collision_state.h"
 #include "python/py3drigidbody.h"
 #include "python/py3dcontactpoint.h"
@@ -24,20 +26,15 @@ static struct Py3dRigidBody *getRigidBodyFromGeom(dGeomID geom) {
 }
 
 static struct Py3dGameObject *getOwnerFromRigidBody(struct Py3dRigidBody *collider) {
-    PyObject *obj = NULL;
+    struct Py3dGameObject *obj = NULL;
 
-    obj = Py3dComponent_GetOwner((struct Py3dComponent *) collider, NULL);
+    obj = Py3d_GetComponentOwner((PyObject *) collider);
     if (obj == NULL) {
         warning_log("[Collision]: Collision detected with detached Py3dRigidBody, discarding collision");
         return NULL;
     }
 
-    if (!Py3dGameObject_Check(obj)) {
-        critical_log("[Collision]: Discovered component with an owner that is not a Game Object!");
-        return NULL;
-    }
-
-    return (struct Py3dGameObject *) obj;
+    return obj;
 }
 
 static struct Py3dCollisionEvent *createCollisionEvent(struct Py3dRigidBody *rb1, struct Py3dRigidBody *rb2) {
