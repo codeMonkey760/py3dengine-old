@@ -1,7 +1,6 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3dgameobject.h"
-#include "python/python_wrapper.h"
 #include "python/component_helper.h"
 
 struct Py3dGameObject *Py3d_GetComponentOwner(PyObject *component) {
@@ -63,23 +62,7 @@ struct Py3dScene *Py3d_GetSceneForComponent(PyObject *component) {
 int Py3d_IsComponentSubclass(PyObject *obj) {
     if (obj == NULL) return 0;
 
-    PyObject *mod = getPy3dEngineModule();
-    if (mod == NULL) {
-        critical_log("[Python]: Could not obtain reference to py3dengine module");
-        return 0;
-    }
-
-    PyObject *componentType = PyObject_GetAttrString(mod, "Component");
-    if (componentType == NULL) {
-        critical_log("[Python]: Could not obtain reference to builtin Component type");
-        handleException();
-        return 0;
-    }
-
-    const int result = PyObject_IsSubclass(obj, componentType);
-    Py_CLEAR(componentType);
-
-    return result;
+    return PyObject_IsSubclass(obj, (PyObject *) componentType);
 }
 
 static PyObject *Py3d_Super(PyObject *obj) {
