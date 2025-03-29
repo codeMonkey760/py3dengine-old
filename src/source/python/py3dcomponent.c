@@ -1,3 +1,4 @@
+/*
 #include "python/py3dcomponent.h"
 
 #include <structmember.h>
@@ -54,16 +55,6 @@ PyTypeObject Py3dComponent_Type = {
     .tp_traverse = (traverseproc) Py3dComponent_Traverse,
     .tp_clear = (inquiry) Py3dComponent_Clear
 };
-
-int PyInit_Py3dComponent(PyObject *module) {
-    if (PyType_Ready(&Py3dComponent_Type) < 0) return 0;
-
-    if (PyModule_AddObject(module, "OldComponent", (PyObject *) &Py3dComponent_Type) < 0) return 0;
-
-    Py_INCREF(&Py3dComponent_Type);
-
-    return 1;
-}
 
 int Py3dComponent_Check(PyObject *pyObj) {
     if (pyObj == NULL) return 0;
@@ -260,4 +251,4 @@ PyObject *Py3dComponent_Parse(struct Py3dComponent *self, PyObject *args, PyObje
 
     Py_RETURN_NONE;
 }
-
+*/

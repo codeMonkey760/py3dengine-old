@@ -6,10 +6,10 @@
 
 extern PyObject *Py3dErr_SceneError;
 
-extern int appendPy3dEngineModule();
-extern int importPy3dEngineModule();
-extern int initPy3dEngineObjects();
-extern PyObject *getPy3dEngineModule();
-extern void finalizePy3dEngineModule();
+extern int appendPy3dEngineExtModule();
+extern int importPy3dEngineExtModule();
+extern int initPy3dEngineExtObjects();
+extern PyObject *getPy3dEngineExtModule();
+extern void finalizePy3dEngineExtModule();
 
 #endif

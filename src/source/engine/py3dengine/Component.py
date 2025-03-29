@@ -1,4 +1,4 @@
-class NewComponent:
+class Component:
     """Base class for writing components"""
     def __init__(self):
         self.name = None

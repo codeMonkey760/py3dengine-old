@@ -1,7 +1,6 @@
 #include "logger.h"
 #include "python/python_util.h"
 #include "python/py3denginemodule.h"
-#include "python/py3dcomponent.h"
 #include "python/py3dmodelrenderer.h"
 #include "python/py3dspriterenderer.h"
 #include "python/py3drenderingcontext.h"
@@ -99,7 +98,7 @@ static PyModuleDef py3dengineModuleDef = {
 static PyObject *module = NULL;
 
 PyMODINIT_FUNC
-PyInit_py3dEngine(void) {
+PyInit_py3dEngineEXT(void) {
     PyObject *newModule = PyModule_Create(&py3dengineModuleDef);
     if (newModule == NULL) {
         critical_log("%s", "[Python]: Failed to create \"py3dengine\" module");
@@ -109,13 +108,6 @@ PyInit_py3dEngine(void) {
 
     if (!PyInit_Py3dGameObject(newModule)) {
         critical_log("%s", "[Python]: Failed to attach Game Object to py3dengine module");
-
-        Py_CLEAR(newModule);
-        return NULL;
-    }
-
-    if (!PyInit_Py3dComponent(newModule)) {
-        critical_log("%s", "[Python]: Failed to attach OldComponent to py3dengine module");
 
         Py_CLEAR(newModule);
         return NULL;
@@ -210,8 +202,8 @@ PyInit_py3dEngine(void) {
     return newModule;
 }
 
-int appendPy3dEngineModule() {
-    if (PyImport_AppendInittab("py3dengineEXT", PyInit_py3dEngine) == -1) {
+int appendPy3dEngineExtModule() {
+    if (PyImport_AppendInittab("py3dengineEXT", PyInit_py3dEngineEXT) == -1) {
         critical_log("%s", "[Python]: Failed to extend built-in modules table with py3dengineEXT module");
         return false;
     }
@@ -219,7 +211,7 @@ int appendPy3dEngineModule() {
     return true;
 }
 
-int importPy3dEngineModule() {
+int importPy3dEngineExtModule() {
     module = PyImport_ImportModule("py3dengineEXT");
     if (module == NULL) {
         critical_log("%s", "[Python]: Could not import py3dengineEXT");
@@ -230,7 +222,7 @@ int importPy3dEngineModule() {
     return true;
 }
 
-int initPy3dEngineObjects() {
+int initPy3dEngineExtObjects() {
     if (!Py3dGameObject_FindCtor(module)) {
         return false;
     }
@@ -270,11 +262,11 @@ int initPy3dEngineObjects() {
     return true;
 }
 
-PyObject *getPy3dEngineModule() {
+PyObject *getPy3dEngineExtModule() {
     return module;
 }
 
-void finalizePy3dEngineModule() {
+void finalizePy3dEngineExtModule() {
     Py_CLEAR(Py3dErr_SceneError);
     Py3dGameObject_FinalizeCtor();
     Py3dRenderingContext_FinalizeCtor();
