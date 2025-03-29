@@ -3,9 +3,6 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <ode/ode.h>
-
-#include "py3dcomponent.h"
 
 struct Py3dRigidBody;
 extern PyTypeObject Py3dRigidBody_Type;
