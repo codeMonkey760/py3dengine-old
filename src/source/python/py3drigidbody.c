@@ -1,4 +1,6 @@
 #include "python/py3drigidbody.h"
+#include "python/py3denginemodule.h"
+#include "python/component_helper.h"
 #include "python/python_util.h"
 #include "logger.h"
 #include "python/py3dgameobject.h"
@@ -6,7 +8,6 @@
 #include "physics/collision.h"
 
 struct Py3dRigidBody {
-    struct Py3dComponent base;
     dBodyID dynamicsBody;
     dGeomID geomId;
     int isTrigger; //generate collision messages only when true, don't physically collide
@@ -30,14 +31,13 @@ static void allocBody(struct Py3dRigidBody *self, struct PhysicsSpace *space) {
 static void deleteGeom(struct Py3dRigidBody *self) {
     if (self->geomId == NULL) return;
 
-
     dGeomSetBody(self->geomId, 0);
     dGeomDestroy(self->geomId);
     self->geomId = NULL;
 }
 
 static int Py3dRigidBody_Init(struct Py3dRigidBody *self, PyObject *args, PyObject *kwds) {
-    if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
+    if (Py3d_CallSuperInit((PyObject *) self, args, kwds) == -1) return -1;
 
     self->dynamicsBody = 0;
     self->geomId = 0;
@@ -51,7 +51,7 @@ static void Py3dRigidBody_Dealloc(struct Py3dRigidBody *self) {
     destroyDynamicsBody(self->dynamicsBody);
     self->dynamicsBody = NULL;
 
-    Py3dComponent_Dealloc((struct Py3dComponent *) self);
+    Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 PyTypeObject Py3dRigidBody_Type = {
@@ -67,7 +67,7 @@ PyTypeObject Py3dRigidBody_Type = {
 };
 
 int PyInit_Py3dRigidBody(PyObject *module) {
-    Py3dRigidBody_Type.tp_base = &Py3dComponent_Type;
+    Py3dRigidBody_Type.tp_base = Py3d_GetComponentType();
     if (PyType_Ready(&Py3dRigidBody_Type) < 0) return 0;
 
     if (PyModule_AddObject(module, "RigidBodyComponent", (PyObject *) &Py3dRigidBody_Type) < 0) return 0;
@@ -78,24 +78,13 @@ int PyInit_Py3dRigidBody(PyObject *module) {
 }
 
 struct Py3dRigidBody *Py3dRigidBody_New() {
-    PyObject *py3dengine = PyImport_ImportModule("py3dengine");
-    if (py3dengine == NULL) {
-        critical_log("[RigidBodyComponent]: Failed to import py3dengine module");
-        return NULL;
-    }
-
-    PyObject *ctor = PyObject_GetAttrString(py3dengine, "RigidBodyComponent");
-    Py_CLEAR(py3dengine);
-
+    PyObject *ctor = PyObject_GetAttrString(getPy3dEngineExtModule(), "RigidBodyComponent");
     if (ctor == NULL) {
         critical_log("[RigidBodyComponent]: Failed to find ctor in py3dengine module");
         return NULL;
     }
 
-    PyObject *args = Py_BuildValue("()");
-    PyObject *ret = PyObject_Call(ctor, args, NULL);
-
-    Py_CLEAR(args);
+    PyObject *ret = PyObject_CallNoArgs(ctor);
     Py_CLEAR(ctor);
 
     if (ret == NULL) {
@@ -205,7 +194,7 @@ PyObject *Py3dRigidBody_SetShape(struct Py3dRigidBody *self, PyObject *args, PyO
     shapeName = NULL;
     Py_CLEAR(shapeNameObj);
 
-    struct Py3dGameObject *owner = Py3d_GetComponentOwner((struct Py3dComponent *) self);
+    struct Py3dGameObject *owner = Py3d_GetComponentOwner((PyObject *) self);
     if (owner == NULL) return NULL;
 
     struct PhysicsSpace *space = getOwnersPhysicsSpace(owner);
@@ -230,7 +219,7 @@ PyObject *Py3dRigidBody_SetShape(struct Py3dRigidBody *self, PyObject *args, PyO
 }
 
 PyObject *Py3dRigidBody_Parse(struct Py3dRigidBody *self, PyObject *args, PyObject *kwds) {
-    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    PyObject *superParseRet = Py3d_CallSuperMethod((PyObject *) self, "parse", args, kwds);
     if (superParseRet == NULL) return NULL;
     Py_CLEAR(superParseRet);
 
@@ -289,11 +278,11 @@ PyObject *Py3dRigidBody_Parse(struct Py3dRigidBody *self, PyObject *args, PyObje
 }
 
 PyObject *Py3dRigidBody_Update(struct Py3dRigidBody *self, PyObject *args, PyObject *kwds) {
-    PyObject *superUpdateRet = Py3dComponent_Update((struct Py3dComponent *) self, args, kwds);
+    PyObject *superUpdateRet = Py3d_CallSuperMethod((PyObject *) self, "update", args, kwds);
     if (superUpdateRet == NULL) return NULL;
     Py_CLEAR(superUpdateRet);
 
-    struct Py3dGameObject *owner = Py3d_GetComponentOwner((struct Py3dComponent *) self);
+    struct Py3dGameObject *owner = Py3d_GetComponentOwner((PyObject *) self);
 
     const float *pos = Py3dGameObject_GetPositionFA(owner);
     dBodySetPosition(self->dynamicsBody, pos[0], pos[1], pos[2]);
