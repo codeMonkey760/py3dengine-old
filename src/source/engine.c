@@ -92,8 +92,6 @@ void initializeEngine(int argc, char **argv){
         return;
     }
 
-    appendImportPath(getConfigEngineScriptLocation());
-
     if (!dInitODE2(0)) {
         critical_log("%s", "[Engine]: Could not initialize collision engine");
         return;

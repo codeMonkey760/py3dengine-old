@@ -2,6 +2,7 @@
 #include <Python.h>
 
 #include "logger.h"
+#include "config.h"
 #include "custom_string.h"
 #include "custom_path.h"
 #include "python/python_wrapper.h"
@@ -103,6 +104,8 @@ int initializePython(int argc, char **argv) {
     }
 
     PyConfig_Clear(&config);
+
+    appendImportPath(getConfigEngineScriptLocation());
 
     if (!importPy3dEngineExtModule()) return false;
     if (!importPy3dMathModule()) return false;
