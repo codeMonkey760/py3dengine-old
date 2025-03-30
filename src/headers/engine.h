@@ -10,7 +10,7 @@ struct Py3dScene;
 
 extern GLFWwindow *glfwWindow;
 
-extern void initializeEngine(int argc, char **argv);
+extern int initializeEngine(int argc, char **argv);
 extern void runEngine();
 extern void finalizeEngine();
 extern void getRenderingTargetDimensions(int *width, int *height);

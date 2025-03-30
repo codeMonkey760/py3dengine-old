@@ -4,7 +4,9 @@
 int main(int argc, char **argv) {
     initLogger();
 
-    initializeEngine(argc, argv);
+    if (!initializeEngine(argc, argv)) {
+        return 1;
+    }
     runEngine();
     finalizeEngine();
 

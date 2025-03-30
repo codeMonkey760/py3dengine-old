@@ -84,23 +84,23 @@ static void doSceneActivation() {
     Py3dScene_Activate(activeScene);
 }
 
-void initializeEngine(int argc, char **argv){
+int initializeEngine(int argc, char **argv){
     parseConfigFile("config.json");
 
     if (!initializePython(argc, argv)) {
         critical_log("%s", "Could not initialize python. Halting");
-        return;
+        return 0;
     }
 
     if (!dInitODE2(0)) {
         critical_log("%s", "[Engine]: Could not initialize collision engine");
-        return;
+        return 0;
     }
 
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit()) {
-        return;
+        return 0;
     }
 
     GLFWmonitor *primaryMonitor = NULL;
@@ -111,7 +111,7 @@ void initializeEngine(int argc, char **argv){
 
     glfwWindow = glfwCreateWindow(getConfigScreenWidth(), getConfigScreenHeight(), "Py3DEngine", primaryMonitor, NULL);
     if (glfwWindow == NULL) {
-        return;
+        return 0;
     }
 
     if (full_screen == false) {
@@ -139,6 +139,8 @@ void initializeEngine(int argc, char **argv){
     } else {
         sceneAwaitingActivation = ret;
     }
+
+    return 1;
 }
 
 void runEngine() {
