@@ -1,4 +1,8 @@
 #include "python/py3dtextrenderer.h"
+
+#include <python/py3denginemodule.h>
+
+#include "python/component_helper.h"
 #include "python/python_util.h"
 #include "logger.h"
 #include "python/py3dresourcemanager.h"
@@ -13,7 +17,6 @@
 #define TEXT_JUSTIFY_RIGHT 1
 
 struct Py3dTextRenderer {
-    struct Py3dComponent base;
     struct Model *quad;
     struct Shader *shader;
     struct Texture *char_map;
@@ -52,7 +55,7 @@ PyTypeObject Py3dTextRenderer_Type = {
 };
 
 int PyInit_Py3dTextRenderer(PyObject *module) {
-    Py3dTextRenderer_Type.tp_base = &Py3dComponent_Type;
+    Py3dTextRenderer_Type.tp_base = Py3d_GetComponentType();
     if (PyType_Ready(&Py3dTextRenderer_Type) < 0) return 0;
 
     if (PyModule_AddObject(module, "TextRendererComponent", (PyObject *) &Py3dTextRenderer_Type) < 0) return 0;
@@ -73,24 +76,13 @@ int Py3dTextRenderer_Check(PyObject *obj) {
 }
 
 struct Py3dTextRenderer *Py3dTextRenderer_New() {
-    PyObject *py3dengine = PyImport_ImportModule("py3dengine");
-    if (py3dengine == NULL) {
-        critical_log("[TextRendererComponent]: Failed to import py3dengine module");
-        return NULL;
-    }
-
-    PyObject *ctor = PyObject_GetAttrString(py3dengine, "TextRendererComponent");
-    Py_CLEAR(py3dengine);
-
+    PyObject *ctor = PyObject_GetAttrString(getPy3dEngineExtModule(), "TextRendererComponent");
     if (ctor == NULL) {
         critical_log("[TextRendererComponent]: Failed to find ctor in py3dengine module");
         return NULL;
     }
 
-    PyObject *args = Py_BuildValue("()");
-    PyObject *ret = PyObject_Call(ctor, args, NULL);
-
-    Py_CLEAR(args);
+    PyObject *ret = PyObject_CallNoArgs(ctor);
     Py_CLEAR(ctor);
 
     if (ret == NULL) {
@@ -107,7 +99,7 @@ struct Py3dTextRenderer *Py3dTextRenderer_New() {
 }
 
 static int Py3dTextRenderer_Init(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
-    if (Py3dComponent_Type.tp_init( (PyObject *) self, args, kwds) == -1) return -1;
+    if (Py3d_CallSuperInit((PyObject *) self, args, kwds) == -1) return -1;
 
     self->quad = NULL;
     self->shader = NULL;
@@ -135,7 +127,8 @@ static void Py3dTextRenderer_Dealloc(struct Py3dTextRenderer *self) {
     self->shader = NULL;
     self->char_map = NULL;
     Py_CLEAR(self->text);
-    Py3dComponent_Dealloc((struct Py3dComponent *) self);
+
+    Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 static void calcCharWVPMtx(float out[16], int row, int col, int font_width, int font_height, int justify, int charsUntilLineEnd, float *margin) {
@@ -258,7 +251,7 @@ PyObject *Py3dTextRenderer_Render(struct Py3dTextRenderer *self, PyObject *args,
 }
 
 PyObject *Py3dTextRenderer_Parse(struct Py3dTextRenderer *self, PyObject *args, PyObject *kwds) {
-    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    PyObject *superParseRet = Py3d_CallSuperMethod((PyObject *) self, "parse", args, kwds);
     if (superParseRet == NULL) return NULL;
     Py_CLEAR(superParseRet);
 

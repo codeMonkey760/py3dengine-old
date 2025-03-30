@@ -4,8 +4,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "python/py3dcomponent.h"
-
 struct Py3dTextRenderer;
 extern PyTypeObject Py3dTextRenderer_Type;
 
