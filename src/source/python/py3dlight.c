@@ -1,21 +1,17 @@
 #include <glad/gl.h>
 
 #include "python/py3dlight.h"
-
 #include "util.h"
-
 #include "python/py3dscene.h"
 #include "math/vector3.h"
-
-#include "python/py3dcomponent.h"
 #include "logger.h"
+#include "python/component_helper.h"
 #include "python/python_util.h"
 #include "lights.h"
 
 static PyObject *Py3dLight_Ctor = NULL;
 
 struct Py3dLight {
-    struct Py3dComponent base;
     GLint lightType;
     float diffuse[3];
     float specular[3];
@@ -25,7 +21,7 @@ struct Py3dLight {
 };
 
 static int Py3dLight_Init(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
-    if (Py3dComponent_Type.tp_init((PyObject *) self, args, kwds) == -1) return -1;
+    if (Py3d_CallSuperInit((PyObject *) self, args, kwds) == -1) return -1;
 
     self->lightType = LIGHT_TYPE_UNKNOWN;
     Vec3Fill(self->diffuse, 0.0f);
@@ -51,10 +47,7 @@ static PyMethodDef Py3dLight_Methods[] = {
 };
 
 static void Py3dLight_Dealloc(struct Py3dModelRenderer *self) {
-    // TODO: its not particularly clear if I should do this
-    Py3dComponent_Dealloc((struct Py3dComponent *) self);
-
-    //Py_TYPE(self)->tp_free((PyObject *) self);
+    Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 PyTypeObject Py3dLight_Type = {
@@ -71,7 +64,7 @@ PyTypeObject Py3dLight_Type = {
 };
 
 int PyInit_Py3dLight(PyObject *module) {
-    Py3dLight_Type.tp_base = &Py3dComponent_Type;
+    Py3dLight_Type.tp_base = Py3d_GetComponentType();
     if (PyType_Ready(&Py3dLight_Type) < 0) return 0;
 
     if (PyModule_AddObject(module, "LightComponent", (PyObject *) &Py3dLight_Type) < 0) return 0;
@@ -162,7 +155,7 @@ void Py3dLight_GetAttenuation(struct Py3dLight *self, float dst[3]) {
 }
 
 PyObject *Py3dLight_Parse(struct Py3dLight *self, PyObject *args, PyObject *kwds) {
-    PyObject *superParseRet = Py3dComponent_Parse((struct Py3dComponent *) self, args, kwds);
+    PyObject *superParseRet = Py3d_CallSuperMethod((PyObject *) self, "parse", args, kwds);
     if (superParseRet == NULL) return NULL;
     Py_CLEAR(superParseRet);
 
@@ -187,7 +180,7 @@ PyObject *Py3dLight_Attach(struct Py3dLight *self, PyObject *args, PyObject *kwd
         return NULL;
     }
 
-    struct Py3dScene *scene = Py3d_GetSceneForComponent((struct Py3dComponent *) self);
+    struct Py3dScene *scene = Py3d_GetSceneForComponent((PyObject *) self);
     if (scene == NULL) return NULL;
 
     const int result = Py3dScene_RegisterLight(scene, self);
@@ -207,7 +200,7 @@ PyObject *Py3dLight_Detach(struct Py3dLight *self, PyObject *args, PyObject *kwd
         return NULL;
     }
 
-    struct Py3dScene *scene = Py3d_GetSceneForComponent((struct Py3dComponent *) self);
+    struct Py3dScene *scene = Py3d_GetSceneForComponent((PyObject *) self);
     if (scene == NULL) return NULL;
 
     const int result = Py3dScene_UnRegisterLight(scene, self);
