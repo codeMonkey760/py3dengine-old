@@ -6,7 +6,7 @@
 static PyTypeObject *componentType = NULL;
 
 int Py3d_InitComponentHelper() {
-    PyObject *componentMod = PyImport_ImportModule("Component");
+    PyObject *componentMod = PyImport_ImportModule("py3dengine.Component");
     if (componentMod == NULL) return 0;
 
     // TODO: can I do this?
