@@ -8,6 +8,7 @@
 #include "physics/collision.h"
 
 struct Py3dRigidBody {
+    PyObject_HEAD
     dBodyID dynamicsBody;
     dGeomID geomId;
     int isTrigger; //generate collision messages only when true, don't physically collide

@@ -9,6 +9,7 @@ struct Shader;
 struct Material;
 
 struct Py3dModelRenderer {
+    PyObject_HEAD
     struct Shader *shader;
     struct Model *model;
     struct Material *material;

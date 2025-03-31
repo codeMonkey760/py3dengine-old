@@ -17,6 +17,7 @@
 #define TEXT_JUSTIFY_RIGHT 1
 
 struct Py3dTextRenderer {
+    PyObject_HEAD
     struct Model *quad;
     struct Shader *shader;
     struct Texture *char_map;

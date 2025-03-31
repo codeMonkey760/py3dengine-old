@@ -12,6 +12,7 @@
 static PyObject *Py3dLight_Ctor = NULL;
 
 struct Py3dLight {
+    PyObject_HEAD
     GLint lightType;
     float diffuse[3];
     float specular[3];
