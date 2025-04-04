@@ -7,6 +7,7 @@
 #include "python/py3dresourcemanager.h"
 #include "resources/shader.h"
 #include "resources/python_script.h"
+#include "python/component_helper.h"
 #include "python/python_util.h"
 #include "math/vector3.h"
 #include "math/quaternion.h"

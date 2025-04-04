@@ -89,7 +89,13 @@ struct Py3dScene *Py3d_GetSceneForComponent(PyObject *component) {
 int Py3d_IsComponentSubclass(PyObject *obj) {
     if (obj == NULL) return 0;
 
-    return PyObject_IsSubclass(obj, (PyObject *) componentType);
+    int ret = PyObject_IsSubclass((PyObject *) Py_TYPE(obj), (PyObject *) componentType);
+    if (ret == -1) {
+        handleException();
+        return 0;
+    }
+
+    return ret;
 }
 
 static PyObject *Py3d_Super(PyObject *obj) {
@@ -104,7 +110,7 @@ static PyObject *Py3d_Super(PyObject *obj) {
         return NULL;
     }
 
-    PyObject *ret = PyObject_CallMethod(builtinsMod, "super", "(O)", obj);
+    PyObject *ret = PyObject_CallMethod(builtinsMod, "super", "(O)", Py_TYPE(obj));
     Py_CLEAR(builtinsMod);
     return ret;
 }

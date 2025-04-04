@@ -1,6 +1,7 @@
 #include "resources/python_script.h"
 #include "custom_string.h"
 #include "logger.h"
+#include "python/component_helper.h"
 #include "python/python_util.h"
 
 #define RESOURCE_TYPE_PYTHON_SCRIPT 5
